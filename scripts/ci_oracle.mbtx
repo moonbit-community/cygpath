@@ -1,0 +1,1120 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/async@0.22.4/stdio",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "moonbitlang/x@0.5.5/crypto",
+  "moonbitlang/x@0.5.5/sys",
+}
+
+///|
+struct Probe {
+  program : String
+  argv : Array[String]
+  cwd : String
+  status : String
+  exit_code : Int?
+  reason : String?
+  stdout_path : String
+  stdout_sha256 : String
+  stdout_length : Int
+  stderr_path : String
+  stderr_sha256 : String
+  stderr_length : Int
+  start_unix_ms : UInt64
+  elapsed_ms : Int64
+  deadline_ms : Int
+} derive(ToJson)
+
+///|
+struct ReviewedDifference {
+  profile : String
+  case_id : String
+  fixture_sha256 : String
+  upstream_executable_sha256 : String
+  upstream_runtime_sha256 : String
+  policy_id : String
+  reason : String
+  oracle_stdout_sha256 : String
+  oracle_stderr_sha256 : String
+  oracle_exit_code : Int
+  project_stdout_sha256 : String
+  project_stderr_sha256 : String
+  project_exit_code : Int
+} derive(@json.FromJson, ToJson)
+
+///|
+struct ReviewFile {
+  schema_version : Int
+  differences : Array[ReviewedDifference]
+} derive(@json.FromJson, ToJson)
+
+///|
+struct GateCase {
+  profile : String
+  suite : String
+  mode : String
+  backend : String
+  case_id : String
+  raw_status : String
+  gate_status : String
+  reason : String?
+  oracle_stdout_sha256 : String?
+  oracle_stderr_sha256 : String?
+  oracle_exit_code : Int?
+  project_stdout_sha256 : String?
+  project_stderr_sha256 : String?
+  project_exit_code : Int?
+} derive(ToJson)
+
+///|
+fn require(condition : Bool, message : String) -> Unit raise {
+  if !condition {
+    fail(message)
+  }
+}
+
+///|
+fn digest(bytes : Bytes) -> String {
+  @crypto.bytes_to_hex_string(@crypto.sha256(bytes))
+}
+
+///|
+fn field(value : Json, key : String) -> Json raise {
+  guard value is Object(fields) && fields.get(key) is Some(result) else {
+    fail("missing JSON field: " + key)
+  }
+  result
+}
+
+///|
+fn text_field(value : Json, key : String) -> String raise {
+  @json.from_json(field(value, key))
+}
+
+///|
+fn int_field(value : Json, key : String) -> Int raise {
+  @json.from_json(field(value, key))
+}
+
+///|
+fn bool_field(value : Json, key : String) -> Bool raise {
+  @json.from_json(field(value, key))
+}
+
+///|
+fn optional_field(value : Json, key : String) -> Json? {
+  match value {
+    Object(fields) => fields.get(key)
+    _ => None
+  }
+}
+
+///|
+fn path_text(value : String) -> String {
+  value.replace_all(old="\\", new="/")
+}
+
+///|
+fn trimmed(value : String) -> String {
+  value.trim().to_owned()
+}
+
+///|
+async fn save_json(path : String, value : Json) -> Unit {
+  @fs.write_file(path, value.stringify(indent=2) + "\n")
+}
+
+///|
+async fn artifact(path : String) -> Json {
+  let path = path_text(@fs.realpath(path))
+  let bytes = @fs.read_file(path).binary()
+  { "path": path, "sha256": digest(bytes) }
+}
+
+///|
+async fn package_metadata(
+  directory : String,
+  relative : String,
+  output : String,
+  entries : Array[Json],
+) -> Unit {
+  let path = if relative == "" { directory } else { directory + "/" + relative }
+  for name in @fs.readdir(path) {
+    let child_relative = if relative == "" {
+      name
+    } else {
+      relative + "/" + name
+    }
+    let child = directory + "/" + child_relative
+    if @fs.kind(child, follow_symlink=false) is Directory {
+      package_metadata(directory, child_relative, output, entries)
+    } else {
+      let metadata = name == "setup.xz" ||
+        name == "setup.ini" ||
+        name == "setup.bz2" ||
+        name.has_suffix(".sig")
+      let runtime_archive = name.has_prefix("cygwin-") &&
+        (
+          name.has_suffix(".tar.xz") ||
+          name.has_suffix(".tar.zst") ||
+          name.has_suffix(".tar.bz2")
+        )
+      if metadata || runtime_archive {
+        let bytes = @fs.read_file(child).binary()
+        let retained = if metadata {
+          let retained = "observations/package-metadata-" +
+            entries.length().to_string() +
+            ".bin"
+          @fs.write_file(output + "/" + retained, bytes, create_mode=CreateNew)
+          retained
+        } else {
+          "digest-only-package-archive"
+        }
+        entries.push({
+          "cache_relative_path": child_relative,
+          "sha256": digest(bytes),
+          "length": bytes.length(),
+          "retained": retained,
+        })
+      }
+    }
+  }
+}
+
+///|
+async fn retain_installer_evidence(root : String, output : String) -> Unit {
+  let entries : Array[Json] = []
+  if @env.get_env_var("ORACLE_SETUP_EXE") is Some(path) && path != "" {
+    entries.push({ "kind": "setup-executable", "artifact": artifact(path) })
+  }
+  let installed = root + "/etc/setup/installed.db"
+  if @fs.exists(installed) {
+    let bytes = @fs.read_file(installed).binary()
+    let retained = "observations/installed.db"
+    @fs.write_file(output + "/" + retained, bytes, create_mode=CreateNew)
+    entries.push({
+      "kind": "installed-packages",
+      "path": installed,
+      "sha256": digest(bytes),
+      "length": bytes.length(),
+      "retained": retained,
+    })
+  }
+  if @env.get_env_var("ORACLE_PACKAGE_CACHE") is Some(path) && path != "" {
+    require(@fs.exists(path), "action package-cache output does not exist")
+    package_metadata(path_text(@fs.realpath(path)), "", output, entries)
+  }
+  save_json(output + "/installer-evidence.json", {
+    "schema_version": 1,
+    "entries": @json.to_json(entries),
+  })
+}
+
+///|
+async fn locate_tool(name : String) -> String {
+  let path = @env.get_env_var("PATH").unwrap_or("")
+  for directory in path.split(";") {
+    let candidate = path_text(directory.to_owned()) + "/" + name
+    if @fs.exists(candidate) {
+      return path_text(@fs.realpath(candidate))
+    }
+  }
+  fail("required observation tool is absent: " + name)
+}
+
+///|
+async fn probe(
+  output : String,
+  name : String,
+  program : String,
+  argv : Array[String],
+  cwd : String,
+  environment : Map[String, String],
+  deadline? : Int = 30000,
+) -> Probe {
+  let stdout_path = "observations/" + name + ".stdout.bin"
+  let stderr_path = "observations/" + name + ".stderr.bin"
+  let start_unix_ms = @env.now()
+  let start = @async.now()
+  let mut code : Int? = None
+  let mut status = "completed"
+  let mut reason : String? = None
+  try {
+    code = @async.with_timeout_opt(deadline, () => {
+      @process.run(
+        program,
+        argv,
+        cwd~,
+        extra_env=environment,
+        inherit_env=false,
+        stdin=@process.redirect_from_file(output + "/empty.bin"),
+        stdout=@process.redirect_to_file(
+          output + "/" + stdout_path,
+          create_mode=CreateNew,
+        ),
+        stderr=@process.redirect_to_file(
+          output + "/" + stderr_path,
+          create_mode=CreateNew,
+        ),
+        cancel_handler=@process.hard_cancel(),
+      )
+    })
+    if code is None {
+      status = "timeout"
+      reason = Some(
+        "observation process exceeded its deadline; hard cancellation requested",
+      )
+    }
+  } catch {
+    error => {
+      status = "error"
+      reason = Some(error.to_string())
+    }
+  }
+  for path in [stdout_path, stderr_path] {
+    if !@fs.exists(output + "/" + path) {
+      @fs.write_file(output + "/" + path, b"", create_mode=CreateNew)
+    }
+  }
+  let stdout = @fs.read_file(output + "/" + stdout_path).binary()
+  let stderr = @fs.read_file(output + "/" + stderr_path).binary()
+  let result : Probe = {
+    program,
+    argv,
+    cwd,
+    status,
+    exit_code: code,
+    reason,
+    stdout_path,
+    stdout_sha256: digest(stdout),
+    stdout_length: stdout.length(),
+    stderr_path,
+    stderr_sha256: digest(stderr),
+    stderr_length: stderr.length(),
+    start_unix_ms,
+    elapsed_ms: @async.now() - start,
+    deadline_ms: deadline,
+  }
+  save_json(output + "/observations/" + name + ".json", @json.to_json(result))
+  result
+}
+
+///|
+async fn successful_text(output : String, result : Probe) -> String {
+  require(
+    result.status == "completed" && result.exit_code == Some(0),
+    "required observation failed: " + result.stdout_path,
+  )
+  trimmed(
+    @utf8.decode(@fs.read_file(output + "/" + result.stdout_path).binary()),
+  )
+}
+
+///|
+fn drive_prefix(observed : String) -> String raise {
+  let path = observed.trim_end(chars="/").to_owned()
+  require(
+    path.has_suffix("/c"),
+    "unexpected official C-drive prefix: " + observed,
+  )
+  let prefix = path[:path.length() - 2].to_owned()
+  if prefix == "" {
+    "/"
+  } else {
+    prefix
+  }
+}
+
+///|
+fn drive_mount(posix : String, prefix : String) -> Bool {
+  let head = if prefix == "/" { "/" } else { prefix + "/" }
+  if posix.has_prefix(head) {
+    let suffix = posix[head.length():]
+    suffix.length() == 1 && suffix[0] >= 'a' && suffix[0] <= 'z'
+  } else {
+    false
+  }
+}
+
+///|
+fn mounted_context(
+  raw : String,
+  prefix : String,
+  root : String,
+  usr_bin : String,
+) -> Array[Json] {
+  let mounts : Array[Json] = []
+  let seen : Map[String, Bool] = Map([])
+  for line in raw.split("\n") {
+    let sides = line.split(" on ").to_array()
+    if sides.length() == 2 {
+      let tail = sides[1].split(" type ").to_array()
+      if tail.length() == 2 {
+        let posix = trimmed(tail[0].to_owned())
+        let windows = path_text(trimmed(sides[0].to_owned()))
+        let ordinary = posix.has_prefix("/") &&
+          posix != "/dev" &&
+          !posix.has_prefix("/dev/") &&
+          posix != "/proc" &&
+          !posix.has_prefix("/proc/") &&
+          !drive_mount(posix, prefix)
+        if ordinary &&
+          windows.length() >= 3 &&
+          windows[1] == ':' &&
+          !seen.contains(posix) {
+          mounts.push({
+            "posix": posix,
+            "windows": windows,
+            "case_policy": "sensitive",
+          })
+          seen[posix] = true
+        }
+      }
+    }
+  }
+  for (posix, windows) in [("/", root), ("/usr/bin", usr_bin)] {
+    if !seen.contains(posix) {
+      mounts.push({
+        "posix": posix,
+        "windows": windows,
+        "case_policy": "sensitive",
+      })
+      seen[posix] = true
+    }
+  }
+  mounts
+}
+
+///|
+fn observation_signature(observation : Json) -> String raise {
+  text_field(field(observation, "stdout"), "sha256") +
+  ":" +
+  int_field(field(observation, "stdout"), "length").to_string() +
+  ":" +
+  text_field(field(observation, "stderr"), "sha256") +
+  ":" +
+  int_field(field(observation, "stderr"), "length").to_string() +
+  ":" +
+  int_field(observation, "exit_code").to_string()
+}
+
+///|
+async fn verify_blob(directory : String, blob : Json) -> Bytes {
+  let path = text_field(blob, "path")
+  require(
+    path != "" &&
+    !path.contains(":") &&
+    !path.contains("\\") &&
+    path.split("/").all(part => part != "" && part != "." && part != ".."),
+    "unsafe run-relative evidence path",
+  )
+  let bytes = @fs.read_file(directory + "/" + path).binary()
+  require(
+    bytes.length() == int_field(blob, "length") &&
+    digest(bytes) == text_field(blob, "sha256"),
+    "oracle evidence byte length/hash differs from recorded reference",
+  )
+  bytes
+}
+
+///|
+fn approved_difference(
+  profile : String,
+  case_id : String,
+  fixture_sha256 : String,
+  upstream_executable_sha256 : String,
+  upstream_runtime_sha256 : String,
+  policy_id : String?,
+  oracle : Json,
+  project : Json,
+  reviews : Array[ReviewedDifference],
+) -> String? raise {
+  for review in reviews {
+    if review.profile == profile &&
+      review.case_id == case_id &&
+      review.fixture_sha256 == fixture_sha256 &&
+      review.upstream_executable_sha256 == upstream_executable_sha256 &&
+      review.upstream_runtime_sha256 == upstream_runtime_sha256 &&
+      review.policy_id != "" &&
+      (policy_id is None || policy_id == Some(review.policy_id)) &&
+      review.oracle_stdout_sha256 ==
+      text_field(field(oracle, "stdout"), "sha256") &&
+      review.oracle_stderr_sha256 ==
+      text_field(field(oracle, "stderr"), "sha256") &&
+      review.oracle_exit_code == int_field(oracle, "exit_code") &&
+      review.project_stdout_sha256 ==
+      text_field(field(project, "stdout"), "sha256") &&
+      review.project_stderr_sha256 ==
+      text_field(field(project, "stderr"), "sha256") &&
+      review.project_exit_code == int_field(project, "exit_code") &&
+      review.reason != "" {
+      return Some(review.reason)
+    }
+  }
+  None
+}
+
+///|
+async fn validate_run(
+  directory : String,
+  profile : String,
+  suite : String,
+  mode : String,
+  backend : String,
+  fixture_path : String,
+  collector_exit : Int?,
+  reviews : Array[ReviewedDifference],
+  signatures : Map[String, String],
+  results : Array[GateCase],
+) -> Bool {
+  let run = @json.parse(@fs.read_file(directory + "/run.json").text())
+  require(
+    int_field(run, "schema_version") == 1 &&
+    text_field(run, "profile") == profile &&
+    text_field(run, "mode") == mode &&
+    text_field(run, "validation_kind") == "official-comparison",
+    "unexpected oracle run schema/identity",
+  )
+  let fixture_bytes = verify_blob(directory, field(run, "fixtures"))
+  require(
+    digest(fixture_bytes) == digest(@fs.read_file(fixture_path).binary()),
+    "oracle run fixture differs from requested immutable input",
+  )
+  let fixture_sha256 = digest(fixture_bytes)
+  let fixture = @json.parse(@utf8.decode(fixture_bytes))
+  let expected_cases : Array[Json] = @json.from_json(field(fixture, "cases"))
+  let expected_ids : Map[String, String?] = Map([])
+  for fixture_case in expected_cases {
+    let id = text_field(fixture_case, "case_id")
+    require(!expected_ids.contains(id), "duplicate fixture case_id")
+    let policy_id : String? = optional_field(
+      fixture_case, "known_difference_id",
+    ).map(value => @json.from_json(value))
+    expected_ids[id] = policy_id
+  }
+  let manifest = @json.parse(
+    @utf8.decode(verify_blob(directory, field(run, "manifest"))),
+  )
+  require(
+    text_field(field(manifest, "project"), "backend") == backend,
+    "wrong backend in oracle manifest",
+  )
+  let upstream = field(manifest, "upstream")
+  let executable_sha256 = text_field(field(upstream, "executable"), "sha256")
+  let runtime_sha256 = text_field(field(upstream, "runtime_library"), "sha256")
+  require(
+    bool_field(run, "complete") && bool_field(run, "integrity_verified"),
+    "oracle run is incomplete or unverified: " + directory,
+  )
+  let cases : Array[Json] = @json.from_json(field(run, "cases"))
+  require(
+    cases.length() == expected_cases.length() &&
+    cases.length() == int_field(run, "planned") &&
+    int_field(run, "executed") == cases.length(),
+    "oracle run skipped or omitted planned cases: " + directory,
+  )
+  let all_raw_pass = cases.all(result => text_field(result, "status") == "pass")
+  require(
+    collector_exit == Some(if all_raw_pass { 0 } else { 1 }),
+    "collector exit does not match its completed raw comparison outcomes",
+  )
+  let seen : Map[String, Bool] = Map([])
+  let mut accepted = true
+  for result in cases {
+    let case_id = text_field(result, "case_id")
+    require(
+      expected_ids.contains(case_id) && !seen.contains(case_id),
+      "unexpected or duplicate oracle result case_id",
+    )
+    seen[case_id] = true
+    let raw_status = text_field(result, "status")
+    let oracle = optional_field(result, "oracle")
+    let project = optional_field(result, "project")
+    let mut gate_status = raw_status
+    let mut reason : String? = None
+    for observation in [oracle, project] {
+      if observation is Some(observation) {
+        for key in ["stdin", "stdout", "stderr"] {
+          ignore(verify_blob(directory, field(observation, key)))
+        }
+      }
+    }
+    if oracle is Some(oracle) &&
+      project is Some(project) &&
+      text_field(oracle, "execution_status") == "completed" &&
+      text_field(project, "execution_status") == "completed" {
+      // Independently recheck raw equality and backend/replay consistency.
+      let oracle_signature = observation_signature(oracle)
+      let project_signature = observation_signature(project)
+      require(
+        (raw_status == "pass") == (oracle_signature == project_signature),
+        "run comparison status disagrees with raw evidence",
+      )
+      for
+        (role, signature) in [
+          ("oracle", oracle_signature),
+          ("project", project_signature),
+        ] {
+        let key = suite + "/" + case_id + "/" + role
+        match signatures.get(key) {
+          Some(prior) if prior != signature => {
+            gate_status = "inconsistent"
+            reason = Some("backend or replay changed " + role + " bytes/status")
+            accepted = false
+          }
+          None => signatures[key] = signature
+          _ => ()
+        }
+      }
+      if raw_status == "fail" && gate_status != "inconsistent" {
+        match
+          approved_difference(
+            profile,
+            case_id,
+            fixture_sha256,
+            executable_sha256,
+            runtime_sha256,
+            expected_ids.get(case_id).unwrap(),
+            oracle,
+            project,
+            reviews,
+          ) {
+          Some(why) => {
+            gate_status = "reviewed-difference"
+            reason = Some(why)
+          }
+          None => {
+            gate_status = "unexplained-difference"
+            accepted = false
+          }
+        }
+      }
+    } else {
+      accepted = false
+      reason = Some(
+        "both actual processes must complete before a comparison can be accepted",
+      )
+    }
+    if gate_status != "pass" && gate_status != "reviewed-difference" {
+      accepted = false
+    }
+    results.push({
+      profile,
+      suite,
+      mode,
+      backend,
+      case_id,
+      raw_status,
+      gate_status,
+      reason,
+      oracle_stdout_sha256: oracle.map(value => {
+        text_field(field(value, "stdout"), "sha256")
+      }),
+      oracle_stderr_sha256: oracle.map(value => {
+        text_field(field(value, "stderr"), "sha256")
+      }),
+      oracle_exit_code: oracle.map(value => int_field(value, "exit_code")),
+      project_stdout_sha256: project.map(value => {
+        text_field(field(value, "stdout"), "sha256")
+      }),
+      project_stderr_sha256: project.map(value => {
+        text_field(field(value, "stderr"), "sha256")
+      }),
+      project_exit_code: project.map(value => int_field(value, "exit_code")),
+    })
+  }
+  accepted
+}
+
+///|
+fn parse_options(args : ArrayView[String]) -> Map[String, String] raise {
+  let options : Map[String, String] = Map([])
+  let valid = [
+    "--profile", "--root", "--wasm", "--native", "--moon", "--moonrun", "--out",
+    "--source-revision",
+  ]
+  for index = 0; index < args.length(); {
+    let name = args[index]
+    require(
+      valid.contains(name) && index + 1 < args.length(),
+      "invalid/missing CI oracle option: " + name,
+    )
+    require(!options.contains(name), "duplicate option: " + name)
+    options[name] = args[index + 1]
+    continue index + 2
+  }
+  for name in valid[:7] {
+    require(options.contains(name), "required option absent: " + name)
+  }
+  options
+}
+
+///|
+async fn run(options : Map[String, String]) -> Unit {
+  require(
+    @async.platform is Windows,
+    "CI official-oracle orchestration requires Windows",
+  )
+  let profile = options.get("--profile").unwrap()
+  require(profile == "cygwin" || profile == "msys2", "unknown profile")
+  let root = path_text(@fs.realpath(options.get("--root").unwrap()))
+  let bin = root + (if profile == "cygwin" { "/bin" } else { "/usr/bin" })
+  let cygpath = bin + "/cygpath.exe"
+  let runtime = bin +
+    (if profile == "cygwin" { "/cygwin1.dll" } else { "/msys-2.0.dll" })
+  require(
+    @fs.exists(cygpath) && @fs.exists(runtime),
+    "selected installation lacks matching cygpath/runtime",
+  )
+  let moon = path_text(@fs.realpath(options.get("--moon").unwrap()))
+  let moonrun = path_text(@fs.realpath(options.get("--moonrun").unwrap()))
+  let wasm = path_text(@fs.realpath(options.get("--wasm").unwrap()))
+  let native = path_text(@fs.realpath(options.get("--native").unwrap()))
+  let repository = path_text(@fs.realpath("."))
+  @fs.mkdir(options.get("--out").unwrap())
+  let output = path_text(@fs.realpath(options.get("--out").unwrap()))
+  @fs.mkdir(output + "/observations")
+  @fs.write_file(output + "/empty.bin", b"", create_mode=CreateNew)
+  retain_installer_evidence(root, output)
+  let cwd = "C:/cygpath-ci/" + profile + "/cwd"
+  @fs.mkdir(cwd, recursive=true, allow_exist=true)
+  let environment : Map[String, String] = Map([])
+  for
+    name in [
+      "SystemRoot", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP", "USERPROFILE",
+      "HOME", "HOMEDRIVE", "HOMEPATH", "MOON_HOME", "APPDATA", "LOCALAPPDATA",
+    ] {
+    if @env.get_env_var(name) is Some(value) {
+      environment[name] = value
+    }
+  }
+  environment["PATH"] = bin + ";" + @env.get_env_var("PATH").unwrap_or("")
+  environment["LANG"] = "C.UTF-8"
+  environment["LC_ALL"] = "C.UTF-8"
+  environment["MSYS2_ARG_CONV_EXCL"] = "*"
+  environment["MSYS2_ENV_CONV_EXCL"] = "*"
+  save_json(output + "/environment.json", @json.to_json(environment))
+  let system_root = @env.get_env_var("SystemRoot").unwrap_or(
+    @env.get_env_var("SYSTEMROOT").unwrap_or(""),
+  )
+  require(system_root != "", "Windows SystemRoot environment is absent")
+  let powershell = path_text(system_root) +
+    "/System32/WindowsPowerShell/v1.0/powershell.exe"
+  require(@fs.exists(powershell), "Windows PowerShell observation tool missing")
+  let probe_environment = environment.copy()
+  probe_environment["CYGPATH_CI_CWD"] = cwd
+  let windows_query =
+    #|[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $p = Get-Item -LiteralPath $env:CYGPATH_CI_CWD; $v = Get-Volume -DriveLetter $p.PSDrive.Name; $r = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'; [pscustomobject]@{os_version=[Environment]::OSVersion.VersionString; architecture=[Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString(); filesystem=$v.FileSystem; test_volume=$v.UniqueId; input_code_page=[Console]::InputEncoding.CodePage.ToString(); output_code_page=[Console]::OutputEncoding.CodePage.ToString(); long_path_policy=('LongPathsEnabled=' + $r.LongPathsEnabled); short_name_policy=('NtfsDisable8dot3NameCreation=' + $r.NtfsDisable8dot3NameCreation); existence_permissions=($p.FullName + '; attributes=' + $p.Attributes + '; SDDL=' + (Get-Acl -LiteralPath $p.FullName).Sddl); symlinks_junctions=('cwd LinkType=' + $p.LinkType + '; Target=' + $p.Target + '; Attributes=' + $p.Attributes)} | ConvertTo-Json -Compress
+  let host_probe = probe(
+    output,
+    "windows-host",
+    powershell,
+    ["-NoProfile", "-NonInteractive", "-Command", windows_query],
+    cwd,
+    probe_environment,
+  )
+  let host = @json.parse(successful_text(output, host_probe))
+  let version = probe(
+    output,
+    "upstream-version",
+    cygpath,
+    ["--version"],
+    cwd,
+    environment,
+  )
+  ignore(successful_text(output, version))
+  let runtime_version = successful_text(
+    output,
+    probe(output, "runtime-uname", bin + "/uname.exe", ["-a"], cwd, environment),
+  )
+  let package_program = bin +
+    (if profile == "cygwin" { "/cygcheck.exe" } else { "/pacman.exe" })
+  let package_args = if profile == "cygwin" {
+    ["-c", "cygwin"]
+  } else {
+    ["-Qi", "msys2-runtime"]
+  }
+  let package_identity = successful_text(
+    output,
+    probe(
+      output, "runtime-package", package_program, package_args, cwd, environment,
+    ),
+  )
+  let mount_table = successful_text(
+    output,
+    probe(output, "mount-table", bin + "/mount.exe", [], cwd, environment),
+  )
+  let locale = successful_text(
+    output,
+    probe(output, "locale", bin + "/locale.exe", [], cwd, environment),
+  )
+  let official_root = path_text(
+    successful_text(
+      output,
+      probe(output, "root-mapping", cygpath, ["-w", "/"], cwd, environment),
+    ),
+  )
+  let usr_bin = path_text(
+    successful_text(
+      output,
+      probe(
+        output,
+        "usr-bin-mapping",
+        cygpath,
+        ["-w", "/usr/bin"],
+        cwd,
+        environment,
+      ),
+    ),
+  )
+  let prefix = drive_prefix(
+    successful_text(
+      output,
+      probe(output, "drive-prefix", cygpath, ["-u", "C:\\"], cwd, environment),
+    ),
+  )
+  let windows_cwd = path_text(
+    successful_text(
+      output,
+      probe(output, "windows-cwd", cygpath, ["-aw", "."], cwd, environment),
+    ),
+  )
+  let posix_cwd = successful_text(
+    output,
+    probe(output, "posix-cwd", cygpath, ["-au", "."], cwd, environment),
+  )
+  let drive_cwd = path_text(
+    successful_text(
+      output,
+      probe(output, "drive-c-cwd", cygpath, ["-aw", "C:"], cwd, environment),
+    ),
+  )
+  let git = locate_tool("git.exe")
+  let git_sha = successful_text(
+    output,
+    probe(
+      output,
+      "project-git-sha",
+      git,
+      ["rev-parse", "HEAD"],
+      repository,
+      environment,
+    ),
+  )
+  let git_dirty = successful_text(
+    output,
+    probe(
+      output,
+      "project-git-status",
+      git,
+      ["status", "--porcelain", "--untracked-files=no"],
+      repository,
+      environment,
+    ),
+  )
+  let moon_version = successful_text(
+    output,
+    probe(
+      output,
+      "moon-version",
+      moon,
+      ["version", "--all"],
+      repository,
+      environment,
+    ),
+  )
+  let source_revision = options
+    .get("--source-revision")
+    .unwrap_or(
+      "measured distribution package release identity (source Git commit not independently attested):\n" +
+      package_identity,
+    )
+  let module_text = @fs.read_file(repository + "/moon.mod").text()
+  let mut module_version = ""
+  for line in module_text.split("\n") {
+    let line = trimmed(line.to_owned())
+    if line.has_prefix("version = ") {
+      module_version = trimmed(line[10:].to_owned()).trim(chars="\"").to_owned()
+    }
+  }
+  require(module_version != "", "module version could not be read")
+  let upstream : Json = {
+    "executable": artifact(cygpath),
+    "runtime_library": artifact(runtime),
+    "source_url": if profile == "cygwin" {
+      "https://github.com/cygwin/cygwin"
+    } else {
+      "https://github.com/msys2/msys2-runtime"
+    },
+    "source_revision": source_revision,
+    "distribution_version": package_identity,
+    "runtime_version": runtime_version,
+    "version_stdout_sha256": version.stdout_sha256,
+    "version_stderr_sha256": version.stderr_sha256,
+    "version_exit_code": 0,
+  }
+  let manifest_base : Json = {
+    "schema_version": 1,
+    "profile": profile,
+    "upstream": upstream,
+    "host": {
+      "os": "windows",
+      "os_version": text_field(host, "os_version"),
+      "architecture": text_field(host, "architecture"),
+      "filesystem": text_field(host, "filesystem"),
+      "installation_root": official_root,
+      "launch_method": "direct-process-argv",
+      "current_drive": "C",
+      "drive_cwds": { "C": drive_cwd },
+      "mount_table": mount_table,
+      "cygdrive_prefix": prefix,
+      "existence_permissions": text_field(host, "existence_permissions"),
+      "locale": locale,
+      "input_code_page": text_field(host, "input_code_page"),
+      "output_code_page": text_field(host, "output_code_page"),
+      "io_mode": "redirected-binary",
+      "long_path_policy": text_field(host, "long_path_policy"),
+      "short_name_policy": text_field(host, "short_name_policy"),
+      "test_volume": text_field(host, "test_volume"),
+      "actual_short_names": "not exercised by read-only fixtures",
+      "symlinks_junctions": text_field(host, "symlinks_junctions"),
+    },
+    "cwd": cwd,
+    "environment": @json.to_json(environment),
+    "cleared_environment": ["MSYSTEM", "CYGWIN"],
+    "context": {
+      "profile": profile,
+      "drive_prefix": prefix,
+      "mounts": @json.to_json(
+        mounted_context(mount_table, prefix, official_root, usr_bin),
+      ),
+      "posix_cwd": posix_cwd,
+      "windows_cwd": windows_cwd,
+      "drive_cwds": { "C": drive_cwd },
+    },
+    "context_mapping_evidence": "Sibling observations retain raw mount/locale/cygpath cwd and mapping probes with their exact argv, bytes, status, and hashes. Mounts are transcribed in observed order; auto cygdrive and virtual /dev,/proc entries are excluded. Root and /usr/bin mappings are independently queried; CLI sensitive matching is explicit. Host facts come from the retained PowerShell observation; source Git provenance is separately qualified.",
+    "capabilities": [
+      "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
+      "windows-cwd", "drive-cwd-c",
+    ],
+    "deadline_ms": 10000,
+  }
+  let manifests : Map[String, String] = Map([])
+  for (backend, executable) in [("wasm", wasm), ("native", native)] {
+    let project : Json = {
+      "artifact": artifact(executable),
+      "launcher": artifact(if backend == "wasm" { moonrun } else { native }),
+      "backend": backend,
+      "git_sha": git_sha,
+      "dirty": git_dirty != "",
+      "module_version": module_version,
+      "moon_version": moon_version,
+      "build_mode": "release",
+    }
+    guard manifest_base is Object(fields) else {
+      fail("manifest base must be object")
+    }
+    let fields = fields.copy()
+    fields["project"] = project
+    let path = output + "/manifest-" + backend + ".json"
+    save_json(path, Json::object(fields))
+    manifests[backend] = path
+  }
+  let review_path = repository + "/testdata/oracle/reviewed-differences.json"
+  let reviews : Array[ReviewedDifference] = if @fs.exists(review_path) {
+    let file : ReviewFile = @json.from_json(
+      @json.parse(@fs.read_file(review_path).text()),
+    )
+    require(file.schema_version == 1, "unknown reviewed-difference schema")
+    file.differences
+  } else {
+    []
+  }
+  save_json(output + "/reviewed-differences.json", {
+    "schema_version": 1,
+    "differences": @json.to_json(reviews),
+  })
+  let signatures : Map[String, String] = Map([])
+  let results : Array[GateCase] = []
+  let mut accepted = true
+  for
+    (suite, fixtures) in [
+      ("profile", repository + "/testdata/oracle/fixtures." + profile + ".json"),
+      ("matrix", repository + "/testdata/oracle/fixtures.readonly-matrix.json"),
+    ] {
+    for backend in ["wasm", "native"] {
+      let manifest = manifests.get(backend).unwrap()
+      let collection = output + "/" + suite + "-" + backend + "-collect"
+      let replay = output + "/" + suite + "-" + backend + "-replay"
+      for
+        (mode, source, directory) in [
+          ("collect", fixtures, collection),
+          ("replay", collection, replay),
+        ] {
+        let name = suite + "-" + backend + "-" + mode
+        let execution = probe(
+          output,
+          name,
+          moon,
+          [
+            "run",
+            "--deny-warn",
+            repository + "/scripts/oracle.mbtx",
+            mode,
+            manifest,
+            source,
+            directory,
+          ],
+          repository,
+          environment,
+          deadline=600000,
+        )
+        // oracle.mbtx exits 1 for raw comparison failures. The independently
+        // checked run file distinguishes those from infrastructure failures.
+        require(
+          execution.status == "completed",
+          "collector process did not complete: " + name,
+        )
+        if !validate_run(
+            directory,
+            profile,
+            suite,
+            mode,
+            backend,
+            fixtures,
+            execution.exit_code,
+            reviews,
+            signatures,
+            results,
+          ) {
+          accepted = false
+        }
+        save_json(output + "/summary.json", {
+          "schema_version": 1,
+          "profile": profile,
+          "complete": false,
+          "accepted": false,
+          "raw_results_preserved": true,
+          "cases": @json.to_json(results),
+        })
+      }
+    }
+  }
+  save_json(output + "/summary.json", {
+    "schema_version": 1,
+    "profile": profile,
+    "complete": true,
+    "accepted": accepted,
+    "raw_results_preserved": true,
+    "comparisons": results.length(),
+    "cases": @json.to_json(results),
+  })
+  println("official oracle CI evidence: " + output)
+  println(
+    "profile=\{profile} comparisons=\{results.length()} accepted=\{accepted}",
+  )
+  require(
+    accepted, "official comparisons contain unreviewed differences or infrastructure/backend failures",
+  )
+}
+
+///|
+fn self_test() -> Unit raise {
+  assert_eq(drive_prefix("/cygdrive/c/"), "/cygdrive")
+  assert_eq(drive_prefix("/c/"), "/")
+  require(
+    drive_mount("/cygdrive/c", "/cygdrive") && drive_mount("/c", "/"),
+    "drive mount classification",
+  )
+  require(
+    !drive_mount("/usr/bin", "/") &&
+    !drive_mount("/cygdrive/c/work", "/cygdrive"),
+    "ordinary mount misclassified",
+  )
+  let mounts = mounted_context(
+    "C:/root on / type ntfs (binary)\nC: on /cygdrive/c type ntfs (binary)\nC:/root/bin on /usr/bin type ntfs (binary)",
+    "/cygdrive", "C:/root", "C:/root/bin",
+  )
+  assert_eq(mounts.length(), 2)
+  assert_eq(text_field(mounts[1], "posix"), "/usr/bin")
+  let oracle : Json = {
+    "stdout": { "sha256": digest(b"official"), "length": 8 },
+    "stderr": { "sha256": digest(b""), "length": 0 },
+    "exit_code": 0,
+  }
+  let project : Json = {
+    "stdout": { "sha256": digest(b"portable"), "length": 8 },
+    "stderr": { "sha256": digest(b""), "length": 0 },
+    "exit_code": 2,
+  }
+  let review : ReviewedDifference = {
+    profile: "cygwin",
+    case_id: "case",
+    fixture_sha256: digest(b"fixture"),
+    upstream_executable_sha256: digest(b"exe"),
+    upstream_runtime_sha256: digest(b"runtime"),
+    policy_id: "portable-policy",
+    reason: "reviewed exact synthetic fixture",
+    oracle_stdout_sha256: digest(b"official"),
+    oracle_stderr_sha256: digest(b""),
+    oracle_exit_code: 0,
+    project_stdout_sha256: digest(b"portable"),
+    project_stderr_sha256: digest(b""),
+    project_exit_code: 2,
+  }
+  let check = fn(candidate : ReviewedDifference) -> String? raise {
+    approved_difference(
+      "cygwin",
+      "case",
+      digest(b"fixture"),
+      digest(b"exe"),
+      digest(b"runtime"),
+      Some("portable-policy"),
+      oracle,
+      project,
+      [candidate],
+    )
+  }
+  assert_eq(check(review), Some("reviewed exact synthetic fixture"))
+  for
+    candidate in [
+      { ..review, profile: "msys2", },
+      { ..review, case_id: "different-case", },
+      { ..review, fixture_sha256: digest(b"changed-fixture"), },
+      { ..review, upstream_executable_sha256: digest(b"changed-exe"), },
+      { ..review, upstream_runtime_sha256: digest(b"changed-runtime"), },
+      { ..review, oracle_stdout_sha256: digest(b"changed-official-output"), },
+      { ..review, project_stderr_sha256: digest(b"changed-diagnostic"), },
+      { ..review, project_exit_code: 0, },
+      { ..review, policy_id: "different-policy", },
+      { ..review, reason: "", },
+    ] {
+    assert_eq(check(candidate), None)
+  }
+  println("CI oracle parser self-test passed; no Windows compatibility tested")
+}
+
+///|
+async fn main {
+  try {
+    let args = @env.args()[1:]
+    if args is ["self-test"] {
+      self_test()
+    } else {
+      run(parse_options(args))
+    }
+  } catch {
+    error => {
+      @stdio.stderr.write("ci_oracle: " + error.to_string() + "\n") catch {
+        _ => ()
+      }
+      @sys.exit(1)
+    }
+  }
+}

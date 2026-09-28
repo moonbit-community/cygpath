@@ -1,0 +1,67 @@
+name: Windows oracle
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  oracle:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [cygwin, msys2]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921 # v1.22
+      - name: Refresh package registry
+        run: moon update
+      - name: Build Wasm executable
+        run: moon build --target wasm --release --deny-warn
+      - name: Build Native executable
+        run: moon build --target native --release --deny-warn
+      - name: Install official Cygwin
+        id: cygwin
+        if: matrix.profile == 'cygwin'
+        uses: cygwin/cygwin-install-action@121fc294c6b6864e1d52caeaa5c8ddb33d3e90f3 # v6
+        with:
+          install-dir: 'C:\cygpath-cygwin'
+          site: https://mirrors.kernel.org/sourceware/cygwin/
+          packages: cygwin
+          add-to-path: false
+      - name: Install official MSYS2
+        id: msys2
+        if: matrix.profile == 'msys2'
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2; installer release/hash pinned by action
+        with:
+          msystem: MSYS
+          location: 'C:\cygpath-msys2'
+          release: true
+          update: false
+          cache: false
+      - name: Collect and replay official comparisons
+        env:
+          ORACLE_ROOT: ${{ matrix.profile == 'cygwin' && 'C:/cygpath-cygwin' || steps.msys2.outputs.msys2-location }}
+          ORACLE_SETUP_EXE: ${{ steps.cygwin.outputs.setup }}
+          ORACLE_PACKAGE_CACHE: ${{ steps.cygwin.outputs.package-cache }}
+        run: >-
+          moon run --deny-warn scripts/ci_oracle.mbtx
+          --profile ${{ matrix.profile }}
+          --root "$env:ORACLE_ROOT"
+          --wasm "${{ github.workspace }}/_build/wasm/release/build/cygpath.wasm"
+          --native "${{ github.workspace }}/_build/native/release/build/cygpath.exe"
+          --moon (Get-Command moon).Source
+          --moonrun (Get-Command moonrun).Source
+          --out "${{ github.workspace }}/_build/oracle-${{ matrix.profile }}"
+      - name: Upload official evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: oracle-${{ matrix.profile }}
+          path: _build/oracle-${{ matrix.profile }}
+          if-no-files-found: warn

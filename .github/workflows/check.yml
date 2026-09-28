@@ -30,12 +30,14 @@ jobs:
         run: moon test --target native --deny-warn
       - name: Test oracle collector mechanics
         run: moon run --deny-warn scripts/oracle.mbtx self-test
+      - name: Test Windows oracle gate mechanics
+        run: moon run --deny-warn scripts/ci_oracle.mbtx self-test
       - name: Test process collector quoting
         run: moon test --deny-warn scripts/check_cli.mbtx
       - name: Check formatting
         run: moon fmt --check
       - name: Check script formatting
-        run: moon fmt --check scripts/check_cli.mbtx scripts/oracle.mbtx
+        run: moon fmt --check scripts/check_cli.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx
       - name: Check public interfaces
         run: moon info --target all
       - name: Reject interface drift
