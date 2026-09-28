@@ -68,3 +68,20 @@ test "Macintosh and T61 mappings retain their distinct single and double bytes" 
   assert_eq(@encoding.encode("한글", 10003), b"\xc7\xd1\xb1\xdb")
   assert_eq(@encoding.encode("é", 20261), b"\xc2e")
 }
+
+///|
+test "CP29001 preserves official empty payload behavior" {
+  assert_true(@encoding.supported(29001))
+  assert_eq(
+    @encoding.encode("/usr/éĀ中文日本한글ไทย", 29001),
+    b"",
+  )
+}
+
+///|
+test "official Windows captures resolve ambiguous WCTABLE entries" {
+  assert_eq(@encoding.encode("\u{05b8}", 10005), b"\xde")
+  assert_eq(@encoding.encode("\u{2225}", 10008), b"\xa1\xce")
+  assert_eq(@encoding.encode("#^`~¤", 20269), b"\xa6\xc3\xc1\xc4\xa8")
+  assert_eq(@encoding.encode("Ÿ", 20924), b"\xe8")
+}

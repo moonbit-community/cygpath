@@ -46,6 +46,13 @@ pub fn encode(text : String, codepage : Int) -> Bytes raise UnsupportedCodePage 
   if codepage == 65001 {
     return @utf8.encode(text)
   }
+  // Windows' WideCharToMultiByte rejects CP29001 (Europa 3) on the official
+  // Cygwin/MSYS2 hosts exercised by the oracle. cygpath ignores that zero
+  // return and still emits its record LF, so the pure byte adapter preserves
+  // the observable empty payload while retaining the published table below.
+  if codepage == 29001 {
+    return b""
+  }
   guard codepage_table(codepage) is Some((table, fallback)) else {
     raise UnsupportedCodePage(codepage)
   }

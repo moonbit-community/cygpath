@@ -41,6 +41,24 @@ fn byte_escape(value : Int) -> String {
 }
 
 ///|
+/// The archived tables contain a few duplicate Unicode keys. These choices
+/// are bound to raw Windows oracle captures below; source order is never used
+/// as a tie breaker.
+fn official_conflict_choice(page : Int, unicode_word : Int) -> Int? {
+  match (page, unicode_word) {
+    (10005, 0x05b8) => Some(0xde)
+    (10008, 0x2225) => Some(0xa1ce)
+    (20269, 0x0023) => Some(0xa6)
+    (20269, 0x005e) => Some(0xc3)
+    (20269, 0x0060) => Some(0xc1)
+    (20269, 0x007e) => Some(0xc4)
+    (20269, 0x00a4) => Some(0xa8)
+    (20924, 0x0178) => Some(0xe8)
+    _ => None
+  }
+}
+
+///|
 async fn main {
   let args = @env.args()[1:]
   let (source_path, output_dir, manifest_path, microsoft) = match args {
@@ -83,6 +101,82 @@ async fn main {
   assert_eq(pages.length(), if microsoft { 96 } else { 15 })
   let evidence : Array[Json] = []
   let excluded : Array[Json] = []
+  let official_resolution_evidence : Json = [
+    {
+      "profile": "cygwin",
+      "case_id": "codepage-10005-conflicting-table-entries",
+      "unicode_word": 1464,
+      "selected_value": 222,
+      "stdout_sha256": "c5fecdbf0c13f48941a3e76d1f604e3ddfc333c257bbb8620c77fa160ed3a9ad",
+      "stdout_length": 24,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect",
+    },
+    {
+      "profile": "msys2",
+      "case_id": "codepage-10005-conflicting-table-entries",
+      "unicode_word": 1464,
+      "selected_value": 222,
+      "stdout_sha256": "d65db5717f5b4f83c6c551bf34e4f44b8992a164c70a127ed180b099f2e94878",
+      "stdout_length": 30,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect",
+    },
+    {
+      "profile": "cygwin",
+      "case_id": "codepage-10008-conflicting-table-entries",
+      "unicode_word": 8741,
+      "selected_value": 41422,
+      "stdout_sha256": "32f61f98071a8dd9bf28438e11a98aa449703265f0bb7c9e8b78faef8a6b96c4",
+      "stdout_length": 25,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect",
+    },
+    {
+      "profile": "msys2",
+      "case_id": "codepage-10008-conflicting-table-entries",
+      "unicode_word": 8741,
+      "selected_value": 41422,
+      "stdout_sha256": "a3a459fcb0bf52d2bcafbb6c8a6529b2145d0aa22b541454b8088f1177adee03",
+      "stdout_length": 31,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect",
+    },
+    {
+      "profile": "cygwin",
+      "case_id": "codepage-20269-conflicting-table-entries",
+      "unicode_word": 35,
+      "selected_value": 166,
+      "selected_values_for_page": [166, 195, 193, 196, 168],
+      "stdout_sha256": "d440e8e3aee095aa6a37ef4a3c5ed52b063aeac8229a2813b10fe40ae887f3cb",
+      "stdout_length": 28,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect",
+    },
+    {
+      "profile": "msys2",
+      "case_id": "codepage-20269-conflicting-table-entries",
+      "unicode_word": 35,
+      "selected_value": 166,
+      "selected_values_for_page": [166, 195, 193, 196, 168],
+      "stdout_sha256": "0cb8cad1e8a32cfdf27d2ab4efe9777ebf88dbc38f1d46491f32585416d55447",
+      "stdout_length": 34,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect",
+    },
+    {
+      "profile": "cygwin",
+      "case_id": "codepage-20924-conflicting-table-entries",
+      "unicode_word": 376,
+      "selected_value": 232,
+      "stdout_sha256": "ceb9a3ad543d18ab9450ae2ad32044057c9321747331ea974fc92193d01122d8",
+      "stdout_length": 24,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect",
+    },
+    {
+      "profile": "msys2",
+      "case_id": "codepage-20924-conflicting-table-entries",
+      "unicode_word": 376,
+      "selected_value": 232,
+      "stdout_sha256": "b5f4d82570cd45b0e76a07259f47325b3875293ee686ae0a065550cbac85b2c5",
+      "stdout_length": 30,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect",
+    },
+  ]
   let dispatch = StringBuilder()
   let dispatch_name = if microsoft {
     "microsoft_codepage_table"
@@ -151,13 +245,32 @@ async fn main {
     mappings.sort_by((left, right) => left.0.compare(right.0))
     let unique : Array[(Int, Int)] = []
     let conflicts : Array[Json] = []
+    let page_resolutions : Array[Json] = []
     for index, pair in mappings {
       if index > 0 && pair.0 == mappings[index - 1].0 {
         if pair.1 != mappings[index - 1].1 {
-          conflicts.push({
-            "unicode_word": pair.0,
-            "encoded_values": [mappings[index - 1].1, pair.1],
-          })
+          match official_conflict_choice(page, pair.0) {
+            Some(selected) => {
+              guard selected == pair.1 || selected == mappings[index - 1].1 else {
+                fail(
+                  "official conflict choice is absent from source: page=\{page}, key=\{pair.0}, selected=\{selected}",
+                )
+              }
+              unique[unique.length() - 1] = (pair.0, selected)
+              let resolution : Json = {
+                "codepage": page,
+                "unicode_word": pair.0,
+                "source_values": [mappings[index - 1].1, pair.1],
+                "selected_value": selected,
+              }
+              page_resolutions.push(resolution)
+            }
+            None =>
+              conflicts.push({
+                "unicode_word": pair.0,
+                "encoded_values": [mappings[index - 1].1, pair.1],
+              })
+          }
         }
       } else {
         unique.push(pair)
@@ -246,6 +359,9 @@ async fn main {
       fields["archive_member"] = @json.to_json(filename)
       fields["maximum_character_bytes"] = @json.to_json(maximum_size)
       fields["source_entries"] = @json.to_json(count)
+      if !page_resolutions.is_empty() {
+        fields["resolved_conflicts"] = @json.to_json(page_resolutions)
+      }
     }
     evidence.push(entry)
   }
@@ -279,6 +395,7 @@ async fn main {
     fields["specification_url"] = "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/d167d756-0c58-4564-a0de-77c647d367fa"
     fields["notice_url"] = "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/4a045e08-fc29-4f22-baf4-16f38c2825fb"
     fields["excluded_pages"] = @json.to_json(excluded)
+    fields["official_resolution_evidence"] = official_resolution_evidence
   }
   @fs.write_file(manifest_path, manifest.stringify(indent=2) + "\n")
   println(

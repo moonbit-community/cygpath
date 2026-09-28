@@ -471,6 +471,29 @@
       "source_entries": 387
     },
     {
+      "codepage": 10005,
+      "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
+      "source_sha256": "949ec6515b588956d8c947ef21710aa3aa4538f7f620bafb81484b64b9a9384b",
+      "source_bytes": 15532,
+      "entries": 255,
+      "packed_sha256": "26f641c3f70454f6c32e6662971aa9fd5cf21a2004e7baeecab3e273b8910963",
+      "default_character": 63,
+      "archive_member": "CodpageFiles/10005.txt",
+      "maximum_character_bytes": 1,
+      "source_entries": 256,
+      "resolved_conflicts": [
+        {
+          "codepage": 10005,
+          "unicode_word": 1464,
+          "source_values": [
+            203,
+            222
+          ],
+          "selected_value": 222
+        }
+      ]
+    },
+    {
       "codepage": 10006,
       "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
       "source_sha256": "48e9340b611b5562d330dfa08a6869f4bf2eef6bc3953fb1e2b179076602aebb",
@@ -493,6 +516,29 @@
       "archive_member": "CodpageFiles/10007.txt",
       "maximum_character_bytes": 1,
       "source_entries": 256
+    },
+    {
+      "codepage": 10008,
+      "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
+      "source_sha256": "46b48ef3411d9d40c2105a40e17415b04e254dff7874dc606ad1ca1472548a32",
+      "source_bytes": 316601,
+      "entries": 7613,
+      "packed_sha256": "62020979f6262a6590c7e96bd29087b346490934a09bcf6bb7772873f7887483",
+      "default_character": 63,
+      "archive_member": "CodpageFiles/10008.txt",
+      "maximum_character_bytes": 2,
+      "source_entries": 7614,
+      "resolved_conflicts": [
+        {
+          "codepage": 10008,
+          "unicode_word": 8741,
+          "source_values": [
+            41388,
+            41422
+          ],
+          "selected_value": 41422
+        }
+      ]
     },
     {
       "codepage": 10010,
@@ -723,6 +769,65 @@
       "source_entries": 493
     },
     {
+      "codepage": 20269,
+      "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
+      "source_sha256": "894193392424c8379068fb921a31aa12dedcabe4373a02c4724427991d4b1a39",
+      "source_bytes": 13828,
+      "entries": 251,
+      "packed_sha256": "f9db47f88f6f93d921032a37d0d44be50d95a244de8a633f87a027daaba2d37e",
+      "default_character": 63,
+      "archive_member": "CodpageFiles/20269.txt",
+      "maximum_character_bytes": 1,
+      "source_entries": 256,
+      "resolved_conflicts": [
+        {
+          "codepage": 20269,
+          "unicode_word": 35,
+          "source_values": [
+            35,
+            166
+          ],
+          "selected_value": 166
+        },
+        {
+          "codepage": 20269,
+          "unicode_word": 94,
+          "source_values": [
+            94,
+            195
+          ],
+          "selected_value": 195
+        },
+        {
+          "codepage": 20269,
+          "unicode_word": 96,
+          "source_values": [
+            96,
+            193
+          ],
+          "selected_value": 193
+        },
+        {
+          "codepage": 20269,
+          "unicode_word": 126,
+          "source_values": [
+            126,
+            196
+          ],
+          "selected_value": 196
+        },
+        {
+          "codepage": 20269,
+          "unicode_word": 164,
+          "source_values": [
+            36,
+            168
+          ],
+          "selected_value": 168
+        }
+      ]
+    },
+    {
       "codepage": 20273,
       "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
       "source_sha256": "05a27571e250a1ae104023f4f3b4f6301fe79c3e39aa031ce248afbcd387b57e",
@@ -927,6 +1032,29 @@
       "source_entries": 343
     },
     {
+      "codepage": 20924,
+      "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
+      "source_sha256": "abd8bb1687afddbd4ff6b48406d1e4d7a65c7393492574f10c625f1acb1022a1",
+      "source_bytes": 21867,
+      "entries": 351,
+      "packed_sha256": "e188140bec155c60d8089b6387abe046006e0231cf686cddc17c370faaa6d98f",
+      "default_character": 111,
+      "archive_member": "CodpageFiles/20924.txt",
+      "maximum_character_bytes": 1,
+      "source_entries": 352,
+      "resolved_conflicts": [
+        {
+          "codepage": 20924,
+          "unicode_word": 376,
+          "source_values": [
+            185,
+            232
+          ],
+          "selected_value": 232
+        }
+      ]
+    },
+    {
       "codepage": 21025,
       "source_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",
       "source_sha256": "cd4cb5a7c445331f6e44cc7d23d3746c22cbd16135d42dc05d74b469719bc91f",
@@ -1112,102 +1240,93 @@
   "archive_bytes": 4020112,
   "specification_url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/d167d756-0c58-4564-a0de-77c647d367fa",
   "notice_url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/4a045e08-fc29-4f22-baf4-16f38c2825fb",
-  "excluded_pages": [
+  "excluded_pages": [],
+  "official_resolution_evidence": [
     {
-      "codepage": 10005,
-      "archive_member": "CodpageFiles/10005.txt",
-      "source_sha256": "949ec6515b588956d8c947ef21710aa3aa4538f7f620bafb81484b64b9a9384b",
-      "source_bytes": 15532,
-      "source_entries": 256,
-      "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
-      "conflicts": [
-        {
-          "unicode_word": 1464,
-          "encoded_values": [
-            203,
-            222
-          ]
-        }
-      ]
+      "profile": "cygwin",
+      "case_id": "codepage-10005-conflicting-table-entries",
+      "unicode_word": 1464,
+      "selected_value": 222,
+      "stdout_sha256": "c5fecdbf0c13f48941a3e76d1f604e3ddfc333c257bbb8620c77fa160ed3a9ad",
+      "stdout_length": 24,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect"
     },
     {
-      "codepage": 10008,
-      "archive_member": "CodpageFiles/10008.txt",
-      "source_sha256": "46b48ef3411d9d40c2105a40e17415b04e254dff7874dc606ad1ca1472548a32",
-      "source_bytes": 316601,
-      "source_entries": 7614,
-      "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
-      "conflicts": [
-        {
-          "unicode_word": 8741,
-          "encoded_values": [
-            41388,
-            41422
-          ]
-        }
-      ]
+      "profile": "msys2",
+      "case_id": "codepage-10005-conflicting-table-entries",
+      "unicode_word": 1464,
+      "selected_value": 222,
+      "stdout_sha256": "d65db5717f5b4f83c6c551bf34e4f44b8992a164c70a127ed180b099f2e94878",
+      "stdout_length": 30,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect"
     },
     {
-      "codepage": 20269,
-      "archive_member": "CodpageFiles/20269.txt",
-      "source_sha256": "894193392424c8379068fb921a31aa12dedcabe4373a02c4724427991d4b1a39",
-      "source_bytes": 13828,
-      "source_entries": 256,
-      "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
-      "conflicts": [
-        {
-          "unicode_word": 35,
-          "encoded_values": [
-            35,
-            166
-          ]
-        },
-        {
-          "unicode_word": 94,
-          "encoded_values": [
-            94,
-            195
-          ]
-        },
-        {
-          "unicode_word": 96,
-          "encoded_values": [
-            96,
-            193
-          ]
-        },
-        {
-          "unicode_word": 126,
-          "encoded_values": [
-            126,
-            196
-          ]
-        },
-        {
-          "unicode_word": 164,
-          "encoded_values": [
-            36,
-            168
-          ]
-        }
-      ]
+      "profile": "cygwin",
+      "case_id": "codepage-10008-conflicting-table-entries",
+      "unicode_word": 8741,
+      "selected_value": 41422,
+      "stdout_sha256": "32f61f98071a8dd9bf28438e11a98aa449703265f0bb7c9e8b78faef8a6b96c4",
+      "stdout_length": 25,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect"
     },
     {
-      "codepage": 20924,
-      "archive_member": "CodpageFiles/20924.txt",
-      "source_sha256": "abd8bb1687afddbd4ff6b48406d1e4d7a65c7393492574f10c625f1acb1022a1",
-      "source_bytes": 21867,
-      "source_entries": 352,
-      "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
-      "conflicts": [
-        {
-          "unicode_word": 376,
-          "encoded_values": [
-            185,
-            232
-          ]
-        }
-      ]
+      "profile": "msys2",
+      "case_id": "codepage-10008-conflicting-table-entries",
+      "unicode_word": 8741,
+      "selected_value": 41422,
+      "stdout_sha256": "a3a459fcb0bf52d2bcafbb6c8a6529b2145d0aa22b541454b8088f1177adee03",
+      "stdout_length": 31,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect"
+    },
+    {
+      "profile": "cygwin",
+      "case_id": "codepage-20269-conflicting-table-entries",
+      "unicode_word": 35,
+      "selected_value": 166,
+      "selected_values_for_page": [
+        166,
+        195,
+        193,
+        196,
+        168
+      ],
+      "stdout_sha256": "d440e8e3aee095aa6a37ef4a3c5ed52b063aeac8229a2813b10fe40ae887f3cb",
+      "stdout_length": 28,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect"
+    },
+    {
+      "profile": "msys2",
+      "case_id": "codepage-20269-conflicting-table-entries",
+      "unicode_word": 35,
+      "selected_value": 166,
+      "selected_values_for_page": [
+        166,
+        195,
+        193,
+        196,
+        168
+      ],
+      "stdout_sha256": "0cb8cad1e8a32cfdf27d2ab4efe9777ebf88dbc38f1d46491f32585416d55447",
+      "stdout_length": 34,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect"
+    },
+    {
+      "profile": "cygwin",
+      "case_id": "codepage-20924-conflicting-table-entries",
+      "unicode_word": 376,
+      "selected_value": 232,
+      "stdout_sha256": "ceb9a3ad543d18ab9450ae2ad32044057c9321747331ea974fc92193d01122d8",
+      "stdout_length": 24,
+      "run_artifact": "remote-473c0f6/oracle-cygwin/p3-native-collect"
+    },
+    {
+      "profile": "msys2",
+      "case_id": "codepage-20924-conflicting-table-entries",
+      "unicode_word": 376,
+      "selected_value": 232,
+      "stdout_sha256": "b5f4d82570cd45b0e76a07259f47325b3875293ee686ae0a065550cbac85b2c5",
+      "stdout_length": 30,
+      "run_artifact": "remote-473c0f6/oracle-msys2/p3-native-collect"
     }
   ]
 }

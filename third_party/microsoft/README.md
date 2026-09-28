@@ -6,9 +6,13 @@ The generator inspects 96 additional pages which, together with the original
 15 tables, cover all 111 table identities in that archive. `codepages.json`
 distinguishes generated pages from temporary `excluded_pages`: a conflicting
 mapping cannot be enabled until direct Windows evidence resolves the source
-ambiguity. In particular, the archived Macintosh Hebrew table gives two
-different bytes for U+05B8. Neither source order nor an arbitrary overwrite
-decides its behavior. The generator requires
+ambiguity. The first remote Windows capture resolved all four ambiguous
+members: 10005 U+05B8 -> DE, 10008 U+2225 -> A1CE, 20269 #^`~¤ -> A6 C3 C1
+C4 A8, and 20924 U+0178 -> E8. Neither source order nor an arbitrary overwrite
+decides their behavior. The exact raw stream hashes, lengths, profile, and
+case IDs are recorded in `codepages.json` under
+`official_resolution_evidence`; the selected values are also recorded per
+page under `resolved_conflicts`. The generator requires
 `CPINFO` to declare one or two bytes, rejects wider mappings, and additionally
 requires single-byte tables to contain only single-byte values. This does not
 implement stateful encodings, four-byte GB18030, or automatic ANSI/OEM host-page
@@ -50,6 +54,9 @@ moon fmt
 
 The generator verifies the pinned archive hash before extracting each member
 directly, then emits a separate dispatch table. It performs no network access.
+The conflict choices are checked against the exact source values and fail if a
+future archive changes them, so regenerated data cannot silently reuse an old
+tie-breaker.
 Review both source and packed hashes when regenerating. Official Windows
 `cygpath` byte probes, rather than data provenance alone, establish the tested
 compatibility scope; see [remote validation](../../docs/09-remote-validation.md).

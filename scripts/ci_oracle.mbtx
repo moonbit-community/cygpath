@@ -901,7 +901,36 @@ async fn run(options : Map[String, String]) -> Unit {
     ),
   )
   let prepared : Array[Json] = [{ "path": cwd, "kind": "working-directory" }]
+  let mut mount_holder : Int? = None
+  let mut mount_holder_program : Json? = None
   if variant == "custom" {
+    // Cygwin/MSYS user mounts are process-session state. Keep one official
+    // runtime process alive while every collection/replay process observes it.
+    let holder = bin + "/sleep.exe"
+    require(
+      @fs.exists(holder),
+      "custom context requires official runtime sleep.exe to retain temporary mounts",
+    )
+    let holder_pid = @process.spawn_orphan(
+      holder,
+      ["1800"],
+      extra_env=environment,
+      inherit_env=false,
+      cwd~,
+      no_console_window=true,
+    )
+    require(holder_pid > 0, "custom mount session holder did not start")
+    mount_holder = Some(holder_pid)
+    mount_holder_program = Some(artifact(holder))
+    save_json(output + "/custom-mount-session.json", {
+      "schema_version": 1,
+      "status": "started",
+      "pid": holder_pid,
+      "program": mount_holder_program.unwrap(),
+      "lifetime_seconds": 1800,
+      "reason": "temporary Cygwin/MSYS mounts disappear when the last runtime process exits",
+      "source": "https://cygwin.com/cygwin-ug-net/mount.html",
+    })
     for
       directory in [
         cwd + "/custom-base/nested",
@@ -1319,6 +1348,44 @@ async fn run(options : Map[String, String]) -> Unit {
         })
       }
     }
+  }
+  if mount_holder is Some(holder_pid) {
+    let stopped = probe(
+      output,
+      "stop-custom-mount-session",
+      powershell,
+      [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Stop-Process -Id " +
+        holder_pid.to_string() +
+        " -Force -ErrorAction SilentlyContinue",
+      ],
+      cwd,
+      probe_environment,
+    )
+    require(
+      stopped.status == "completed" && stopped.exit_code == Some(0),
+      "custom mount session holder did not stop",
+    )
+    save_json(output + "/custom-mount-session-stop.json", {
+      "schema_version": 1,
+      "status": "stopped",
+      "pid": holder_pid,
+      "observation": @json.to_json(stopped),
+    })
+    save_json(output + "/custom-mount-session.json", {
+      "schema_version": 1,
+      "status": "stopped",
+      "pid": holder_pid,
+      "program": mount_holder_program.unwrap(),
+      "lifetime_seconds": 1800,
+      "reason": "temporary Cygwin/MSYS mounts disappear when the last runtime process exits",
+      "source": "https://cygwin.com/cygwin-ug-net/mount.html",
+      "stop_observation": "custom-mount-session-stop.json",
+    })
   }
   let mut coverage_verified = false
   try {
