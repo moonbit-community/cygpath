@@ -1,24 +1,43 @@
 ///|
+async fn write_record(action : @cli.RecordAction, codepage : Int) -> Bool {
+  match action {
+    Output(text) => {
+      @host.write_stdout_bytes(@encoding.encode(text + "\n", codepage))
+      true
+    }
+    Skip => true
+    Stop(text) => {
+      @host.write_stdout(text)
+      false
+    }
+  }
+}
+
+///|
 async fn execute() -> Unit {
   match @cli.parse_args(@host.args()) {
     Help => @host.write_stdout(@cli.help_text())
     Version => @host.write_stdout(@cli.version_text())
     Convert(request) => {
       let converter = request.prepare()
-      let count = match request.input() {
+      match request.input() {
         Names(paths) => {
-          for path in paths {
-            @host.write_stdout(converter.convert(path) + "\n")
+          if paths.is_empty() && !request.ignore_missing() {
+            raise @cli.MissingInput
           }
-          paths.length()
+          for path in paths {
+            let action = converter.convert_operand(path)
+            if !write_record(action, converter.codepage()) {
+              break
+            }
+          }
         }
-        File(path) =>
-          @host.stream_file(path, record => {
-            @host.write_stdout(converter.convert(record) + "\n")
+        File(path) => {
+          let _ = @host.stream_file_until(path, record => {
+            let action = converter.convert_file_record(record)
+            write_record(action, converter.codepage())
           })
-      }
-      if count == 0 && !request.ignore_missing() {
-        raise @cli.MissingInput
+        }
       }
     }
   }

@@ -8,12 +8,19 @@ pub fn exit(Int) -> Unit
 
 pub async fn stream_file(String, async (String) -> Unit) -> Int
 
+pub async fn stream_file_until(String, async (String) -> Bool) -> Int
+
 pub async fn write_stderr(String) -> Unit
 
 pub async fn write_stdout(String) -> Unit
 
+pub async fn write_stdout_bytes(Bytes) -> Unit
+
 // Errors
 pub(all) suberror HostError {
+  FileNotFound
+  FileAccessDenied
+  FileNotDirectory
   ReadError(source~ : String)
   WriteError(stream~ : String)
   InvalidEncoding(source~ : String, line~ : Int)

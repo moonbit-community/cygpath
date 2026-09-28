@@ -97,7 +97,11 @@ fn Context::to_windows(
   }
   for mount in self.posix_mounts {
     if components_match(mount.posix.components, path.components, mount.case) {
-      return remount(path, mount.posix, mount.windows)
+      let mapped = remount(path, mount.posix, mount.windows)
+      if self.profile == Msys2 && path.components.is_empty() {
+        return { ..mapped, trailing: true, }
+      }
+      return mapped
     }
   }
   raise MissingContext(field="root or mount")

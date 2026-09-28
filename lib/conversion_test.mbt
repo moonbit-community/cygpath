@@ -46,10 +46,7 @@ test "source grammar is explicit and independent of output style" {
     conversion_error(() => context.convert("a\\b", from=Posix, to=Windows))
     is @lib.UnrepresentablePath(component="a\\b", reason=_),
   )
-  assert_true(
-    conversion_error(() => context.convert("C:/a", from=Posix, to=Windows))
-    is @lib.UnrepresentablePath(component="C:", reason=_),
-  )
+  assert_eq(context.convert("C:/a", from=Posix, to=Windows), "C\uF03A\\a")
 }
 
 ///|
@@ -78,7 +75,7 @@ test "absolute normalization cannot escape a root and retains trailing separator
   assert_eq(context.convert("/a//./b/../../..", from=Posix, to=Posix), "/")
   assert_eq(
     context.convert("//server/share/a/../../b/", from=Posix, to=Posix),
-    "//server/share/b/",
+    "//server/share/../b/",
   )
   assert_eq(context.convert("C:\\", from=Windows, to=Windows), "C:\\")
   assert_eq(
@@ -95,8 +92,22 @@ test "POSIX root mapping distinguishes structural and optional separators" {
     let directory = @lib.Context::new(profile~, mounts=[
       @lib.Mount::new("/", "C:\\root"),
     ])
-    assert_eq(directory.convert("/", from=Posix, to=Windows), "C:\\root")
-    assert_eq(directory.convert("/", from=Posix, to=Mixed), "C:/root")
+    assert_eq(
+      directory.convert("/", from=Posix, to=Windows),
+      if profile == Msys2 {
+        "C:\\root\\"
+      } else {
+        "C:\\root"
+      },
+    )
+    assert_eq(
+      directory.convert("/", from=Posix, to=Mixed),
+      if profile == Msys2 {
+        "C:/root/"
+      } else {
+        "C:/root"
+      },
+    )
     assert_eq(directory.convert("/", from=Posix, to=Posix), "/")
     for input in ["/folder/", "/folder//"] {
       assert_eq(
@@ -151,15 +162,12 @@ test "absolute resolution consumes only the source syntax cwd" {
 }
 
 ///|
-test "drive relative and current-drive-root-relative paths need distinct context" {
+test "drive-relative conversion follows Cygwin root anchoring" {
   let empty = @lib.Context::new()
   assert_eq(empty.convert("c:a", from=Windows, to=Mixed), "C:a")
   assert_eq(empty.convert("c:", from=Windows, to=Windows), "C:")
   assert_eq(empty.convert("\\a", from=Windows, to=Mixed), "/a")
-  assert_true(
-    conversion_error(() => empty.convert("C:a", from=Windows, to=Posix))
-    is @lib.MissingContext(field="drive_cwds[C]"),
-  )
+  assert_eq(empty.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
   assert_true(
     conversion_error(() => empty.convert("\\a", from=Windows, to=Posix))
     is @lib.MissingContext(field="windows_cwd drive"),
@@ -168,25 +176,16 @@ test "drive relative and current-drive-root-relative paths need distinct context
     "c": "C:\\work",
     "D": "D:\\other",
   })
-  assert_eq(
-    context.convert("C:a", from=Windows, to=Posix),
-    "/cygdrive/c/work/a",
-  )
-  assert_eq(context.convert("C:", from=Windows, to=Posix), "/cygdrive/c/work")
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(context.convert("C:", from=Windows, to=Posix), "/cygdrive/c")
   assert_eq(
     context.convert("D:../a", from=Windows, to=Windows, absolute=true),
     "D:\\a",
   )
   assert_eq(context.convert("\\a", from=Windows, to=Posix), "/cygdrive/c/a")
   let fallback = @lib.Context::new(windows_cwd="C:\\fallback")
-  assert_eq(
-    fallback.convert("c:a", from=Windows, to=Posix),
-    "/cygdrive/c/fallback/a",
-  )
-  assert_true(
-    conversion_error(() => fallback.convert("D:a", from=Windows, to=Posix))
-    is @lib.MissingContext(field="drive_cwds[D]"),
-  )
+  assert_eq(fallback.convert("c:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(fallback.convert("D:a", from=Windows, to=Posix), "/cygdrive/d/a")
 }
 
 ///|
@@ -208,10 +207,7 @@ test "complete UNC paths and UNC cwd preserve the share boundary" {
     conversion_error(() => context.convert("\\a", from=Windows, to=Posix))
     is @lib.MissingContext(field="windows_cwd drive"),
   )
-  assert_true(
-    conversion_error(() => context.convert("C:a", from=Windows, to=Posix))
-    is @lib.MissingContext(field="drive_cwds[C]"),
-  )
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
 }
 
 ///|
@@ -240,14 +236,9 @@ test "Unicode scalars are preserved without normalization and invalid text is re
 }
 
 ///|
-test "unrepresentable Windows components retain the original component" {
+test "Windows filename output encodes punctuation and preserves ordinary names" {
   let context = @lib.Context::new()
-  for
-    component in [
-      "a:b", "a*b", "a?b", "a\\b", "a|b", "a<b", "a>b", "a\"b", "a\u0001b", "name.",
-      "name ", "CON", "con.txt", "PRN", "AUX", "NUL", "COM1", "com9.txt", "LPT1",
-      "lpt9.txt", "COM¹", "LPT²", "COM³",
-    ] {
+  for component in ["a\\b"] {
     let error = conversion_error(() => {
       context.convert(component, from=Posix, to=Windows)
     })
@@ -256,7 +247,11 @@ test "unrepresentable Windows components retain the original component" {
       actual == component,
     )
   }
-  for component in ["COM0", "COM10", "LPT10", "CONSOLE", ".hidden", "a;b"] {
+  for
+    component in [
+      "COM0", "COM10", "LPT10", "CONSOLE", ".hidden", "a;b", "name.", "name ", "CON",
+      "con.txt", "COM1",
+    ] {
     assert_eq(context.convert(component, from=Posix, to=Windows), component)
   }
 }
@@ -265,9 +260,7 @@ test "unrepresentable Windows components retain the original component" {
 test "namespace handling is explicit and does not masquerade as disk paths" {
   let context = @lib.Context::new(mounts=[@lib.Mount::new("/", "C:\\root")])
   for
-    path in [
-      "\\\\?\\C:\\a", "\\\\?\\UNC\\server\\share\\a", "\\\\.\\COM1", "//server",
-    ] {
+    path in ["\\\\?\\GLOBALROOT\\Device\\Harddisk0", "\\\\.\\COM1", "//server"] {
     assert_true(
       conversion_error(() => context.convert(path, from=Windows, to=Posix))
       is @lib.UnsupportedNamespace(_),
@@ -325,7 +318,7 @@ test "lists preserve order and use only the declared source delimiter" {
   let context = @lib.Context::new(drive_cwds={ "C": "C:\\work" })
   assert_eq(
     context.convert_list("C:;D:\\a;C:", from=Windows, to=Posix),
-    "/cygdrive/c/work:/cygdrive/d/a:/cygdrive/c/work",
+    "/cygdrive/c:/cygdrive/d/a:/cygdrive/c",
   )
   assert_eq(context.convert_list("a:b:a", from=Posix, to=Windows), "a;b;a")
   assert_eq(
@@ -348,9 +341,9 @@ test "list errors retain the original index and reject lossy serialization" {
   let context = @lib.Context::new()
   assert_true(
     conversion_error(() => {
-      context.convert_list(";C:\\ok;;D:a", from=Windows, to=Posix)
+      context.convert_list(";C:\\ok;;\\\\.\\COM1", from=Windows, to=Posix)
     })
-    is @lib.ListEntryError(index=3, @lib.MissingContext(field="drive_cwds[D]")),
+    is @lib.ListEntryError(index=3, @lib.UnsupportedNamespace(_)),
   )
   assert_eq(context.convert("a;b", from=Posix, to=Windows), "a;b")
   assert_true(

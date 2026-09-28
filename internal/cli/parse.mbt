@@ -81,12 +81,15 @@ fn collect_options(
   let names : Array[String] = []
   for i = 0; i < args.length(); {
     let token = args[i]
-    if token == "--" || token == "-" || !token.has_prefix("-") {
-      let start = if token == "--" { i + 1 } else { i }
-      for j = start; j < args.length(); j = j + 1 {
+    if token == "--" {
+      for j = i + 1; j < args.length(); j = j + 1 {
         names.push(args[j])
       }
       break
+    }
+    if token == "-" || !token.has_prefix("-") {
+      names.push(token)
+      continue i + 1
     }
     if token.has_prefix("--") {
       let (option, attached) = match token.split_once("=") {
@@ -111,6 +114,9 @@ fn collect_options(
         values.push(args[i + 1 + n])
       }
       options.push((option, values))
+      if option is ("--help" | "--version") {
+        return (options, names)
+      }
       continue i + 1 + needed
     } else {
       let mut next = i + 1
@@ -119,6 +125,9 @@ fn collect_options(
         let arity = option_arity(option)
         if arity == 0 {
           options.push((option, []))
+          if option is ("--help" | "--version") {
+            return (options, names)
+          }
           continue offset + 1
         } else {
           // All short options take at most one operand. The rest of a bundle
@@ -159,7 +168,9 @@ fn repeated_value(
 /// Identical scalar declarations are accepted; conflicting declarations fail.
 pub fn parse_args(args : Array[String]) -> Command raise CliError {
   let (options, names) = collect_options(args)
-  let mut format : String? = None
+  let mut unix = false
+  let mut windows = false
+  let mut mixed = false
   let mut from : String? = None
   let mut profile : String? = None
   let mut root : String? = None
@@ -173,32 +184,46 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
   let mut list = false
   let mut proc_cygdrive = false
   let mut ignore = false
-  let mut help = false
-  let mut version = false
   let mut short = false
   let mut long = false
   let mut root_local = false
-  let mut utf8 = false
+  let mut codepage = 65001
+  let mut unavailable_codepage : String? = None
+  let mut file_options = false
   let unsupported : Array[String] = []
   for (option, values) in options {
     match option {
-      "--unix" => format = repeated_value(format, "unix", "output format")
-      "--windows" => format = repeated_value(format, "windows", "output format")
-      "--mixed" => format = repeated_value(format, "mixed", "output format")
+      "--unix" => unix = true
+      "--windows" => windows = true
+      "--mixed" => {
+        windows = true
+        mixed = true
+      }
       "--type" => {
         let value = values[0]
+          .strip_prefix("=")
+          .unwrap_or(values[0][:])
+          .to_owned()
+          .to_lower()
         if value == "dos" {
-          format = repeated_value(format, "windows", "output format")
+          windows = true
           short = true
           unsupported.push("short names require Windows filesystem queries")
         } else if value is ("unix" | "windows" | "mixed") {
-          format = repeated_value(format, value, "output format")
+          if value == "unix" {
+            unix = true
+          } else {
+            windows = true
+          }
+          if value == "mixed" {
+            mixed = true
+          }
         } else {
           raise InvalidOptions("unknown output type " + value)
         }
       }
       "--dos" => {
-        format = repeated_value(format, "windows", "output format")
+        windows = true
         short = true
         unsupported.push("short names require Windows filesystem queries")
       }
@@ -210,24 +235,29 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
         long = true
         unsupported.push("long names require Windows filesystem queries")
       }
-      "--root-local" => {
-        root_local = true
-        unsupported.push("root-local namespace output is not implemented")
-      }
+      "--root-local" => root_local = true
       "--codepage" =>
-        if values[0] is ("UTF8" | "65001") {
-          utf8 = true
+        if values[0].to_upper() is ("UTF8" | "UTF-8") {
+          codepage = 65001
+          unavailable_codepage = None
+        } else if values[0].to_upper() is ("ANSI" | "OEM") {
+          unavailable_codepage = Some(values[0])
         } else {
-          unsupported.push(
-            "code page " + values[0] + "; only UTF8 and 65001 are supported",
-          )
+          codepage = @string.parse_int(values[0]) catch {
+            _ => raise InvalidOptions("invalid code page " + values[0])
+          }
+          unavailable_codepage = if @encoding.supported(codepage) {
+            None
+          } else {
+            Some(values[0])
+          }
         }
       "--absolute" => absolute = true
       "--path" => list = true
       "--proc-cygdrive" => proc_cygdrive = true
       "--ignore" => ignore = true
-      "--help" => help = true
-      "--version" => version = true
+      "--help" => return Help
+      "--version" => return Version
       "--file" => file = repeated_value(file, values[0], option)
       "--from" => {
         if !(values[0] is ("windows" | "posix")) {
@@ -267,7 +297,8 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
         drive_cwds[drive] = values[1]
       }
       "--mode" => unsupported.push("file modes require the Cygwin runtime")
-      "--option" => unsupported.push("per-line options are not implemented")
+      "--allusers" => ()
+      "--option" => file_options = true
       "--close" =>
         unsupported.push("closing host process handles is not supported")
       _ =>
@@ -277,31 +308,37 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
   if (short && long) || (short && root_local) || (long && root_local) {
     raise InvalidOptions("--short-name, --long-name and --root-local conflict")
   }
-  let to : @lib.OutputFormat = match format {
-    Some("windows") => Windows
-    Some("mixed") => Mixed
-    _ => Posix
+  if unix && windows && !file_options {
+    raise InvalidOptions("conflicting output formats")
   }
-  if proc_cygdrive && to != Posix {
-    raise InvalidOptions("--proc-cygdrive requires POSIX output")
+  let to : @lib.OutputFormat = if unix || (!windows && !file_options) {
+    Posix
+  } else if mixed {
+    Mixed
+  } else {
+    Windows
   }
-  if utf8 && to == Posix {
-    raise InvalidOptions("--codepage requires Windows or Mixed output")
+  if root_local && to != Windows {
+    raise InvalidOptions(
+      "root-local requires Windows output without mixed mode",
+    )
+  }
+  if (short || long) && !windows {
+    raise InvalidOptions("short and long names require Windows output")
+  }
+  if to != Posix && unavailable_codepage is Some(page) {
+    raise UnsupportedCapability(
+      "code page " + page + " is not supported by the pure encoder",
+    )
   }
   if unsupported.get(0) is Some(reason) {
     raise UnsupportedCapability(reason)
   }
-  if help && version {
-    raise InvalidOptions("--help and --version conflict")
+  if file_options && file is None {
+    raise InvalidOptions("--option requires --file")
   }
   if file is Some(_) && !names.is_empty() {
     raise InvalidOptions("--file cannot be combined with NAME arguments")
-  }
-  if help {
-    return Help
-  }
-  if version {
-    return Version
   }
   let source = match file {
     Some(path) => File(path)
@@ -338,5 +375,8 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
     posix_cwd,
     windows_cwd,
     drive_cwds,
+    root_local,
+    file_options,
+    codepage,
   })
 }

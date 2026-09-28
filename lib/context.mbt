@@ -165,11 +165,11 @@ pub fn Context::new(
     drive_paths[drive] = path.normalize()
   }
   {
+    profile,
     drive_prefix: prefix.components,
     posix_mounts: ordered_mounts(mounts, windows=false),
     windows_mounts: ordered_mounts(mounts, windows=true),
     posix_cwd: parse_cwd(posix_cwd, Posix, "posix_cwd"),
     windows_cwd: parse_cwd(windows_cwd, Windows, "windows_cwd"),
-    drive_cwds: drive_paths,
   }
 }

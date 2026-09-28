@@ -35,11 +35,20 @@ pub(all) enum Command {
 pub struct Converter {
   // private fields
 }
+pub fn Converter::codepage(Self) -> Int
 pub fn Converter::convert(Self, String) -> String raise CliError
+pub fn Converter::convert_file_record(Self, String) -> RecordAction raise CliError
+pub fn Converter::convert_operand(Self, String) -> RecordAction raise CliError
 
 pub(all) enum InputSource {
   Names(Array[String])
   File(String)
+}
+
+pub(all) enum RecordAction {
+  Output(String)
+  Skip
+  Stop(String)
 }
 
 pub struct Request {
@@ -47,6 +56,7 @@ pub struct Request {
 }
 pub fn Request::ignore_missing(Self) -> Bool
 pub fn Request::input(Self) -> InputSource
+pub fn Request::per_line_options(Self) -> Bool
 pub fn Request::prepare(Self) -> Converter raise CliError
 
 // Type aliases

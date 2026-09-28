@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "license": "Unicode-3.0",
+  "pages": [
+    {
+      "codepage": 874,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit874.txt",
+      "source_sha256": "663f43ca662e037c4534cb16298b560f29ce29c27b49b3589601ec3d97dd89fd",
+      "source_bytes": 19653,
+      "entries": 394,
+      "packed_sha256": "c2a352f44635553df0a142e8ab1c0e04556587d0f9eca20832df05569980c70b",
+      "default_character": 63
+    },
+    {
+      "codepage": 932,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit932.txt",
+      "source_sha256": "2614cfea35c3c86c41d33198793a84ca44edee3cf0ee0013a61a43fba4ece331",
+      "source_bytes": 361078,
+      "entries": 9486,
+      "packed_sha256": "18a1ebe61727a76a94a507879093d320c11424347630f7964aede0eaf803ba4a",
+      "default_character": 63
+    },
+    {
+      "codepage": 936,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit936.txt",
+      "source_sha256": "e5070a2d6ad26619f5872ddbe64d3381c11620af5adbb04cda0f0abb1a91fdae",
+      "source_bytes": 872372,
+      "entries": 24482,
+      "packed_sha256": "2b90db7cdb786bbd72ca956cd2e3c7747c12e58a5d79091784741b3a2511023d",
+      "default_character": 63
+    },
+    {
+      "codepage": 949,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit949.txt",
+      "source_sha256": "50e13b60ea8fda66a8223ecc85270e0f182303222244e2345d3d57f3e839d20a",
+      "source_bytes": 1270936,
+      "entries": 17760,
+      "packed_sha256": "87a61d6dd7bfabc2a41a74070a42a25040471bd0164ff0f654b901b25b97ae19",
+      "default_character": 63
+    },
+    {
+      "codepage": 950,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit950.txt",
+      "source_sha256": "cf8c23389a42a226ea707f7ec32c665556d1fc3364db25bd765ce64d54eaee2a",
+      "source_bytes": 705261,
+      "entries": 20321,
+      "packed_sha256": "bdfd9d3ca6e4a6022b9b19b767f27fb66ec6308349c440f2d57dd86e0a774cc0",
+      "default_character": 63
+    },
+    {
+      "codepage": 1250,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1250.txt",
+      "source_sha256": "cef9f171e67b09445bcb3f9ffccdc89418250ff825f1bd2d29a92d2074d7a53b",
+      "source_bytes": 36656,
+      "entries": 693,
+      "packed_sha256": "6b9b546809beb034f05dc3a8fc0988ee88470d30695d3a8be2df30375b03a64a",
+      "default_character": 63
+    },
+    {
+      "codepage": 1251,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1251.txt",
+      "source_sha256": "59ec85612ff908d9da0e877893c935941e56b13a2882b4fb9c9599be3d1ce4e7",
+      "source_bytes": 35779,
+      "entries": 640,
+      "packed_sha256": "872238fb54ecbd9620b455eb25fe2222adb6aa83f39b752dca5d00d7f70ec5a0",
+      "default_character": 63
+    },
+    {
+      "codepage": 1252,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1252.txt",
+      "source_sha256": "72ea23c939c5b26fae7aded0207b327e2f3902d7d3c168d7087f5cfc38ee76a9",
+      "source_bytes": 37057,
+      "entries": 698,
+      "packed_sha256": "fd977494a66db3f27c7d500f65aa5ab90e9b782abd95a23312ea8853268a9841",
+      "default_character": 63
+    },
+    {
+      "codepage": 1253,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1253.txt",
+      "source_sha256": "ea80c442aff7f09b36da6335f85f8e527f51c146beeb9825ec00d1b6ca99a99e",
+      "source_bytes": 34013,
+      "entries": 622,
+      "packed_sha256": "3a1bd6458d81f0ee8cab991571985a7e941d4288a7d12dc31a0ce46694ef0c71",
+      "default_character": 63
+    },
+    {
+      "codepage": 1254,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1254.txt",
+      "source_sha256": "3d02512087634dc493b720992b590277736ffb2d5b0b665d69b6b9727e2c361a",
+      "source_bytes": 36451,
+      "entries": 694,
+      "packed_sha256": "10e2149ea57cd1d56c10ea36687f40631450f51e43f04a94d480e2d56327917f",
+      "default_character": 63
+    },
+    {
+      "codepage": 1255,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1255.txt",
+      "source_sha256": "fdd4bdda74f6571d89171b0070ac052cd3714c395dc3d1799bcd5e4a4da6f83a",
+      "source_bytes": 20822,
+      "entries": 352,
+      "packed_sha256": "e1275784b71b666b8d019638a727f1eaab56027cf93bb8394d513d230a18c679",
+      "default_character": 63
+    },
+    {
+      "codepage": 1256,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1256.txt",
+      "source_sha256": "745c447ada04a838da8bea406c13f446c7453b6371e8c6c7863a632443d56007",
+      "source_bytes": 29404,
+      "entries": 544,
+      "packed_sha256": "755a9c60872a6e6ea4a205e2c2134c78d69d1ff1d7e17ffbc8e968b21587bb3e",
+      "default_character": 63
+    },
+    {
+      "codepage": 1257,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1257.txt",
+      "source_sha256": "b8c5d7f3b8c25c3d5625d44dd3d6ee7a06e652ddf77373d050282c1cb7517366",
+      "source_bytes": 16235,
+      "entries": 350,
+      "packed_sha256": "957f679f9dd70989147e11bb07fcd774a86a9df844601ce2bcce1dc5fb6a4312",
+      "default_character": 63
+    },
+    {
+      "codepage": 1258,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1258.txt",
+      "source_sha256": "5d52a9357b7d6b5b5014ed5a51be0ff9809b0c33625793d2a4feaf502e0682f1",
+      "source_bytes": 22252,
+      "entries": 350,
+      "packed_sha256": "7a96ead3253c582cb5b461d2bcb87d89b548cc42d551c906ed9f94d3ee7c53f5",
+      "default_character": 63
+    },
+    {
+      "codepage": 1361,
+      "source_url": "https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1361.txt",
+      "source_sha256": "7dcda2d5d2cfc5ddf43757d589a0106e020ef0d9b84de47f08e18297ae0fe1ec",
+      "source_bytes": 1223827,
+      "entries": 17542,
+      "packed_sha256": "211136d5091e068b7f4bb43b1ab8821aac388ea1fa16e36ac7517151e2a40026",
+      "default_character": 63
+    }
+  ]
+}

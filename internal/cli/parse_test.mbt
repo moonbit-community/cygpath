@@ -19,9 +19,11 @@ fn parse_failure(args : Array[String]) -> @cli.CliError raise {
 test "help and version do not construct or inspect context" {
   assert_true(@cli.parse_args(["-h", "--root", "relative"]) is Help)
   assert_true(@cli.parse_args(["--version", "--file", "missing"]) is Version)
-  assert_true(parse_failure(["-h", "--bad"]) is UnknownOption(_))
-  assert_true(parse_failure(["-hV"]) is InvalidOptions(_))
-  assert_true(parse_failure(["-help"]) is UnknownOption(_))
+  assert_true(@cli.parse_args(["-h", "--bad"]) is Help)
+  assert_true(@cli.parse_args(["-hV"]) is Help)
+  assert_true(@cli.parse_args(["-help"]) is Help)
+  assert_true(@cli.parse_args(["-uw", "-h"]) is Help)
+  assert_true(parse_failure(["--bad", "-h"]) is UnknownOption(_))
   assert_true(@cli.help_text().has_suffix("\n"))
   assert_eq(
     @cli.version_text(),
@@ -44,14 +46,16 @@ test "short bundles attached values and long equal values" {
 }
 
 ///|
-test "options stop at NAME and double dash preserves names" {
-  assert_true(
-    request(["name", "-w", "--"]).input() is Names(["name", "-w", "--"]),
-  )
+test "GNU argument permutation and double dash preserve operand order" {
+  assert_true(request(["name", "-w", "--"]).input() is Names(["name"]))
   assert_true(
     request(["--", "-w", "--help"]).input() is Names(["-w", "--help"]),
   )
   assert_true(request(["-"]).input() is Names(["-"]))
+  assert_eq(request(["a/b", "-w"]).prepare().convert("a/b"), "a\\b")
+  assert_true(
+    request(["a", "-w", "b", "--", "-u"]).input() is Names(["a", "b", "-u"]),
+  )
   assert_true(parse_failure(["--"]) is MissingInput)
 }
 
@@ -88,15 +92,19 @@ test "identical output formats repeat and conflicting formats fail" {
     request(["-uu", "--type=unix", "C:/x"]).prepare().convert("C:/x"),
     "/cygdrive/c/x",
   )
-  for
-    args in [
-      ["-uw", "x"],
-      ["-m", "--type", "windows", "x"],
-      ["-t", "invalid", "x"],
-    ] {
+  for args in [["-uw", "x"], ["-t", "invalid", "x"]] {
     assert_true(parse_failure(args) is InvalidOptions(_))
   }
   assert_true(parse_failure(["--profile=other", "x"]) is InvalidOptions(_))
+  for
+    options in [
+      ["-mw", "a/b"],
+      ["-wm", "a/b"],
+      ["-m", "--type=windows", "a/b"],
+      ["-t=MiXeD", "a/b"],
+    ] {
+    assert_eq(request(options).prepare().convert("a/b"), "a/b")
+  }
   assert_true(parse_failure(["--from=auto", "x"]) is InvalidOptions(_))
   assert_true(
     parse_failure(["--from=windows", "--from=posix", "x"]) is InvalidOptions(_),
@@ -107,12 +115,11 @@ test "identical output formats repeat and conflicting formats fail" {
 test "every unavailable option is recognized" {
   for
     option in [
-      "-d", "-s", "-l", "-r", "-M", "-D", "-H", "-O", "-P", "-S", "-W", "-A", "-o",
-      "--dos", "--short-name", "--long-name", "--root-local", "--mode", "--desktop",
-      "--homeroot", "--mydocs", "--smprograms", "--sysdir", "--windir", "--allusers",
-      "--option",
+      "-d", "-s", "-l", "-M", "-D", "-H", "-O", "-P", "-S", "-W", "--dos", "--short-name",
+      "--long-name", "--mode", "--desktop", "--homeroot", "--mydocs", "--smprograms",
+      "--sysdir", "--windir",
     ] {
-    assert_true(parse_failure([option, "x"]) is UnsupportedCapability(_))
+    assert_true(parse_failure(["-w", option, "x"]) is UnsupportedCapability(_))
   }
   for
     args in [
@@ -122,8 +129,8 @@ test "every unavailable option is recognized" {
       ["--folder=1"],
       ["-c", "1"],
       ["--close=1"],
-      ["-C", "ANSI", "x"],
-      ["--codepage=0", "x"],
+      ["-wC", "ANSI", "x"],
+      ["-w", "--codepage=0", "x"],
     ] {
     assert_true(parse_failure(args) is UnsupportedCapability(_))
   }
@@ -136,32 +143,56 @@ test "namespace and filename mode conflicts precede unsupported errors" {
   for flags in ["-rs", "-rl", "-sl", "-dl", "-dr"] {
     assert_true(parse_failure([flags, "x"]) is InvalidOptions(_))
   }
-  assert_true(parse_failure(["-wU", "x"]) is InvalidOptions(_))
-  assert_true(parse_failure(["-mU", "x"]) is InvalidOptions(_))
+  assert_eq(request(["-wU", "a/b"]).prepare().convert("a/b"), "a\\b")
+  assert_eq(request(["-mU", "a/b"]).prepare().convert("a/b"), "a/b")
+  assert_true(parse_failure(["-ur", "x"]) is InvalidOptions(_))
+  assert_true(parse_failure(["-mr", "x"]) is InvalidOptions(_))
 }
 
 ///|
-test "UTF-8 code page selection has explicit output restrictions" {
-  for page in ["UTF8", "65001"] {
+test "pure code page selection affects Windows output only" {
+  for page in ["UTF8", "utf-8", "65001"] {
     assert_eq(request(["-m", "-C", page, "a"]).prepare().convert("a"), "a")
-    assert_true(parse_failure(["-u", "-C", page, "C:/a"]) is InvalidOptions(_))
+    assert_eq(request(["-u", "-C", page, "C:/a"]).prepare().codepage(), 65001)
   }
+  for
+    (page, number) in [
+      ("1252", 1252),
+      ("932", 932),
+      ("936", 936),
+      ("1361", 1361),
+    ] {
+    assert_eq(request(["-w", "-C", page, "a"]).prepare().codepage(), number)
+    assert_eq(request(["-u", "-C", page, "C:/a"]).prepare().codepage(), 65001)
+  }
+  for page in ["ANSI", "OEM", "0", "999999"] {
+    assert_eq(
+      request(["-u", "-C", page, "C:/a"]).prepare().convert("C:/a"),
+      "/cygdrive/c/a",
+    )
+  }
+  assert_eq(request(["-wCANSI", "-C1252", "a"]).prepare().codepage(), 1252)
+  assert_eq(request(["-wA", "a/b"]).prepare().convert("a/b"), "a\\b")
   assert_true(
     parse_failure(["-w", "-C", "OEM", "x"]) is UnsupportedCapability(_),
   )
 }
 
 ///|
-test "file and NAME are mutually exclusive and ignore only permits no input" {
+test "file and NAME are mutually exclusive and ignore suppresses empty operands" {
   assert_true(parse_failure([]) is MissingInput)
   let empty = request(["-i"])
   assert_true(empty.ignore_missing())
   assert_true(empty.input() is Names([]))
   assert_true(parse_failure(["-f", "-", "name"]) is InvalidOptions(_))
   assert_true(parse_failure(["-i", "--unknown"]) is UnknownOption(_))
-  try request(["-i", ""]).prepare().convert("") catch {
-    error => assert_eq(error.exit_code(), 2)
+  assert_true(request(["-i", ""]).prepare().convert_operand("") is Skip)
+  try request([""]).prepare().convert("") catch {
+    error => {
+      assert_eq(error.exit_code(), 1)
+      assert_eq(error.diagnostic(), "cygpath: can't convert empty path")
+    }
   } noraise {
-    _ => fail("ignore suppressed an empty path")
+    _ => fail("accepted an empty path without ignore")
   }
 }

@@ -76,12 +76,12 @@ pub struct Mount {
 ///|
 /// An immutable snapshot of the path environment. No conversion reads the host.
 pub struct Context {
+  priv profile : Profile
   priv drive_prefix : Array[String]
   priv posix_mounts : Array[Mount]
   priv windows_mounts : Array[Mount]
   priv posix_cwd : ParsedPath?
   priv windows_cwd : ParsedPath?
-  priv drive_cwds : Map[String, ParsedPath]
 }
 
 ///|

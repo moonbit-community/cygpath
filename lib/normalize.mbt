@@ -15,7 +15,12 @@ fn ParsedPath::normalize(self : ParsedPath) -> ParsedPath {
   for part in self.components {
     match part {
       "." => ()
-      ".." => ignore(components.pop())
+      ".." =>
+        if components.last() is Some(part) && part != ".." {
+          ignore(components.pop())
+        } else if self.root is Unc(_, _) {
+          components.push("..")
+        }
       _ => components.push(part)
     }
   }
@@ -46,21 +51,10 @@ fn Context::resolve(
       }
       resolve_against(base, path)
     }
-    DriveRelative(drive) if absolute || to == Posix => {
-      let base = match self.drive_cwds.get(drive) {
-        Some(base) => Some(base)
-        None =>
-          match self.windows_cwd {
-            Some({ root: DriveAbsolute(current), .. } as base) if current ==
-              drive => Some(base)
-            _ => None
-          }
-      }
-      guard base is Some(base) else {
-        raise MissingContext(field="drive_cwds[\{drive}]")
-      }
-      resolve_against(base, path)
-    }
+    DriveRelative(drive) if absolute || to == Posix =>
+      // Cygwin's conversion API anchors DOS drive-relative input at that
+      // drive's root rather than consulting the Win32 per-drive cwd.
+      { ..path, root: DriveAbsolute(drive), }.normalize()
     WindowsRooted if absolute || to == Posix => {
       guard self.windows_cwd is Some({ root: DriveAbsolute(drive), .. }) else {
         raise MissingContext(field="windows_cwd drive")

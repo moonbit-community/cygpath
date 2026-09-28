@@ -15,11 +15,14 @@ test "default syntax and single Windows recognition are deterministic" {
     "C:a",
   )
   assert_eq(request(["-w", "\\name"]).prepare().convert("\\name"), "\\name")
-  try request(["-w", "/\\?/C:/name"]).prepare().convert("/\\?/C:/name") catch {
-    error => assert_true(error.diagnostic().contains("unsupported-namespace:"))
-  } noraise {
-    _ => fail("accepted a mixed-separator extended namespace")
-  }
+  assert_eq(
+    request(["-w", "/\\?/C:/name"]).prepare().convert("/\\?/C:/name"),
+    "C:\\name",
+  )
+  assert_eq(
+    request(["-u", "/usr/bin"]).prepare().convert("/usr/bin"),
+    "/usr/bin",
+  )
 }
 
 ///|
@@ -52,7 +55,7 @@ test "absolute conversion uses only supplied cwd and drive state" {
     "-au", "--windows-cwd=C:/work", "--drive-cwd", "D", "D:/other", "name",
   ]).prepare()
   assert_eq(windows.convert("name"), "/cygdrive/c/work/name")
-  assert_eq(windows.convert("D:name"), "/cygdrive/d/other/name")
+  assert_eq(windows.convert("D:name"), "/cygdrive/d/name")
   assert_true(
     parse_failure(["--drive-cwd", "C", "C:/a", "--drive-cwd", "c", "C:/b", "x"])
     is InvalidOptions(_),
@@ -90,7 +93,7 @@ test "lists have one input syntax and fail atomically" {
     request(["-pw", "--root=C:/cyg", "C:/a"]).prepare().convert("C:/a"),
     "C;C:\\cyg\\a",
   )
-  try windows.convert("C:/good;D:/CON") catch {
+  try windows.convert("C:/good;\\\\.\\COM1") catch {
     error => {
       assert_eq(error.exit_code(), 2)
       assert_true(error.diagnostic().contains("list-entry: index 1:"))
@@ -101,17 +104,10 @@ test "lists have one input syntax and fail atomically" {
 }
 
 ///|
-test "line protocol rejects CR LF without weakening library diagnostics" {
+test "operand line breaks are preserved while diagnostics escape control text" {
   let converter = request(["--from=posix", "name"]).prepare()
   for text in ["line\nname", "line\rname", "\r\n"] {
-    try converter.convert(text) catch {
-      error => {
-        assert_true(error is InvalidRecord)
-        assert_eq(error.exit_code(), 2)
-      }
-    } noraise {
-      _ => fail("accepted embedded line break")
-    }
+    assert_eq(converter.convert(text), text)
   }
   let error = parse_failure(["--bad\noption"])
   assert_true(!error.diagnostic().contains_char('\n'))

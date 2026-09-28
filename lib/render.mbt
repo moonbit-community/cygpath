@@ -4,12 +4,12 @@ fn ParsedPath::render(
   format : OutputFormat,
 ) -> String raise ConversionError {
   let sep = if format == Windows { "\\" } else { "/" }
-  if format != Posix {
-    for part in self.components {
-      validate_windows_component(part)
-    }
+  let parts = if format == Posix {
+    self.components
+  } else {
+    self.components.map(encode_windows_component)
   }
-  let body = self.components.join(sep)
+  let body = parts.join(sep)
   let result = match self.root {
     Relative => if body.is_empty() { "." } else { body }
     PosixRoot | WindowsRooted => sep + body

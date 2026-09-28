@@ -193,7 +193,7 @@ test "invalid mount paths and virtual namespaces are rejected at construction" {
   }
   for
     windows in [
-      "relative", "C:root", "\\root", "C:\\a\\..\\b", "//server", "\\\\?\\C:\\root",
+      "relative", "C:root", "\\root", "C:\\a\\..\\b", "//server", "\\\\?\\GLOBALROOT\\Device",
     ] {
     assert_true(
       context_error(() => ignore(@lib.Mount::new("/root", windows)))
@@ -302,14 +302,11 @@ test "cwd validation is explicit and per-drive entries agree with their keys" {
     context.convert("a", from=Posix, to=Windows, absolute=true),
     "C:\\work\\a",
   )
-  assert_eq(
-    context.convert("C:a", from=Windows, to=Posix),
-    "/cygdrive/c/work/a",
-  )
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
 }
 
 ///|
-test "context snapshots caller arrays and maps before later mutation" {
+test "context snapshots caller mounts and drive-relative paths ignore drive cwd" {
   let mounts = [@lib.Mount::new("/original", "C:\\root")]
   let drive_cwds = { "C": "C:\\before" }
   let context = @lib.Context::new(mounts~, drive_cwds~)
@@ -325,14 +322,8 @@ test "context snapshots caller arrays and maps before later mutation" {
     context.convert("C:\\root\\a", from=Windows, to=Posix),
     "/original/a",
   )
-  assert_eq(
-    context.convert("C:a", from=Windows, to=Posix),
-    "/cygdrive/c/before/a",
-  )
-  assert_true(
-    conversion_error(() => context.convert("D:a", from=Windows, to=Posix))
-    is @lib.MissingContext(field="drive_cwds[D]"),
-  )
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(context.convert("D:a", from=Windows, to=Posix), "/cygdrive/d/a")
 }
 
 ///|

@@ -2,12 +2,10 @@
 test "POSIX names do not inherit the Windows NT namespace" {
   let context = @lib.Context::new()
   assert_eq(context.convert("/??/name", from=Posix, to=Posix), "/??/name")
-  try context.convert("\\??\\C:\\name", from=Windows, to=Posix) catch {
-    @lib.UnsupportedNamespace("device") => ()
-    error => fail("unexpected error: \{Repr(error)}")
-  } noraise {
-    _ => fail("expected device namespace rejection")
-  }
+  assert_eq(
+    context.convert("\\??\\C:\\name", from=Windows, to=Posix),
+    "/cygdrive/c/name",
+  )
 }
 
 ///|
@@ -29,7 +27,7 @@ test "UNC authority fields cannot be empty" {
   }
   assert_eq(
     context.convert("//server/share//a", from=Windows, to=Posix),
-    "//server/share/a",
+    "//server/share//a",
   )
 }
 

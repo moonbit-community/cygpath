@@ -2,7 +2,13 @@
 /// Write exactly the UTF-8 bytes of `text`, with no implicit newline or
 /// platform newline translation. The caller supplies any LF record separator.
 pub async fn write_stdout(text : String) -> Unit {
-  @stdio.stdout.write(@utf8.encode(text)) catch {
+  write_stdout_bytes(@utf8.encode(text))
+}
+
+///|
+/// Write already-encoded output bytes without implicit newline conversion.
+pub async fn write_stdout_bytes(bytes : Bytes) -> Unit {
+  @stdio.stdout.write(bytes) catch {
     _ => raise WriteError(stream="stdout")
   }
 }

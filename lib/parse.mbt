@@ -46,6 +46,19 @@ fn parse_path(
 ) -> ParsedPath raise ConversionError {
   guard !path.is_empty() else { raise EmptyPath }
   validate_text(path)
+  if syntax == Windows {
+    let text = path.replace_all(old="\\", new="/")
+    if text.has_prefix("//?/") || text.has_prefix("/??/") {
+      let ordinary = text[4:].to_owned()
+      if ordinary.length() >= 2 && ordinary[1] == ':' {
+        return parse_path(ordinary, Windows)
+      }
+      if ordinary.has_prefix("UNC/") {
+        return parse_path("//" + ordinary[4:].to_owned(), Windows)
+      }
+      raise UnsupportedNamespace("extended device")
+    }
+  }
   // Classify namespaces before treating separators as ordinary components.
   if path.length() >= 3 &&
     is_separator(path[0], syntax) &&
@@ -103,11 +116,6 @@ fn parse_path(
     (root, path_components(text))
   } else {
     (Relative, path_components(text))
-  }
-  if syntax == Windows {
-    for part in components {
-      validate_windows_component(part)
-    }
   }
   // A bare POSIX root's slash expresses its root, not an optional trailing
   // separator to append after a mount maps it to an ordinary directory.

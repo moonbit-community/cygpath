@@ -20,7 +20,8 @@ pub fn Context::convert(
   unix_prefix? : UnixPrefix = Configured,
 ) -> String raise ConversionError {
   validate_options(to, unix_prefix)
-  let parsed = self.resolve(parse_path(path, from), from, to, absolute)
+  let original = parse_path(path, from)
+  let parsed = self.resolve(original, from, to, absolute)
   let output = if to == Posix {
     if from == Windows || parsed.root is Unc(_, _) {
       self.to_posix(parsed, unix_prefix)
@@ -33,5 +34,21 @@ pub fn Context::convert(
   } else {
     parsed
   }
-  output.render(to)
+  if from == Windows &&
+    to == Posix &&
+    (output.root is Unc(_, _) || (original.root == Relative && !absolute)) {
+    // Unmatched UNC names and relative Windows inputs are slashified by
+    // Cygwin without canonicalizing their original component spelling.
+    let text = path.replace_all(old="\\", new="/")
+    if text.has_prefix("//?/UNC/") || text.has_prefix("/??/UNC/") {
+      return decode_windows_filename("//" + text[8:].to_owned())
+    }
+    return decode_windows_filename(text)
+  }
+  let rendered = output.render(to)
+  if from == Windows && to == Posix {
+    decode_windows_filename(rendered)
+  } else {
+    rendered
+  }
 }

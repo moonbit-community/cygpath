@@ -2,6 +2,9 @@
 /// Stable host-boundary failures. Runtime-specific error strings are not part
 /// of the command's portable diagnostic contract.
 pub(all) suberror HostError {
+  FileNotFound
+  FileAccessDenied
+  FileNotDirectory
   ReadError(source~ : String)
   WriteError(stream~ : String)
   InvalidEncoding(source~ : String, line~ : Int)
@@ -12,6 +15,9 @@ pub(all) suberror HostError {
 /// filename containing a control character cannot forge an extra message.
 pub fn HostError::diagnostic(self : HostError) -> String {
   match self {
+    FileNotFound => "cygpath: No such file or directory"
+    FileAccessDenied => "cygpath: Permission denied"
+    FileNotDirectory => "cygpath: Not a directory"
     ReadError(source~) =>
       "cygpath: input-read-error: cannot read \{@debug.to_string(source)}"
     WriteError(stream~) =>

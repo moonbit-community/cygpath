@@ -12,6 +12,7 @@ pub(all) suberror CliError {
 ///|
 fn conversion_exit_code(error : @lib.ConversionError) -> Int {
   match error {
+    @lib.EmptyPath => 1
     @lib.InvalidContext(..)
     | @lib.MissingContext(..)
     | @lib.InvalidOptions(_) => 1
@@ -32,7 +33,7 @@ pub fn CliError::exit_code(self : CliError) -> Int {
 ///|
 fn conversion_diagnostic(error : @lib.ConversionError) -> String {
   match error {
-    @lib.EmptyPath => "empty-path: path is empty"
+    @lib.EmptyPath => "can't convert empty path"
     @lib.InvalidPath(reason~, offset~) =>
       "invalid-path: UTF-16 offset \{offset}: " + reason.escape()
     @lib.InvalidContext(field~, reason~) =>
