@@ -1,0 +1,3 @@
+# Keep byte-exact text fixtures and source consistent on every checkout.
+* text=auto eol=lf
+*.bin -text
