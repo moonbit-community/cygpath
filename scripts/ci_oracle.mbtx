@@ -688,8 +688,10 @@ async fn run(options : Map[String, String]) -> Unit {
   let environment : Map[String, String] = Map([])
   for
     name in [
-      "SystemRoot", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP", "USERPROFILE",
-      "HOME", "HOMEDRIVE", "HOMEPATH", "MOON_HOME", "APPDATA", "LOCALAPPDATA",
+      "WINDIR", "COMSPEC", "TEMP", "TMP", "USERPROFILE", "HOME", "HOMEDRIVE", "HOMEPATH",
+      "MOON_HOME", "APPDATA", "LOCALAPPDATA", "SystemDrive", "ProgramFiles", "ProgramFiles(x86)",
+      "ProgramW6432", "ProgramData", "PSModulePath", "PATHEXT", "OS", "PROCESSOR_ARCHITECTURE",
+      "NUMBER_OF_PROCESSORS", "USERNAME", "USERDOMAIN",
     ] {
     if @env.get_env_var(name) is Some(value) {
       environment[name] = value
@@ -700,23 +702,48 @@ async fn run(options : Map[String, String]) -> Unit {
   environment["LC_ALL"] = "C.UTF-8"
   environment["MSYS2_ARG_CONV_EXCL"] = "*"
   environment["MSYS2_ENV_CONV_EXCL"] = "*"
-  save_json(output + "/environment.json", @json.to_json(environment))
   let system_root = @env.get_env_var("SystemRoot").unwrap_or(
     @env.get_env_var("SYSTEMROOT").unwrap_or(""),
   )
   require(system_root != "", "Windows SystemRoot environment is absent")
-  let powershell = path_text(system_root) +
-    "/System32/WindowsPowerShell/v1.0/powershell.exe"
-  require(@fs.exists(powershell), "Windows PowerShell observation tool missing")
+  environment["SystemRoot"] = system_root
+  save_json(output + "/environment.json", @json.to_json(environment))
+  let powershell = locate_tool("pwsh.exe")
   let probe_environment = environment.copy()
   probe_environment["CYGPATH_CI_CWD"] = cwd
+  let startup = probe(
+    output,
+    "powershell-startup",
+    powershell,
+    [
+      "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "[Console]::Error.WriteLine('pwsh: startup'); [Console]::Out.Write('cygpath-pwsh-ready')",
+    ],
+    cwd,
+    probe_environment,
+  )
+  require(
+    successful_text(output, startup) == "cygpath-pwsh-ready",
+    "PowerShell startup probe returned unexpected output",
+  )
   let windows_query =
-    #|[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $p = Get-Item -LiteralPath $env:CYGPATH_CI_CWD; $v = [IO.DriveInfo]::new($p.PSDrive.Root); $r = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'; [pscustomobject]@{os_version=[Environment]::OSVersion.VersionString; architecture=[Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString(); filesystem=$v.DriveFormat; test_volume=($v.Name + '; label=' + $v.VolumeLabel); input_code_page=[Console]::InputEncoding.CodePage.ToString(); output_code_page=[Console]::OutputEncoding.CodePage.ToString(); long_path_policy=('LongPathsEnabled=' + $r.LongPathsEnabled); short_name_policy=('NtfsDisable8dot3NameCreation=' + $r.NtfsDisable8dot3NameCreation); existence_permissions=($p.FullName + '; attributes=' + $p.Attributes + '; SDDL=' + (Get-Acl -LiteralPath $p.FullName).Sddl); symlinks_junctions=('cwd LinkType=' + $p.LinkType + '; Target=' + $p.Target + '; Attributes=' + $p.Attributes)} | ConvertTo-Json -Compress
+    #|[Console]::Error.WriteLine('host: startup')
+    #|$ErrorActionPreference = 'Stop'
+    #|[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+    #|[Console]::Error.WriteLine('host: item')
+    #|$p = Get-Item -LiteralPath $env:CYGPATH_CI_CWD
+    #|[Console]::Error.WriteLine('host: drive')
+    #|$v = [IO.DriveInfo]::new($p.PSDrive.Root)
+    #|[Console]::Error.WriteLine('host: registry')
+    #|$r = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+    #|[Console]::Error.WriteLine('host: ACL')
+    #|$sddl = (Get-Acl -LiteralPath $p.FullName).Sddl
+    #|[Console]::Error.WriteLine('host: emit')
+    #|[pscustomobject]@{os_version=[Environment]::OSVersion.VersionString; architecture=[Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString(); filesystem=$v.DriveFormat; test_volume=($v.Name + '; label=' + $v.VolumeLabel); input_code_page=[Console]::InputEncoding.CodePage.ToString(); output_code_page=[Console]::OutputEncoding.CodePage.ToString(); long_path_policy=('LongPathsEnabled=' + $r.LongPathsEnabled); short_name_policy=('NtfsDisable8dot3NameCreation=' + $r.NtfsDisable8dot3NameCreation); existence_permissions=($p.FullName + '; attributes=' + $p.Attributes + '; SDDL=' + $sddl); symlinks_junctions=('cwd LinkType=' + $p.LinkType + '; Target=' + $p.Target + '; Attributes=' + $p.Attributes)} | ConvertTo-Json -Compress
   let host_probe = probe(
     output,
     "windows-host",
     powershell,
-    ["-NoProfile", "-NonInteractive", "-Command", windows_query],
+    ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", windows_query],
     cwd,
     probe_environment,
   )
