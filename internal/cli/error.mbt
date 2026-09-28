@@ -10,6 +10,7 @@ pub(all) suberror CliError {
   IgnoredUsage
   InvalidRecord
   PathNotFound(String)
+  ListConversion(String, @lib.ConversionError)
   Conversion(@lib.ConversionError)
 }
 
@@ -122,6 +123,8 @@ pub fn CliError::diagnostic(self : CliError) -> String {
     InvalidRecord => "invalid-record: embedded CR or LF is not allowed"
     PathNotFound(path) =>
       "error converting \"" + path + "\" - No such file or directory"
+    ListConversion(path, _) =>
+      "error converting \"" + path + "\" - Unknown error -1"
     Conversion(error) => conversion_diagnostic(error)
   }
   "cygpath: " + detail

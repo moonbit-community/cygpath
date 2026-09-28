@@ -24,6 +24,7 @@ pub(all) suberror CliError {
   IgnoredUsage
   InvalidRecord
   PathNotFound(String)
+  ListConversion(String, @lib.ConversionError)
   Conversion(@lib.ConversionError)
 }
 pub fn CliError::diagnostic(Self) -> String

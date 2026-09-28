@@ -193,13 +193,44 @@ test "list length failure reports the whole original operand atomically" {
   let path = "/proc/cygdrive/c/ok:/proc/cygdrive/c/" + "a".repeat(256)
   try converter.convert(path) catch {
     error => {
+      assert_true(
+        error
+        is @cli.ListConversion(
+          _,
+          @lib.ListEntryError(index=1, @lib.PathTooLong(_))
+        ),
+      )
       assert_eq(error.exit_code(), 1)
       assert_eq(
         error.diagnostic(),
-        "cygpath: error converting \"" + path + "\" - File name too long",
+        "cygpath: error converting \"" + path + "\" - Unknown error -1",
       )
     }
   } noraise {
     _ => fail("expected atomic list conversion failure")
+  }
+}
+
+///|
+test "list drive-prefix failure preserves its typed cause and wrapper diagnostic" {
+  let converter = request(["-wp", "--drive-prefix=/p3-drives", "name"]).prepare()
+  let path = "/p3-drives/c/ok:/p3-drives/cat/file"
+  try converter.convert(path) catch {
+    error => {
+      assert_true(
+        error
+        is @cli.ListConversion(
+          _,
+          @lib.ListEntryError(index=1, @lib.InvalidDrivePrefix)
+        ),
+      )
+      assert_eq(error.exit_code(), 1)
+      assert_eq(
+        error.diagnostic(),
+        "cygpath: error converting \"" + path + "\" - Unknown error -1",
+      )
+    }
+  } noraise {
+    _ => fail("expected atomic list drive-prefix failure")
   }
 }

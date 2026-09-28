@@ -182,6 +182,10 @@ pub fn Converter::convert(
       )
     }
   } catch {
+    error if self.list && (invalid_drive_prefix(error) || path_too_long(error)) =>
+      // The upstream list wrapper assigns the nested conversion's -1 return
+      // to errno. Preserve the structured cause while matching its diagnostic.
+      raise ListConversion(path, error)
     error if invalid_drive_prefix(error) => raise PathNotFound(path)
     error if path_too_long(error) => raise Conversion(@lib.PathTooLong(path))
     error => raise Conversion(error)

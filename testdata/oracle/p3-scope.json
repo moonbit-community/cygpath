@@ -2504,6 +2504,12 @@
       "cases": [
         {
           "suite": "custom",
+          "case_id": "custom-drive-prefix-invalid-list",
+          "profiles": ["cygwin", "msys2"],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
           "case_id": "custom-drive-prefix-forward",
           "profiles": [
             "cygwin",

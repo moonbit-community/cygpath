@@ -64,7 +64,7 @@
     "windows_cwd": "C:/cygpath-fixtures",
     "drive_cwds": {"C": "C:/cygpath-fixtures"}
   },
-  "context_mapping_evidence": "REPLACE_EXPLANATION_LINKING_OBSERVED_HOST_MOUNTS_CWD_AND_DRIVE_STATE_TO_CONTEXT",
-  "capabilities": ["portable-paths", "utf8", "stdin"],
+  "context_mapping_evidence": "REPLACE_EXPLANATION_LINKING_RAW_MOUNT_DECLARATIONS_CWD_DRIVE_STATE_AND_SEPARATE_USR_BIN_PATH_MAPPING_PROBE_TO_CONTEXT_WITHOUT_INVENTING_MOUNTS",
+  "capabilities": ["portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mapping"],
   "deadline_ms": 10000
 }

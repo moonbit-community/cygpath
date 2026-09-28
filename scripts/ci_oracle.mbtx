@@ -1272,7 +1272,7 @@ async fn run(options : Map[String, String]) -> Unit {
     },
     "context_mapping_evidence": "Sibling observations retain raw mount/locale/cygpath cwd and mapping probes with their exact argv, bytes, status, and hashes. Per-drive C cwd is measured by the native Windows .NET Path.GetFullPath API on C:.; it is not inferred by converting the ambiguous C: operand with cygpath. Mounts are transcribed in observed order; auto cygdrive and virtual /dev,/proc entries are excluded. Mount case policy is transcribed from posix=0 and supplied explicitly. Root and /usr/bin mappings are independently queried. Custom declarations remain unchanged when MSYS2 selects another matching mount; custom-mapping-observations.json retains that distinction and strict fixture comparisons remain mandatory. Host facts come from the retained PowerShell observation; source Git provenance is separately qualified.",
     "capabilities": [
-      "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
+      "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mapping", "posix-cwd",
       "windows-cwd", "drive-cwd-c",
     ],
     "deadline_ms": 10000,

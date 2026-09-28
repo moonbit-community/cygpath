@@ -47,7 +47,7 @@
       "required": true,
       "required_capabilities": [
         "root-mount",
-        "usr-bin-mount"
+        "usr-bin-mapping"
       ],
       "allowed_backends": [
         "wasm",
@@ -71,7 +71,7 @@
       "required": true,
       "required_capabilities": [
         "root-mount",
-        "usr-bin-mount"
+        "usr-bin-mapping"
       ],
       "allowed_backends": [
         "wasm",
@@ -95,7 +95,7 @@
       "required": true,
       "required_capabilities": [
         "root-mount",
-        "usr-bin-mount"
+        "usr-bin-mapping"
       ],
       "allowed_backends": [
         "wasm",
@@ -304,7 +304,7 @@
       "required": true,
       "required_capabilities": [
         "root-mount",
-        "usr-bin-mount"
+        "usr-bin-mapping"
       ],
       "allowed_backends": [
         "wasm",

@@ -253,7 +253,7 @@ fn windows_absolute(value : String) -> Bool {
 ///|
 fn known_capability(capability : String) -> Bool {
   [
-    "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
+    "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mapping", "posix-cwd",
     "windows-cwd", "drive-cwd-c",
   ].contains(capability)
 }
@@ -426,8 +426,15 @@ fn case_available(fixture : Fixture, manifest : Manifest) -> Bool {
     manifest.capabilities.contains(cap) &&
     (match cap {
       "root-mount" => manifest.context.mounts.any(mount => mount.posix == "/")
-      "usr-bin-mount" =>
-        manifest.context.mounts.any(mount => mount.posix == "/usr/bin")
+      "usr-bin-mapping" =>
+        // Availability is a measured path mapping, not a claim that this
+        // spelling has a distinct mount. MSYS2 commonly resolves /usr/bin
+        // below its root mount. Exact fixture results still validate the map.
+        manifest.context.mounts.any(mount => {
+          mount.posix == "/" ||
+          mount.posix == "/usr" ||
+          mount.posix == "/usr/bin"
+        })
       "posix-cwd" => manifest.context.posix_cwd is Some(_)
       "windows-cwd" => manifest.context.windows_cwd is Some(_)
       "drive-cwd-c" =>
@@ -1499,7 +1506,7 @@ async fn self_test() -> Unit {
       git_sha: "0000000000000000000000000000000000000000",
     },
     capabilities: [
-      "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
+      "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mapping", "posix-cwd",
       "windows-cwd", "drive-cwd-c",
     ],
     context: {
@@ -1553,6 +1560,37 @@ async fn self_test() -> Unit {
       validate_manifest(manifest)
       validate_suite(suite, manifest)
       let first = suite.cases[0]
+      if path == "testdata/oracle/fixtures.readonly-matrix.json" &&
+        profile == "msys2" {
+        let lexical_mapping : Manifest = {
+          ..manifest,
+          context: {
+            ..manifest.context,
+            mounts: [
+              { posix: "/", windows: "C:/msys64", case_policy: "sensitive", },
+              {
+                posix: "/bin",
+                windows: "C:/msys64/usr/bin",
+                case_policy: "sensitive",
+              },
+            ],
+          },
+        }
+        // Every required matrix case must run with the actual MSYS2 root/bin
+        // declarations, without inventing a separate /usr/bin mount.
+        validate_suite(suite, lexical_mapping)
+        let mapping_fixture : Fixture = {
+          ..first,
+          required_capabilities: ["usr-bin-mapping"],
+        }
+        require(
+          !case_available(mapping_fixture, {
+            ..lexical_mapping,
+            context: { ..lexical_mapping.context, mounts: [], },
+          }),
+          "usr-bin mapping requires an applicable explicit context mount",
+        )
+      }
       expect_failure(() => {
         validate_suite(
           { ..suite, cases: [{ ..first, required_capabilities: ["typo"], }], },

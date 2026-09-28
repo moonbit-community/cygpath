@@ -9,6 +9,18 @@
   "source_revision": "Independently authored custom mount/drive-prefix fixtures; actual official configuration and measurements retained by CI, no expected output imported.",
   "cases": [
     {
+      "case_id": "custom-drive-prefix-invalid-list",
+      "category": "custom-list-conversion-error",
+      "source_type": "posix",
+      "upstream_argv": ["-wp", "{drive_prefix}/c/ok:{drive_prefix}/cat/file"],
+      "project_argv": ["-wp", "{drive_prefix}/c/ok:{drive_prefix}/cat/file"],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": ["portable-paths"],
+      "allowed_backends": ["wasm", "native"],
+      "directory_preparation": "none-read-only"
+    },
+    {
       "case_id": "custom-drive-prefix-forward",
       "category": "p3-second-wave",
       "source_type": "windows",
