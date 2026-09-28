@@ -1,144 +1,91 @@
 # cygpath Architecture Handbook
 
-Design baseline: 2026-09-28. At the P0 baseline, initialization was complete and all functionality and APIs were still planned.
+This handbook describes the implemented contracts, package boundaries, upstream
+references, validation evidence, and remaining delivery work. Its baseline is
+2026-09-28. The reusable library and root executable are implemented; P3 is
+complete for the explicit-context portable matrix frozen in
+[`p3-scope.json`](../testdata/oracle/p3-scope.json).
 
-This handbook tells implementers and reviewers what to build, where the behavior comes from, how packages are separated, what the input/output contracts are, and which evidence establishes completion. “Should” and “must” in these chapters express implementation requirements; they do not imply that the corresponding feature already exists.
+## Verified status
 
-## Current implementation status
+Code revision **`b32dd7448658bc251b216ba93a5c120ef54fdbc9`** passed
+[Check](https://github.com/moonbit-community/cygpath/actions/runs/36385821361)
+on Linux, macOS, and Windows, and
+[Windows oracle](https://github.com/moonbit-community/cygpath/actions/runs/36385821354)
+for Cygwin/MSYS2 with both default and custom mount contexts.
 
-The P1 library is implemented in [`lib/`](../lib/README.mbt.md). Its public interface is recorded in [`lib/pkg.generated.mbti`](../lib/pkg.generated.mbti). `Context::new`, `Mount::new`, `Context::convert`, and `Context::convert_list` provide:
-
-- Explicit Windows/POSIX input syntax and Windows/Mixed/POSIX output formats.
-- Cygwin and MSYS2 drive-prefix profiles, custom prefixes, and `/proc/cygdrive` fallback output.
-- Drive-absolute, relative, drive-relative, rooted, and UNC paths; lexical normalization and explicit cwd resolution.
-- Validated mount tables with component-boundary matching, longest-prefix selection, case policies, and stable reverse aliases.
-- Direction-specific PATH-list conversion and structured errors with original member indices.
-- Validation of Unicode, namespaces, context, and Windows filename representability.
-
-`Context` and `Mount` have private fields. Context construction copies caller-owned collections. Conversion uses pure MoonBit with no host inspection, I/O, project FFI, or external process invocation. The package uses only the MoonBit core library.
-
-The P2 executable is implemented in root [`main.mbt`](../main.mbt), composed from
-the pure [`internal/cli`](../internal/cli/moon.pkg) package and the
-[`internal/host`](../internal/host/moon.pkg) runtime boundary. It supports the
-documented conversion and context options, help/version, file and stdin
-records, strict UTF-8, stable diagnostics, and exit codes. Known unsupported
-options are recognized and rejected explicitly. The root and host packages
-support Wasm and Native; the pure packages remain checked on all compiler
-targets. The [development guide](08-development-and-release.md) records pinned
-runtime dependencies and local commands.
-
-Local macOS validation on 2026-09-28 used `moon 0.1.20260920 (914d7da)` and `moonc v0.10.14+7d59c7ec9`:
-
-| Command | Result |
+| Evidence | Result |
 | --- | --- |
-| `moon check --target all --deny-warn` | Passed; pure packages checked on all targets, root/host on their declared Wasm/Native targets |
-| `moon test --target wasm --deny-warn` | 59 passed, 0 failed |
-| `moon test --target native --deny-warn` | 59 passed, 0 failed |
-| Release executable builds | Passed on Wasm and Native |
-| `scripts/check_cli.mbtx` | 57 cases per backend: 114 passed; all 57 exact byte/exit backend comparisons passed |
-| Isolated `moon install ./ --bin ...` | Passed; installed command passed version, conversion, and unknown-option smoke checks |
-| `moon package --list` | Passed; archive contains source, interfaces, documentation, and fixtures, without build outputs or installed dependencies |
-| `scripts/oracle.mbtx self-test` | Passed synthetic integrity, comparison, serialization, and manifest checks; validated 100 fixture/profile inputs; no official Windows program was run |
-| `scripts/ci_oracle.mbtx self-test` | Passed exact reviewed-difference matching and rejection checks; separate from actual Windows collection |
-| `moon test --deny-warn scripts/check_cli.mbtx` | One collector regression passed for Windows diagnostic escaping and raw argv preservation |
-| `moon info --target all` | Passed; generated interfaces reviewed for the intended public API |
-| `moon fmt` | Passed |
+| Unit and documentation tests | 99 passed per backend, Wasm and Native, on each of three hosts |
+| Actual CLI contracts | 57 cases per backend on each host; byte/exit equality across backends |
+| External public API consumer | Passed Wasm and Native on all three hosts |
+| Official supported-domain comparisons | 7,144 exact; zero mismatches |
+| Rejection-boundary observations | 160 malformed UTF-8 and 32 unavailable CP29001; counted separately |
+| Scope coverage | 152 capability rows; 473 unique fixture references; every required observation accounted for |
+| Windows failure-path evidence | Real timeout/cancellation/reaping, spawn failure, and three evidence-tampering drills passed in all four environments |
+| Publication | Maintainer-owned; exact published-version `moonx` retrieval remains pending |
 
-The suite comprises 30 library blackbox tests in [`conversion_test.mbt`](../lib/conversion_test.mbt), [`context_test.mbt`](../lib/context_test.mbt), and [`parsing_test.mbt`](../lib/parsing_test.mbt), four executable documentation examples in the [library guide](../lib/README.mbt.md), 16 pure CLI tests, and nine host record/streaming tests. It covers conversion vectors, context validation and collection ownership, scoped round trips and normalization, list errors, option parsing, and strict input framing. The latest library regression distinguishes the structural slash in `/` from an optional trailing separator after mapping to a Windows directory.
+The [remote report](09-remote-validation.md) and checked-in
+[`p3-evidence.json`](../testdata/oracle/p3-evidence.json) retain the exact run,
+artifact, upstream, environment, and digest identities. Raw observations are
+retained in the linked CI artifacts. Boundary tests do not count as official
+equality. Old reviewed-difference records are historical data and are not
+consulted by the current gate.
 
-The separate [process fixtures](../testdata/contracts/README.md) exercise real
-executables, including closed stdout, file-read errors, invalid UTF-8, BOM/CRLF,
-partial earlier output, and atomic list failures. The latest local run is saved
-under `_build/cli-root-regression/`; it includes the new mapped-root case and
-retains raw byte files, toolchain/Git provenance, artifact/fixture SHA-256 hashes,
-manifest, and summary. Earlier local runs remain under `_build/cli-evidence-1/`
-and `_build/cli-evidence-2/`. These generated files are ignored by Git.
-Portable-contract success does not establish complete Cygwin/MSYS2 compatibility.
-
-During P1, an additional temporary consumer module imported `ZSeanYves/cygpath/lib` through a local `moon.work` dependency. Its public-API smoke test passed on both Wasm and Native with `--deny-warn`, covering named types, context and mount construction, both conversion methods, and error construction and matching. This checks use from another module, not registry retrieval. The module now declares runtime dependencies for the executable; `lib/moon.pkg` still imports only core facilities.
-
-Remote validation on 2026-09-28 passed at `7dfe6ba58520a6f5249c41bd9aad39cfeb215440`:
-
-| Remote suite | Observed result |
-| --- | --- |
-| [Check](https://github.com/moonbit-community/cygpath/actions/runs/36371978473) | Linux, macOS, and Windows passed; each host ran 59 tests per backend and 114 process cases, with all 57 Wasm/Native comparisons matching |
-| [Windows oracle](https://github.com/moonbit-community/cygpath/actions/runs/36371978419) | Cygwin and MSYS2 passed the reviewed-difference gate; 400 comparisons completed, with 308 exact matches and 92 preserved raw mismatches covered by 23 reviewed profile/case records |
-
-The [remote validation report](09-remote-validation.md) records official
-versions and hashes, measured context, artifact locations, and each difference.
-Each profile has 10 dedicated inputs and 40 shared inputs, run on Wasm and Native
-in both collection and replay modes. There were no required skips, execution
-errors, timeouts, unexplained differences, or backend/replay inconsistencies.
-This completes the recorded P2 host matrix and a bounded P3 subset. Full P3
-coverage and real Windows collector fault drills remain open. P4 publication
-and retrieval of a published version through `moonx` are unexecuted; the
-maintainer will publish separately. Source and CI changes have been pushed to
-`main`; no Mooncakes publication was performed.
+P3 completion is a claim about this frozen supported matrix and the recorded
+hosts, profiles, and backends. It does not mean full official compatibility,
+every possible input combination, or every theoretically feasible pure MoonBit
+extension. The support and exclusion tables remain part of the contract.
 
 ## Reading order
 
-| Document | Questions it answers |
+| Document | Responsibility |
 | --- | --- |
-| [01 Upstream, Scope, and Compatibility Boundaries](01-upstream-and-scope.md) | Which mature implementations inform the project, which behavior can be modeled directly, and which capabilities are unsupported |
-| [02 Architecture and Project Structure](02-architecture.md) | Where code belongs, how data flows, and which dependencies are allowed |
-| [03 Path Semantics and Algorithm Contracts](03-path-semantics.md) | How drive letters, mounts, UNC, relative paths, lists, and Unicode are handled |
-| [04 Library API, CLI, and moonx Delivery](04-api-and-cli.md) | Invocation, option combinations, errors, input/output, and the published entry point |
-| [05 Validation and Implementation Roadmap](05-validation-and-roadmap.md) | Work at each stage, acceptance evidence, differential testing, and release gates |
-| [06 Architecture Decision Records](06-decisions.md) | Major choices, rationale, costs, and conditions for reconsideration |
-| [07 Oracle Collection](07-oracle-collection.md) | Manifest preparation, raw official observations, replay, and reviewed-difference gating |
-| [08 Development and Release](08-development-and-release.md) | Local execution, runtime dependencies, process acceptance, packaging, and release gates |
-| [09 Remote Validation](09-remote-validation.md) | Successful CI revisions, actual official baselines, observed differences, and the limits of the verified subset |
+| [01 Upstream References and Scope](01-upstream-and-scope.md) | Behavior sources, complete option inventory, supported and excluded capabilities |
+| [02 Architecture](02-architecture.md) | Package ownership, dependency direction, pure conversion and I/O boundaries |
+| [03 Path Semantics](03-path-semantics.md) | Roots, normalization, mounts, profile ordering, lists, Unicode and length rules |
+| [04 Library API, CLI, and moonx Delivery](04-api-and-cli.md) | Public API, option parsing, file records, diagnostics and root command entry |
+| [05 Validation and Implementation Roadmap](05-validation-and-roadmap.md) | P0–P4 acceptance criteria and evidence responsibilities |
+| [06 Architecture Decision Records](06-decisions.md) | Durable decisions, their costs, and conditions for revision |
+| [07 Oracle Collection](07-oracle-collection.md) | Measured contexts, immutable inputs, exact comparisons, replay and failure drills |
+| [08 Development and Release](08-development-and-release.md) | Local commands, dependencies, packaging, release and registry checks |
+| [09 Remote Validation](09-remote-validation.md) | Current verified revision, counts, upstream artifacts and evidence limits |
 
-Explicit user constraints take precedence when requirements conflict. Within this handbook, chapter 03 governs path contracts and chapter 04 governs interface contracts; chapter 01 records sources and scope, and chapter 05 assigns validation responsibilities. A semantic change must update the relevant chapters, fixtures, and API together. Snapshot updates must not conceal compatibility changes.
+User constraints take precedence. Chapter 03 governs path semantics and chapter
+04 governs interface behavior; chapter 01 defines scope and chapter 05 assigns
+acceptance duties. A semantic change must update the corresponding code,
+contract, fixtures, and evidence together.
 
 ## Established constraints
 
-1. Implement both the library and CLI in pure MoonBit. The direct entry point is `main.mbt` in the repository root, and the root package is executable. Users pass ordinary cygpath options and paths, such as `-h` and `-u`, to `moonx ZSeanYves/cygpath`. The public library lives in `lib/`.
-2. Wasm and Native share the same conversion engine and option semantics. Do not introduce project C/C++ FFI, an external `cygpath` proxy, or conversion logic that branches by backend.
-3. Official Cygwin behavior is the primary reference. Select MSYS2 mode explicitly; do not conflate `/c` with `/cygdrive/c`.
-4. Model context explicitly. Report errors for information unavailable to a pure algorithm; do not invent an installation root, short filename, or system directory.
-5. Build a reusable library and minimal CLI first, then collect differential evidence in real Windows environments. Planned, implemented, and differentially verified are separate states.
+1. Implement product logic in MoonBit. Root `main.mbt` is the direct executable
+   entry, with `moonx ZSeanYves/cygpath -h` or `-u` as the intended published
+   command. The public library remains in `lib/`.
+2. Share conversion and encoding between Wasm and Native. Do not introduce a
+   system-cygpath proxy, project C/C++ FFI, or backend-specific path rules.
+3. Select Cygwin/MSYS2 explicitly and preserve their observed differences,
+   including mount ordering. Do not guess host profiles, roots, or cwd.
+4. Keep immutable Context separate from mutable CLI record options and host
+   I/O. `drive_cwds` is validated metadata; upstream-compatible drive-relative
+   resolution uses the drive root.
+5. Require exact supported-domain bytes and status. Explicit undefined-input
+   and unavailable-code-page boundaries have independently checked project
+   rejection contracts and remain outside supported parity.
 
-Pure MoonBit means that project source and business logic do not depend on implementations in another language. Ordinary use of argument, file, and standard-stream facilities provided by the MoonBit compiler and runtime is allowed. This project does not reimplement the runtime's I/O internals, but boundary tests must expose any backend differences.
+Ordinary argument, file, and stream facilities supplied by MoonBit dependencies
+are allowed. The product does not replace the runtime's general I/O internals.
+Oracle tooling may invoke official programs and read Windows API facts solely
+to establish evidence; product packages never invoke that tooling.
 
-## Repository baseline and future structure
+## Implementation entry points
 
-The P0 baseline retained module metadata, the license, project documentation, agent agreements, and this handbook; template CLI code, placeholder source/tests, and template workflows were removed. At that baseline there was no `moon.pkg`, source code, or generated interface; `README.md` linked to `README.mbt.md`. Once implemented, the public library API is defined by `lib/pkg.generated.mbti`, generated with `moon info`; the root package is responsible only for the command-line entry point.
+[`lib/pkg.generated.mbti`](../lib/pkg.generated.mbti) records the public API.
+[`lib/README.mbt.md`](../lib/README.mbt.md) provides checked consumer examples.
+[`main.mbt`](../main.mbt) composes the CLI, encoding, and host packages.
+[`p3-scope.json`](../testdata/oracle/p3-scope.json) maps capabilities to required
+fixtures. The workflows retain process and official-oracle evidence separately.
 
-The planned source directories are described in [02](02-architecture.md). Create each directory when its responsibility is implemented. Empty functions, `TODO` tests, and `.gitkeep` files do not establish feature completion. P0 did not create a conversion implementation, published package, Git commit, or remote push.
-
-The Git remote is `https://github.com/moonbit-community/cygpath.git`, and the initial local branch is `main`. The MoonBit module remains `ZSeanYves/cygpath`; version `0.1.0` is development metadata. The publishing namespace requires independent verification.
-
-## First complete workflow
-
-The first workflow now runs without an installed Cygwin environment or a system `cygpath`:
-
-```text
-argv: ["-u", "C:\work\demo.txt"]
-  → CLI parses Windows input, POSIX output, and the default Cygwin prefix
-  → Construct an explicit Context without an installation root or cwd
-  → The core recognizes and renders a drive-absolute path
-stdout: /cygdrive/c/work/demo.txt + LF
-stderr: empty
-exit: 0
-```
-
-At P0 this was a planned end-to-end acceptance case. It is now covered by the
-`unix-default` process fixture on both Wasm and Native. Root mounts, relative
-paths, lists, file input, and failure cases have their own acceptance cases.
-File reading is invoked only when the selected options actually require it.
-
-## Historical P0 local validation and its limits
-
-Local macOS toolchain on 2026-09-28: `moon 0.1.20260920 (914d7da)` and `moonc v0.10.14+7d59c7ec9`.
-
-The following results came from the initial state, which still contained an empty root library package. They do not validate the subsequent root-executable design:
-
-| Command | Initial setup result |
-| --- | --- |
-| `moon check --target all --deny-warn` | Passed; checked only the configuration and backend checks for the then-empty root library package |
-| `moon test` | Exited successfully with no test entry point; 0 tests do not establish conversion correctness |
-| `moon info` | Passed; the generated interface contained no public values, types, or errors |
-| `moon fmt` | Passed; module metadata was formatted |
-
-The empty package configuration and generated interface were subsequently removed. The root-entry-point design update only synchronized the architecture agreements for the root executable and `lib/`; it did not restore placeholder packages or add an empty main. P0 did not run official Cygwin/MSYS2, compare Wasm/Native CLI output, or perform registry/moonx release acceptance. Those tasks have separate completion criteria in P1–P4.
+The original P0 template cleanup and design-only state are historical. Empty
+package checks from that stage are not implementation evidence. Module version
+`0.1.0` is candidate metadata; the maintainer still owns publication and the
+subsequent registry retrieval check.

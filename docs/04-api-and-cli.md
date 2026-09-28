@@ -1,26 +1,38 @@
 # 04 Library API, CLI, and moonx Delivery
 
-Status: implemented library and initial CLI contract. See [the architecture index](README.md) for current host/backend verification and open acceptance gates. The generated `lib/pkg.generated.mbti` is authoritative for the public library API. The pseudocode signatures below summarize the contract; executable MoonBit examples live in [the library guide](../lib/README.mbt.md). Portable CLI acceptance has run on Linux, macOS, and Windows; selected real Windows differential results are recorded in [the remote validation report](09-remote-validation.md). Broader official compatibility and registry/moonx acceptance remain separate requirements.
+Status: implemented and verified within the frozen P3 pure MoonBit,
+explicit-context matrix at `b32dd7448658bc251b216ba93a5c120ef54fdbc9`.
+See [the architecture index](README.md) and [remote validation](09-remote-validation.md)
+for exact host/backend and official-program evidence. P3 completion does not
+mean complete Windows runtime emulation or publication: registry retrieval and
+version-pinned `moonx` acceptance remain release gates.
 
-## 1. Minimal library surface
+The generated [library interface](../lib/pkg.generated.mbti) is authoritative
+for public signatures. Executable examples are in [the library guide](../lib/README.mbt.md).
+Path algorithms and profile distinctions are defined in [03](03-path-semantics.md).
 
-The public library package is `ZSeanYves/cygpath/lib`. Public concrete types belong to `lib/`; do not define them in an `internal` package and re-export them. The module root `ZSeanYves/cygpath` is reserved for the executable entry point and is not a library import path.
+## 1. Public library API
 
-| Type | Design |
+Import `ZSeanYves/cygpath/lib`. The module root `ZSeanYves/cygpath` is the
+executable coordinate. Public concrete conversion types belong to `lib/`;
+internal command-line and host types are not consumer library API.
+
+| Type | Purpose |
 | --- | --- |
-| `InputSyntax` | Windows / Posix; no Auto |
-| `OutputFormat` | Windows / Mixed / Posix; no unsupported Dos variant |
-| `Profile` | Cygwin / Msys2 |
-| `UnixPrefix` | Configured / ProcCygdrive; affects only the drive fallback mapping |
-| `MountCase` | Sensitive / AsciiInsensitive; not full Windows Unicode case folding |
-| `Mount` | Validated POSIX absolute mount point, Windows absolute target, and comparison policy |
-| `Context` | Opaque mapping and cwd snapshot, immutable after construction |
-| `ConversionError` | Typed errors suitable for pattern matching, without host exception objects |
+| `InputSyntax` | `Windows` or `Posix`; no automatic library grammar |
+| `OutputFormat` | `Windows`, `Mixed`, or `Posix` |
+| `Profile` | `Cygwin` or `Msys2`: drive-prefix default, mount ordering, and mapped-root behavior |
+| `UnixPrefix` | `Configured` or `ProcCygdrive`, affecting unmatched drive fallback |
+| `MountCase` | `Sensitive` or ASCII-only `AsciiInsensitive` |
+| `Mount` | Opaque validated absolute POSIX-to-Windows mapping |
+| `Context` | Opaque immutable explicit mapping/cwd snapshot |
+| `ConversionError` | Checked, structured failures without host exception objects |
 
-Constructor and conversion pseudocode signatures:
+Signatures below omit the implicit method receiver and summarize defaults:
 
 ```text
-Mount::new(posix, windows, case?=Sensitive) -> Mount raises ConversionError
+Mount::new(posix, windows, case?=Sensitive)
+  -> Mount raises ConversionError
 
 Context::new(profile?=Cygwin, drive_prefix?, mounts?=[],
              posix_cwd?, windows_cwd?, drive_cwds?=empty)
@@ -31,60 +43,81 @@ Context::convert(path, from~, to~, absolute?=false,
   -> String raises ConversionError
 
 Context::convert_list(paths, from~, to~, absolute?=false,
-                      unix_prefix?=Configured)
+                      recognize_windows?=false, unix_prefix?=Configured)
   -> String raises ConversionError
 ```
 
-Use MoonBit labeled parameters for optional settings rather than introducing a large Options structure for one call. Context is a reusable domain object holding related state. The first implementation may expose only its completed subset. API expansion requires corresponding tests and mbti updates; do not reserve API names with public methods that always raise NotImplemented.
+Reuse a Context across conversions. Its constructor copies collections and
+validates mounts, prefixes, cwd, and drive metadata. `drive_cwds` is validated
+metadata, not a conversion-base override: explicit Windows drive-relative
+conversion follows cygpath's drive-root rule. Context never reads the host.
 
-`convert_list` is distinct from repeated `convert` calls: it owns direction-specific separators, empty-member semantics, and atomic failure. Callers that already have arrays can call `convert` according to their own batch failure policy. Do not add a generic batch-processing framework initially.
+`convert_list` owns source delimiters, empty-member handling, and atomic failure.
+Its optional `recognize_windows` flag recognizes backslash-containing members
+of an already-split POSIX list, as needed by the CLI. The default keeps library
+source grammar explicit. Callers with structured arrays can call `convert`
+under their own batch policy; no generic batch framework is imposed.
 
-## 2. Structured errors and diagnostics
+## 2. Structured errors and diagnostic ownership
 
-| Error category | Information for diagnostics | Example |
-| --- | --- | --- |
-| EmptyPath | Input category from the caller's request; no error payload | Empty single-path string |
-| InvalidPath | Reason and UTF-16 offset when available | NUL or incomplete ordinary prefix |
-| InvalidContext | Field/mount index and reason | Relative mount target or duplicate mount point |
-| MissingContext | Required field and relevant drive | `C:a` without a cwd for C |
-| UnsupportedNamespace | Prefix category | Extended or device namespace |
-| UnrepresentablePath | Component and reason in the error; target format from the caller's request | A filename not representable in Windows |
-| InvalidOptions | Conflicting combination | ProcCygdrive requested for non-POSIX output |
-| ListEntryError | Original member index and underlying error | Conversion of the third member fails |
+| Library error | Payload and meaning |
+| --- | --- |
+| `EmptyPath` | Empty single-path input |
+| `PathTooLong(String)` | Original path with an overlong Windows-output component |
+| `InvalidDrivePrefix` | Configured drive branch is not followed by one ASCII drive letter |
+| `InvalidPath(reason~, offset~)` | Invalid text/structure, including NUL or unpaired UTF-16 |
+| `InvalidContext(field~, reason~)` | Invalid mount, cwd, prefix, or drive metadata |
+| `MissingContext(field~)` | A required mapping or source cwd is absent |
+| `UnsupportedNamespace(String)` | Unsupported device, incomplete UNC, or virtual mapping |
+| `UnrepresentablePath(component~, reason~)` | Unsupported ordinary component/authority spelling |
+| `InvalidOptions(String)` | Invalid library option combination |
+| `ListEntryError(index~, cause)` | Original zero-based member index and underlying error |
 
-Input syntax and output format are explicit conversion arguments. Callers retain
-them when composing diagnostics; errors do not duplicate that request metadata.
-The generated interface records the exact payload of each error constructor.
+The caller retains input/output request metadata. The library returns errors,
+not formatted English messages, and never returns a partial list.
 
-`internal/cli` owns `CliError`, including unknown options, missing values,
-conflicting options, unsupported capabilities, missing input, invalid records,
-and wrapped library conversion failures. `internal/host` owns `HostError`, with
-`ReadError`, `WriteError`, and `InvalidEncoding`. These host/command-line errors
-do not belong in the pure library. Main matches their categories to choose a
-diagnostic and exit status; it does not parse English messages.
+`internal/cli` owns argument errors and wraps conversion errors. Its
+`ListConversion(original, cause)` retains a typed `ListEntryError` while emitting
+the observed whole-list diagnostic. `internal/host` classifies file-not-found,
+permission, non-directory, read/write, and UTF-8 decoding failures. The root
+entry point dispatches on types, never on exception-message substrings.
 
-Use checked errors for foreseeable input failures. Do not panic or silently
-return the original input. CLI diagnostics use stable ASCII error identifiers,
-fixed short English messages, and necessary position information, such as
-`cygpath: missing-context: "root or mount"`. User-controlled values are quoted
-and escaped. Each diagnostic formatter returns one string without LF; main
-appends LF and writes it to stderr. Exact expected bytes are frozen in
-[`testdata/contracts/cli.json`](../testdata/contracts/cli.json), with execution
-results recorded separately. Library/list indices and UTF-16 offsets are zero
-based; file diagnostic line numbers are one based.
+Project-specific failures use stable identifiers such as `missing-context` and
+`unsupported-capability`, with escaped values. Official option errors use the
+observed usage/getopt protocol. Known conversion failures quote the **raw**
+original operand, including backslashes and any control characters:
 
-## 3. Command-line entry point
+```text
+cygpath: can't convert empty path
+cygpath: error converting "NAME" - File name too long
+cygpath: error converting "NAME" - No such file or directory
+cygpath: error converting "WHOLE_LIST" - Unknown error -1
+```
 
-The executable package is the module root. Place `main.mbt` directly in the repository root and declare `pkgtype(kind: "executable")` in the root `moon.pkg`. The public library resides in `lib/`. After publication, users pass options and paths directly to `moonx ZSeanYves/cygpath`. The root main only orchestrates arguments, I/O, and execution.
+The final form applies to the tested list-member length and invalid-drive-prefix
+failures: the upstream wrapper assigns a nested `-1` result to errno. Unsupported
+project namespaces retain their typed project diagnostics. Diagnostic methods
+return text without the final LF; root appends LF and writes stderr. Library
+indices/UTF-16 offsets are zero-based; host input-record numbers are one-based.
+Exact process expectations and raw evidence remain separate validation assets.
 
-For the implemented local executable, use:
+## 3. Executable entry point and package coordinate
+
+The executable package is the repository root, with `main.mbt` directly there
+and `pkgtype(kind: "executable")` in its `moon.pkg`. The entry point composes pure
+argument/conversion code with general-purpose MoonBit runtime I/O. It performs
+no Windows conversion FFI and never launches system cygpath as a fallback.
+
+Local invocation:
 
 ```sh
 moon run --target wasm . -- -u 'C:\work\demo.txt'
 moon run --target native . -- -u 'C:\work\demo.txt'
 ```
 
-After publication and namespace verification, use the root coordinate for ordinary invocation and pin a version for reproduction. `<published-version>` is a placeholder; no version has been published yet:
+After publication and namespace verification, ordinary usage is through the root
+coordinate. These are future delivery examples; `<published-version>` is not
+an already-published release:
 
 ```text
 moonx ZSeanYves/cygpath -h
@@ -92,75 +125,143 @@ moonx ZSeanYves/cygpath -u 'C:\work\demo.txt'
 moonx ZSeanYves/cygpath@<published-version> -u 'C:\work\demo.txt'
 ```
 
-Toolchain evidence: on 2026-09-28, local `moonx --help` confirmed package coordinates, version pinning, and the default `wasm` target; `moon install --help` confirmed local executable-package installation. The [official package configuration documentation](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html) confirms the executable declaration. Current `moonx` help still lists native but marks it deprecated and scheduled for removal, so `moonx --target native` must not be treated as the long-term delivery entry point. Check Native consistency through `moon run/build`.
-
-CLI version output must identify the MoonBit implementation, its own module version, and supported profiles. It must not impersonate an official Cygwin version. Version-pinned invocation supports reproduction; `@latest` is appropriate for intentional updates, not benchmark coordinates.
-
-The current development version record is:
+The `--` above separates `moon run` arguments. Cygpath itself accepts normal
+short flags such as `-h`, `-u`, and `-aw`. The development version output is:
 
 ```text
 cygpath (MoonBit) 0.1.0
 Profiles: cygwin, msys2
 ```
 
-The record ends with LF. The root module uses ordinary `README.md` because the
-root package is executable; checked library examples remain in
-`lib/README.mbt.md`. Root and `internal/host` currently support Wasm and Native.
-The pure library and argument/conversion layer compile for all standard targets;
-this does not imply JavaScript or Wasm GC command-line I/O support.
+It ends with LF and identifies this implementation rather than impersonating an
+official version. Help documents project extensions and supported capabilities.
+The root README is ordinary `README.md`; compiled documentation examples belong
+in `lib/README.mbt.md` because the root package is executable.
 
-## 4. Option parsing and execution model
+Root and host I/O support Wasm and Native. The pure library and CLI compile for
+all standard compiler targets, which does not imply JavaScript/Wasm GC CLI I/O
+support. On 2026-09-28, local `moonx --help` confirmed coordinate/version syntax
+and default Wasm delivery; its Native option was deprecated. Verify Native
+through development build/run commands, and recheck current tooling at release.
 
-The CLI separates pure `parse_args`, pure application execution, and main's I/O orchestration. argv is the string array provided by the runtime. Do not repeat shell tokenization, backslash decoding, or variable expansion.
+## 4. Parser and execution interfaces
 
-`parse_args` returns `Help`, `Version`, or `Convert(Request)`. An opaque Request
-exposes `input()` (`Names` or `File`), `ignore_missing()`, and `prepare()`.
-Preparing a conversion creates an opaque Converter with one validated Context;
-`Converter::convert` handles one NAME/file record, including list conversion
-when requested. None of these operations performs I/O. Request input arrays are
-copied so callers cannot mutate the stored request. These integration types
-belong to the internal CLI package and are not public library API.
+`parse_args(Array[String])` receives already-tokenized argv without the executable
+name. It performs no I/O and returns `Help`, `Version`, `ExitSuccess`, or
+`Convert(Request)`. `ExitSuccess` covers an ignored usage/no-input condition.
+Request exposes `input()` (`Names` or `File`), `ignore_missing()`,
+`per_line_options()`, and `prepare()`. Input arrays are copied.
 
-Implemented output options are `-u/-w/-m`, `--unix/--windows/--mixed`, and `-t/--type`, with `-u` as the default. `-a/--absolute`, `-p/--path`, `-U/--proc-cygdrive`, and `-f/--file` control absolute resolution, list conversion, the prefix, and the input source respectively. `-i/--ignore` handles missing input only; it does not suppress conversion errors. Help and version use `-h/--help` and `-V/--version`.
+`prepare()` creates a Converter with one validated immutable Context and mutable
+conversion flags. `convert(path)` returns one string; `convert_operand(path)`
+handles `-i` and returns `RecordAction`. `convert_file_record(record)` additionally
+applies `-o` parsing/state. `RecordAction` is `Output(String)`, `Skip`, or
+`Stop(String)`. Root writes Output using `codepage()`, ignores Skip, and writes
+Stop control text as UTF-8 before ending the stream. These are internal
+integration interfaces, not additions to the public library surface.
 
-Arguments in entry-point examples illustrate usage and do not require double hyphens. Short options use one hyphen; long options use the corresponding names above. The root `moonx` entry point does not change cygpath option spelling.
+The parser does not repeat shell tokenization, remove backslash escapes, expand
+variables, or interpret globs. GNU-style argument permutation permits options
+after NAME arguments while preserving NAME order. `--` ends option parsing;
+`-` is an ordinary NAME unless consumed as a file option's value.
 
-Short options may be combined, as in `-aw`. A short option's value may be attached or supplied in the next argument. Long options accept both `--type=windows` and `--type windows`. Everything after `--` is a NAME rather than an option. Initially, options are allowed only before the first NAME. Option-like text after a NAME is treated as a path. This is a portable CLI rule; retain its difference from GNU argument permutation in the compatibility matrix.
+Short flags may be combined (`-aw`). A value-taking short flag consumes the rest
+of its token or the next argument (`-twindows`, `-C1252`, `-f input.txt`). Long
+options accept `--type=windows` and `--type windows`. Unique official long-option
+prefixes are recognized; ambiguous prefixes fail. Project extensions require
+exact spelling and do not create new ambiguity among official option names.
 
-Repeated declarations of the same format are allowed when they do not conflict. Conflicting output formats produce InvalidOptions; do not silently use the last one. Recognize `-t dos` and `-d/-s`, but return UnsupportedCapability rather than treating them as ordinary Windows output. Diagnose conflicts among `-r/-l/-s` explicitly even while those capabilities are unavailable. Parsing must not silently discard unsupported capabilities.
+Options are interpreted in scan order. Help/version stop at their position and
+skip subsequent validation, context construction, and file reads. Thus
+`-h --bad` shows help, while `--bad -h` fails; `-hV` shows help. Earlier immediately
+invalid type/codepage syntax still fails before later help. Conflicts determined
+after scanning may be bypassed by an earlier help/version action, matching the
+official control flow.
 
-Identical scalar context and file declarations may repeat; conflicting values
-fail. `--mount` appends in declaration order, with duplicate or conflicting
-mounts rejected during context construction. `--drive-cwd` accepts one ASCII
-drive letter and rejects any duplicate after case folding. Supplying both help
-and version is a conflict. Unsupported and malformed options still fail when
-help/version is present; valid help/version skips context construction and file
-reads.
+## 5. Options and precedence
 
-`-U` with non-POSIX output is an invalid combination. Known unsupported options such as `-o`, `-M`, `-c`, system-directory options, and non-UTF-8 code pages explain why the capability is unsupported; only unknown names produce UnknownOption. See 01 for the complete inventory. P2 supports `-C UTF8`/`-C 65001` as explicit UTF-8 selection, restricted to Windows/Mixed output. `-C 0` remains unsupported rather than pretending to implement locale-dependent behavior.
+| Option | Implemented behavior |
+| --- | --- |
+| `-u`, `--unix` | POSIX output; ordinary default |
+| `-w`, `--windows` | Windows output with backslashes |
+| `-m`, `--mixed` | Windows semantics with forward slashes |
+| `-t`, `--type TYPE` | Case-insensitive `unix`, `windows`, or `mixed`; `dos` is recognized but unsupported |
+| `-a`, `--absolute` | Resolve relative paths from explicit context |
+| `-p`, `--path` | Convert each NAME/record as one atomic PATH list |
+| `-U`, `--proc-cygdrive` | POSIX drive fallback through `/proc/cygdrive`; ignored for Windows/Mixed output |
+| `-r` | Add a root-local prefix to single Windows output; does not alter list output |
+| `-f`, `--file FILE` | Read UTF-8 records from a file; `-` selects stdin |
+| `-o`, `--option` | Interpret leading-hyphen records as per-record option declarations; requires `-f` |
+| `-i`, `--ignore` | Skip empty operands/records and suppress official usage failures occurring after this flag |
+| `-C`, `--codepage CP` | Select an implemented output encoding; ignored for POSIX output after syntax validation |
+| `-A`, `--allusers` | Accepted without effect on ordinary conversion |
+| `-h`, `--help`; `-V`, `--version` | Implementation help/version |
 
-For ordinary conversion requests, finish validating all options before reading files or producing stdout. Execute help/version control commands after successful parsing, without constructing context or reading files.
+Repeated output flags are accepted. `-w` together with `-m` selects Mixed in
+either order; POSIX plus Windows flags conflict except in the upstream's outer
+`-o` configuration. `-r` requires Windows output and conflicts with Mixed,
+short-name, or long-name modes. The upstream `--root-local` long spelling is
+rejected in the pinned behavior; use `-r`.
 
-## 5. CLI extensions for explicit context
+`-i` is stateful during option scanning: `-i -tinvalid` exits successfully without
+output, but `-tinvalid -i` fails. It does not suppress unknown/getopt errors,
+conversion failures, missing context, invalid encoding, or I/O errors. No NAME
+without `-i` is a usage failure; an explicitly selected empty input stream is
+successful without needing `-i`.
 
-These options are project additions, not claimed to come from official cygpath:
+The last `-f` value wins; `-f` and NAME cannot be combined. The last `-C` value
+wins. Identical scalar project context declarations may repeat; conflicting
+values fail. Mounts append, and Context rejects duplicates/conflicts. Duplicate
+`--drive-cwd` letters are rejected after ASCII case folding.
+
+Recognized but unsupported capabilities remain explicit errors: `-d/--dos`,
+`-s/--short-name`, `-l/--long-name`, `-M/--mode`, `-c/--close HANDLE`,
+`-D/--desktop`, `-H/--homeroot`, `-O/--mydocs`, `-P/--smprograms`, `-S/--sysdir`,
+`-W/--windir`, and `-F/--folder ID`. Invalid combinations are diagnosed before
+attempting unavailable capabilities. See [01](01-upstream-and-scope.md) for the
+complete capability inventory.
+
+## 6. Explicit context and natural input recognition
+
+These project extensions change the request, never the real host environment:
 
 | Option | Meaning |
 | --- | --- |
-| `--from windows\|posix` | Explicit input syntax, especially for lists and ambiguous paths |
-| `--profile cygwin\|msys2` | Default to cygwin; explicitly switch prefix style |
-| `--root WINDOWS` | Create the `/` root mount without implicit `/usr/bin` or other aliases |
-| `--mount POSIX WINDOWS` | Repeatable; add ordinary mounts in declaration order, using two separate arguments to avoid colon ambiguity |
-| `--drive-prefix POSIX` | Override the profile's default drive prefix |
-| `--posix-cwd POSIX` | Supply cwd for making POSIX relative paths absolute |
-| `--windows-cwd WINDOWS` | Supply cwd for Windows relative paths |
-| `--drive-cwd DRIVE WINDOWS` | Repeatable; supply a drive-specific current directory |
+| `--from windows\|posix` | Override natural source recognition |
+| `--profile cygwin\|msys2` | Select drive-prefix defaults and profile-specific mapping rules |
+| `--root WINDOWS` | Add `/` as an explicit mount, without implicit aliases |
+| `--mount POSIX WINDOWS` | Append a mount using two operands |
+| `--mount-case POSIX sensitive\|ascii-insensitive` | Set a matching mount's comparison policy, independent of declaration order |
+| `--drive-prefix POSIX` | Override the profile's default prefix |
+| `--posix-cwd POSIX` | Supply an absolute POSIX cwd |
+| `--windows-cwd WINDOWS` | Supply an absolute Windows cwd/current drive |
+| `--drive-cwd DRIVE WINDOWS` | Validate per-drive cwd metadata; does not alter drive-relative conversion |
 
-Initial CLI mounts use the Sensitive policy; library callers may explicitly choose AsciiInsensitive. Do not read the process cwd, `HOME`, `MSYSTEM`, or the registry to guess Context. Every option changes only the request's context, never the actual environment, mount table, or current directory.
+Mount-case paths normalize trailing `/`; a policy without a matching mount is
+an error. Default comparison is Sensitive. No process cwd, HOME, MSYSTEM,
+registry, or installation-root guessing populates Context.
 
-Determine the input direction as follows: honor `--from` first; otherwise, `-u` uses Windows and `-w/-m` use Posix. However, a single path outside list mode with a drive prefix, backslash root, or extended/device prefix is explicitly recognized as Windows. Do not infer a mixture of syntaxes member by member within a list. Complete double-forward-slash UNC is explicitly supported in both syntaxes. A same-format input such as `-u /usr/bin` requires `--from posix`; do not leave the ambiguity to the host machine.
+With no `--from`, POSIX output uses Windows grammar plus its already-POSIX
+absolute passthrough. Single Windows/Mixed output recognizes a drive prefix,
+backslashes, or ordinary extended/device prefix; otherwise it uses POSIX grammar.
+Complete UNC is supported in either grammar. A single-backslash-rooted natural
+Windows input resolves against the explicit Windows current drive.
 
-Examples of the implemented explicit-context rules:
+For Windows/Mixed output, a bare drive (`C:`), or a drive-relative operand with
+`-a` (`C:child`), follows the official CLI's literal POSIX-relative branch.
+Given `posix_cwd=/cygdrive/c/cwd`, `-aw C:child` produces
+`C:\cwd\C<U+F03A>child`, whereas explicit `--from windows -aw C:child`
+produces `C:\child`. `-u C:child` yields `/cygdrive/c/child`. Per-drive metadata
+does not change these rules.
+
+Natural list input uses Windows syntax for POSIX output and POSIX syntax for
+Windows/Mixed output. After delimiter splitting, backslash-containing members
+of a POSIX list use Windows grammar. Consequently, `-wp 'C:\one'` splits on the
+colon; use `--from windows` when deliberately supplying a Windows list for
+Windows output. `-u /usr/bin` needs no override; explicit `--from posix` is useful
+when the caller wants POSIX normalization rather than spelling passthrough.
+
+Examples below show literal argument values; quote them for the actual shell:
 
 ```text
 cygpath -w --root C:\cygwin64 /usr/bin
@@ -172,64 +273,117 @@ cygpath -w --root C:\cygwin64 --mount /usr/bin C:\cygwin64\bin /usr/bin
 cygpath -u --profile msys2 C:\work
   => /c/work
 
-cygpath -w -a --root C:\cygwin64 --posix-cwd /home/user ../work
+cygpath -aw --root C:\cygwin64 --posix-cwd /home/user ../work
   => C:\cygwin64\home\work
 ```
 
-Spaces and backslashes in these examples are argument values; quote them according to the shell used in an actual terminal. In particular, MSYS2 may rewrite argv before launching a native program. The differential harness must control that boundary.
+MSYS shells may rewrite argv before launching a program. The official collector
+records and controls launch transport; product parsing cannot reconstruct argv
+that a parent already changed.
 
-## 6. Input records and output protocol
+## 7. File records and `-o` state
 
-Process NAME arguments in order. Write each successful result as one UTF-8 record followed by LF. Multiple NAME arguments and `-p` are independent dimensions: one NAME may contain an entire PATH list. stdout contains only results, help, or version output; diagnostics go to stderr.
+`-f FILE` and `-f -` stream input incrementally. The byte protocol is:
 
-`-f FILE` and `-f -` are implemented. The first version prohibits combining `-f` with NAME to avoid ambiguous ordering. Files are read incrementally, accepting LF/CRLF and removing only line terminators, without trimming path spaces. A UTF-8 BOM is allowed and removed only at the first byte position of the file; a BOM elsewhere is path content. The final line need not have a terminator. A BOM-only file has no records, while a BOM followed by LF has one empty record. Memory use is bounded by the longest individual record, not the complete file.
+1. Translate CRLF to LF. Preserve a standalone CR, including a final CR at EOF.
+2. End a record at LF or after 8192 bytes following CRLF translation, matching
+   the official `fgets` capacity. LF itself is not part of the path. A longer
+   physical line becomes independently converted chunks.
+3. Treat the first NUL in a record as the end of path text. Bytes after it in
+   that record are not UTF-8-decoded; subsequent records are still processed.
+4. Decode the visible bytes as strict UTF-8. Retain BOM characters at every
+   position, including byte zero. Preserve spaces and a final unterminated record.
 
-An empty line is an empty path and fails with EmptyPath; in `-p` mode, use the empty-list semantics from 03 instead. An empty file counts as no input, which `-i` may turn into success with no output. This empty-file/empty-line policy is a portable contract. The recorded official differences below do not broaden `-i` or change that policy.
+An empty stream succeeds with no output. A BOM-only stream contains a BOM path.
+An empty record is an empty operand, including in list mode: report
+`can't convert empty path` with exit 1, or skip it with `-i`. Malformed UTF-8
+fails deterministically, preserving earlier output. Upstream malformed-input
+and unavailable-CP29001 observations are retained as separately identified
+boundaries, not advertised as successful conversion matches.
 
-All output uses UTF-8 regardless of Windows OEM/ANSI code pages or the environment locale. Do not translate line endings for the platform. Because the CLI uses a line protocol, validate CR/LF in NAME arguments and in each file/stdin record after removing its terminator, rejecting remaining embedded line breaks. Converted output is checked as well, including POSIX names introduced by explicit context. Such failures are `InvalidRecord` with exit code 2. Library single-path behavior is determined by its own syntax contract. File/stdin decoding rejects invalid UTF-8 rather than replacing characters automatically; argv is supplied as strings by the runtime.
+With `-o`, only a record whose first character is `-` starts option parsing.
+Split it at its first ASCII whitespace character: the first token is an option
+bundle, and the remaining text after leading whitespace is **one** operand.
+Do not apply shell quoting or split the remaining path on spaces. A value-taking
+option can use its attached value (`-tWindows /path`); `-t windows /path` instead
+passes `windows /path` as its type value and fails.
 
-Process multiple NAME arguments or file lines in order and stop at the first conversion failure. Earlier successful output may already have been written. An individual list must convert completely before its line is written. After an output I/O failure, do not process later input or automatically retry the entire batch and duplicate results.
+Each option record resets conversion flags to defaults, applies that record's
+options, and converts its optional path under the same fixed Context. Plain
+records reuse the latest state. Output type, absolute/list/proc/root-local flags,
+ignore, explicit source grammar, and codepage all participate in that lifecycle.
+The outer `-o` mode remains enabled. Before an option record selects a format,
+outer `-o` without an output selector follows the official Windows-output default.
 
-`-i` only permits success with no output when there is no input at all. It does not suppress empty paths, invalid encoding, unknown options, missing context, or file-read errors.
+`-f` and `-o` inside option records are usage errors. The project Context is
+immutable for the stream: `--profile`, `--root`, `--mount`, `--mount-case`,
+`--drive-prefix`, `--posix-cwd`, `--windows-cwd`, and `--drive-cwd` in an option
+record are explicitly rejected. `--from` remains permitted and effective.
+A help/version record stops the stream after control output. An ignored usage
+record, such as `-i` with no operand, stops successfully without processing later
+records. An ignored empty operand skips only that operand.
 
-The pinned Windows runs observed the following differences in both official
-profiles. These descriptions apply to the collected fixtures, with exact raw
-bytes, status, versions, and review records in
-[the remote validation report](09-remote-validation.md):
+## 8. Output encoding and failure ordering
 
-| Recorded case | Project contract | Observed official behavior |
-| --- | --- | --- |
-| Empty stdin without `-i` | Missing-input diagnostic, exit 1 | No output, exit 0 |
-| Empty single-path record or operand | Empty-path diagnostic, exit 2; preserve earlier output and stop | Different diagnostic, exit 1; the tested partial-input cases preserve the same earlier stdout |
-| Initial UTF-8 BOM | Remove it only at byte zero | Retain it as path content |
-| Malformed UTF-8 after a valid record | Preserve the earlier record, report invalid encoding, stop with exit 1 | Repeat the previous record, continue processing, and exit 0 in the measured fixture |
-| Embedded LF in an operand | Reject it with InvalidRecord, exit 2 | Emit the embedded LF and exit 0 |
+Each successful conversion is encoded, then followed by one raw LF byte. Default
+output is UTF-8; POSIX output always uses UTF-8. Windows/Mixed output additionally
+supports 110 stateless legacy code pages plus UTF-8/65001. Their identities,
+mapping hashes, default characters, and source notices are frozen in the
+[Microsoft catalog](../third_party/microsoft/codepages.json) and
+[Unicode catalog](../third_party/unicode/codepages.json). Numeric pages use
+Windows best-fit mappings; unmapped UTF-16 words use the table's default
+character, so an unmapped supplementary scalar can yield two replacement bytes.
 
-Reviewed differences remain failed byte/status comparisons in the raw oracle
-records. They are accepted only under the explicit portable policies and exact
-observations recorded for those fixtures; they are not blanket allowances for
-new output. The portable contract suite continues to check the project behavior
-independently. Unmeasured stream, platform, and filesystem conditions retain their
-acceptance gates.
+`UTF8` and `UTF-8` aliases are case-insensitive. Numeric `-C` values use the
+official decimal `strtoul` grammar: leading ASCII whitespace and an optional sign
+are accepted; hex prefixes, underscores, and trailing junk are rejected.
+Unsigned-long overflow saturates before conversion to a 32-bit page number.
+`-C 4294968548`, for example, selects 1252. `-i` observes syntax errors in scan
+order. Repeated `-C` replaces the previous selection.
 
-## 7. Exit-code contract
+Windows-output `ANSI`, `OEM`, and `0` require unavailable host selection and are
+rejected. CP29001 and unimplemented/stateful pages are also rejected. POSIX
+output ignores a syntactically valid codepage selection, including unavailable
+identities, because that branch does not invoke the Windows encoder. No locale
+or platform codec participates in product encoding.
 
-The project's stable exit codes form a portable CLI contract. They must not be claimed to match every official error branch:
+There is no blanket CR/LF rejection in NAME arguments or results: POSIX output
+can contain embedded line breaks before the final LF. Therefore output is not an
+unambiguous one-line serialization of arbitrary path strings. Only encoded path
+bytes are affected by `-C`; record LF, help/version, and diagnostics use the
+specified raw/UTF-8 protocol without host newline translation.
 
-| Exit code | Meaning |
+Process NAMEs or file records in order, stopping on the first failure. Earlier
+successful output remains visible. Convert an entire PATH list before writing
+it. Stop after output failure without retrying the batch or processing later
+records. stdout contains results or control text; stderr contains diagnostics.
+
+## 9. Exit statuses
+
+| Status | Meaning |
 | --- | --- |
-| 0 | Complete success, valid help/version, or no input with `-i` |
-| 1 | Argument, context, encoding, read/write error, or known unsupported capability |
-| 2 | Path/list content conversion failure in an otherwise valid request |
+| 0 | Successful conversions, help/version, empty stream, skipped empty operands, or ignored usage |
+| 1 | Option/context/I/O/encoding/capability failure; empty path; path too long; invalid drive prefix; known whole-list runtime-style failure |
+| 2 | Other typed path-content failures, including InvalidPath, UnrepresentablePath, and UnsupportedNamespace |
 
-MissingContext / InvalidContext use 1; EmptyPath / InvalidPath / UnrepresentablePath / UnsupportedNamespace use 2. Classify ListEntryError by its underlying category. Never swallow an unknown exception and report success. Preserve evidence and a minimal regression case for internal defects found during implementation.
+Ordinary wrapped `ListEntryError` uses its cause's category; the known
+`ListConversion` wrapper uses 1 and retains its typed cause. Unknown runtime
+exceptions produce `cygpath: internal-error: unexpected runtime failure` and
+exit 1. A failed stderr write does not turn failure into success. These are
+implemented, tested classifications, not a promise to reproduce every error
+branch of the full Windows runtime.
 
-The initial host adapter reports stable input-read, output-write, or invalid-encoding diagnostics without exposing runtime-specific exception text. A failed diagnostic write still exits with the original failure code. Unknown runtime exceptions produce `internal-error` and exit 1. If a future diagnostic includes platform-specific details, retain the stable identifier and include the platform reason only as supplementary information. Backend consistency checks should first fix controllable failure categories, then record OS-specific reasons separately; do not compare errno text from different operating systems as equivalent evidence.
+## 10. Delivery and remaining release gates
 
-## 8. moonx delivery gates
+P3 verifies the frozen supported matrix against measured Cygwin/MSYS2 binaries,
+with separate boundary outcomes and fault drills. Publication is still separate.
+A release must retrieve and run the exact published version through `moonx`,
+without local source or system cygpath, and exercise help, version, successful
+conversion, invalid input, stdin, and exit status. Native from the same source
+must retain the corresponding contract behavior.
 
-Release requires: an actual executable-package build; a version-pinned Wasm artifact downloaded and run through moonx; no dependence on local source or system cygpath; real-launch acceptance of help, version, successful conversions, invalid input, standard input, and exit codes; and the corresponding contract cases for Native built from the same source.
-
-`moon install ./` can check the local root executable package first, but does not replace real registry/moonx acceptance. `moon package --list` checks package contents only; it does not prove that the registry contains an executable artifact. Publication and unverified automatic publishing workflows are outside the current work.
-
-If the runtime library cannot reliably provide a required I/O capability, retain the exact blocking issue. Do not bypass the pure MoonBit constraint with a custom C shim, shell command, or backend-specific workaround. See 05 for the relevant evidence requirements and phase gates.
+Local installation and package-content inspection establish useful prerequisites
+but cannot prove registry availability. Keep the root coordinate
+`ZSeanYves/cygpath` until the publishing namespace is explicitly settled. If an
+I/O or capability gate fails, retain the evidence; custom C stubs, shell
+fallbacks, and backend-specific conversion rules remain prohibited.

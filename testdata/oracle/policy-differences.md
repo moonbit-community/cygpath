@@ -1,22 +1,64 @@
-# Portable policy identifiers
+# Historical differences and current boundaries
 
-These identifiers connect observed differences to intentional portable contracts in [path semantics](../../docs/03-path-semantics.md) and [the CLI contract](../../docs/04-api-and-cli.md). [Windows oracle run 36371978419](https://github.com/moonbit-community/cygpath/actions/runs/36371978419) verified their exact scopes at commit `7dfe6ba58520a6f5249c41bd9aad39cfeb215440`. The measured distributions are Cygwin `3.6.10-1` and MSYS2 `3.6.10-5`; their binary/runtime hashes are fixed in the approvals. These observations are not universal claims about other upstream versions or environments.
+The current gate requires exact equality for every supported case.
+[Windows run 36385821354](https://github.com/moonbit-community/cygpath/actions/runs/36385821354)
+verified the frozen scope at
+`b32dd7448658bc251b216ba93a5c120ef54fdbc9`, including default/custom contexts and
+both backends with collection/replay. It does not read
+[`reviewed-differences.json`](reviewed-differences.json).
 
-[`reviewed-differences.json`](reviewed-differences.json) records 23 profile/case differences: 11 Cygwin and 12 MSYS2. Across Wasm/Native and collect/replay, they account for 92 preserved raw failures. An approval never changes `run.json` status from `fail` to `pass`; the CI wrapper uses the separate `reviewed-difference` category after checking exact fixture/upstream hashes, output hashes, and integer exits. [Remote Validation](../../docs/09-remote-validation.md) links the full evidence.
+That file preserves the historical `7dfe6ba` baseline's 23 profile/case
+approvals, previously responsible for 92 repeated raw mismatches. Its hashes
+and reasons remain a historical record; they do not authorize current or future
+output differences. Fixture `known_difference_id` fields likewise remain
+annotations only.
 
-| Identifier | Portable contract and measured difference |
+## Current boundary contracts
+
+| Domain | Evidence and required project behavior |
 | --- | --- |
-| `portable-empty-list-policy` | An empty Windows list converts to an empty output record; both official CLIs reject the empty operand before list conversion |
-| `portable-drive-relative-policy` | `C:child` and bare `C:` use explicit per-drive cwd; both measured official conversions resolve these cases from the drive root |
-| `portable-unc-normalization-policy` | Absolute UNC traversal is normalized and clamped at the share root; both measured official conversions retain the parent component |
-| `portable-trailing-separator-policy` | A mapped installation directory needs no Windows drive-root separator; the measured MSYS2 `/` conversion adds a trailing separator |
-| `portable-empty-input-policy` | An empty stream is missing input unless `-i` is present; both measured official file loops succeed without output |
-| `portable-empty-record-policy` | Empty records stop processing with stable project diagnostics and exit 2; the measured official diagnostics and exit 1 differ |
-| `portable-initial-bom-policy` | Remove a UTF-8 BOM only at byte zero; both measured official conversions preserve that initial BOM as path content |
-| `portable-strict-utf8-policy` | Reject malformed UTF-8, preserve earlier output, and exit 1; the measured official runtimes continue and return success |
-| `portable-failure-reporting-policy` | Stop at an empty operand after preserving earlier output, using project diagnostics and exit 2; the measured official diagnostics and exit 1 differ |
-| `portable-line-protocol-policy` | Reject embedded CR/LF with exit 2; both measured official CLIs emit the embedded LF successfully |
+| Malformed UTF-8: ten case references | Preserve actual upstream observations and prior output. The project must reject invalid decoding with its exact diagnostic and exit 1, consistently across backends/replay. |
+| CP29001: two case references | First require independent Win32 evidence of failure and an untouched initialized destination, with a correct CP1252 control. Then require empty project stdout, the exact unsupported-capability diagnostic, and exit 1. |
 
-Some fixtures declare `known_difference_id`; others gained a reviewed policy ID only after observing the official result. A fixture annotation alone never grants an approval. Exact entries bind profile, case, complete fixture-file SHA-256, upstream executable/runtime SHA-256, nonempty policy/reason, both streams, and both exits. A fixture or upstream update invalidates that scope, as does changed output. Review new evidence before changing an entry; do not regenerate approvals automatically to make a job green.
+The pinned Cygwin and MSYS2
+[`wide_path.h`](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/wide_path.h)
+helpers expose the unchecked malformed-input conversion; the corresponding
+[MSYS2 helper](https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/utils/wide_path.h)
+has the same bytes. Their SHA-256 is
+`4b9e9c9de0b9525d4758312f94338125ee9ecd07ade479d9ceab29d0dc5dce99`.
+Arbitrary output after that failure is not a defined byte-equivalence target.
 
-The corrected rendering of a mapped POSIX root and the measured Windows per-drive cwd are implementation/collection fixes, not policy exceptions. The remaining drive-relative entries above reflect actual results after those fixes. Full P3 coverage and real Windows collector fault drills remain open; this list describes only the verified subset.
+For CP29001, the measured Windows API rejects the conversion; upstream
+[`cygpath.cc`](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc)
+does not check the failed conversion before using its destination. The direct
+probe is a necessary gate condition, not an assumption that every Windows host
+universally lacks CP29001. Pinned source references explain the failure path;
+installed-binary source provenance remains independently unattested.
+
+The current run retains 160 malformed-input and 32 CP29001 observations
+separately from 7,144 supported exact comparisons. Boundaries are neither raw
+passes nor reviewed-output waivers. The raw collector can remain nonzero while
+the wrapper verifies the explicit boundary contract. Missing observations,
+process errors, timeouts, altered bytes, and project inconsistency still fail.
+
+## Historical identifiers
+
+The following identifiers may appear in old records. Their old descriptions
+must not be read as the current implementation contract; [path semantics](../../docs/03-path-semantics.md)
+and [CLI behavior](../../docs/04-api-and-cli.md) describe current behavior.
+
+| Historical identifier | Current disposition |
+| --- | --- |
+| `portable-empty-list-policy` | Empty-list operand behavior converged with the measured official programs. |
+| `portable-drive-relative-policy` | Drive-relative and bare-drive behavior converged; recorded per-drive cwd no longer implies the former resolution policy. |
+| `portable-unc-normalization-policy` | Unmatched UNC source spelling follows measured official behavior. |
+| `portable-trailing-separator-policy` | Profile-specific root rendering is implemented and compared exactly. |
+| `portable-empty-input-policy` | Empty stream success matches official file-input behavior. |
+| `portable-empty-record-policy` | Empty-record diagnostics, exit, and ignore handling are exact supported comparisons. |
+| `portable-initial-bom-policy` | Initial BOM content is retained as measured. |
+| `portable-strict-utf8-policy` | Replaced as an acceptance concept by the explicit malformed-input boundary above. |
+| `portable-failure-reporting-policy` | Supported failure diagnostics, exits, and earlier output are exact comparisons. |
+| `portable-line-protocol-policy` | Representable record/operand delimiter behavior follows the measured contract. |
+
+Changes to scope, upstream distributions, or behavior require fresh evidence.
+Do not add approvals or edit expected output to make supported mismatches green.

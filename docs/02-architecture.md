@@ -1,141 +1,135 @@
 # 02 Overall Architecture and Project Structure
 
-Status: Architecture baseline; implementation status is tracked in [docs/README.md](README.md). Related documents: [semantic contract](03-path-semantics.md), [API and delivery](04-api-and-cli.md), and [validation roadmap](05-validation-and-roadmap.md).
+Status: implemented architecture, with the frozen P3 matrix verified at `b32dd7448658bc251b216ba93a5c120ef54fdbc9`. [The index](README.md) and [remote validation](09-remote-validation.md) record host/backend results. Related contracts: [path semantics](03-path-semantics.md), [API and CLI](04-api-and-cli.md), and [validation roadmap](05-validation-and-roadmap.md).
 
 ## 1. Goals and Boundaries
 
-There are two deliverables: a path-conversion library that other MoonBit packages can import, and a command-line package executable through `moonx`. Both share one pure MoonBit implementation. Their primary purpose is to convert path representations in scripts, build tools, and cross-platform tasks, not to access the files identified by the results.
+The project provides a reusable path-conversion library and a command-line package invoked through `moonx`. Both use pure MoonBit. Given identical input, explicit context, and options, conversion must have identical semantics across Wasm and Native, independent of the machine's environment or cwd.
 
-Given the same input, context, and options, the core library must return the same result regardless of compilation backend, host operating system, environment variables, or working directory. The CLI translates external input into this explicit contract; the core must never detect host context for itself.
+The library converts representations and applies the selected Cygwin/MSYS2 rules. It does not establish that a converted name exists or identifies the same filesystem entity after symlink, junction, device, or short-name resolution. Implemented private-use-area filename mapping and extended-drive/UNC formatting are lexical operations; they do not introduce a filesystem resolver.
 
-Non-goals include reproducing the entire Cygwin DLL, implementing a filesystem or symlink resolver, automatically converting arbitrary shell-command arguments, replacing WSL's `wslpath`, and implementing Cygwin private-use-area encoding for invalid Windows filenames. The project may recognize related inputs and options and report them as unsupported, but must not guess an apparently valid path.
+P3 completion means the declared portable matrix has exact evidence for its supported domain and separate evidence for its rejection boundaries. It does not mean full official compatibility or an unlimited maximum implementation. Missing host APIs and feasible but unimplemented pure algorithms are separate categories in [chapter 01](01-upstream-and-scope.md).
 
 ## 2. Pure MoonBit and the Runtime Boundary
 
-Do not introduce `.c`, `.cc`, `.h`, `native-stub`, or project-defined `extern` declarations, or execute system `cygpath`, PowerShell, cmd, or a shell to implement product behavior. Test tooling may run official programs to collect reference results; the product execution path may not.
+Product code must not introduce C/C++ stubs, project-defined foreign imports, native Windows business-logic bindings, or a subprocess fallback to official cygpath, PowerShell, cmd, or a shell. General-purpose I/O from the official MoonBit runtime is allowed and concentrated in `internal/host`.
 
-Standard arguments, standard streams, and file reads as needed use MoonBit runtime libraries, with adaptation concentrated in `internal/host`. This does not mean that host capabilities are absent: the runtime necessarily provides I/O. The project nevertheless maintains one path algorithm for Wasm and Native and does not bypass the standard runtime with backend-specific implementations.
+Validation tooling may launch official programs and independent diagnostic probes. In particular, the Windows code-page probe uses PowerShell/.NET interop only to observe Win32 behavior and retains its raw evidence. That code is not imported or called by the product. No upstream C implementation is compiled or linked into the product.
 
-Wasm is the default delivery target. Native is a same-source consistency target and an optional build artifact. Root and `internal/host` explicitly support Wasm and Native because their current I/O runtime supports these delivery targets. `lib/` and `internal/cli` remain pure and compile on all standard compiler targets. Pure MoonBit alone does not prove identical behavior: encoding, standard-stream line endings, exit codes, and runtime arguments still require verification. Checks for the `wasm-gc` and `js` pure packages are recorded separately from Wasm/Native CLI delivery.
+Wasm is the default delivery target. Native is a same-source consistency target and an optional development artifact. Root and `internal/host` declare Wasm/Native support because their I/O runtime supports those targets. The library, CLI, and encoder are pure packages checked on all standard targets; that does not imply JavaScript or Wasm GC command-line I/O support. Raw bytes, exit status, argv, and file behavior still require real backend/host verification.
 
-## 3. Target Structure by Responsibility
+## 3. Structure by Responsibility
 
-The P1 library and P2 executable packages now follow the structure below. Validation and collection tooling has its own evidence requirements; [docs/README.md](README.md) tracks execution status. The root-level `main.mbt` is the direct entry point required by the user. The root package is configured as the executable for future publication, and the public library lives in `lib/`.
+The root-level `main.mbt` is the direct entry point. Root `moon.pkg` declares `pkgtype(kind: "executable")`; `lib/` is the public library. New packages are added for implemented responsibilities, not speculative layers.
 
 ```text
 cygpath/
-├── moon.mod                       Module, version, dependencies, default wasm
-├── moon.pkg                       Root executable: pkgtype(kind: "executable")
-├── main.mbt                       Read input → dispatch → write output → exit
-├── README.md                      Module documentation, not executable doctests
-├── lib/                           Public library ZSeanYves/cygpath/lib
-│   ├── moon.pkg                   Default library package
-│   ├── types.mbt                  Public types such as InputSyntax and OutputFormat
-│   ├── context.mbt                Context / Mount validation and read-only state
-│   ├── error.mbt                  Structured ConversionError
-│   ├── convert.mbt                Single-path conversion orchestration
-│   ├── parse.mbt                  Private path classification and scanning
-│   ├── normalize.mbt              Constrained lexical normalization
-│   ├── mount.mbt                  Mount matching and drive mapping
-│   ├── render.mbt                 Windows / Mixed / POSIX output
-│   ├── path_list.mbt              Explicitly directional list rules
-│   ├── *_test.mbt                 Public behavior, properties, and regressions
-│   ├── *_wbtest.mbt               Parser-internal tests where necessary
-│   └── pkg.generated.mbti         Generated public library interface
+├── moon.mod                         Module metadata and pinned dependencies
+├── moon.pkg                         Root executable, default Wasm
+├── main.mbt                         Read → dispatch → encode/write → exit
+├── README.md                        Module guide
+├── lib/                             Public ZSeanYves/cygpath/lib
+│   ├── types.mbt, error.mbt          Public types and checked errors
+│   ├── context.mbt                  Immutable validated Context
+│   ├── parse.mbt, normalize.mbt     Grammar and lexical resolution
+│   ├── mount.mbt, msys_mount.mbt     Profile-specific mount ordering/mapping
+│   ├── filename_encoding.mbt        Filename private-use-area mapping
+│   ├── convert.mbt, render.mbt      Conversion and output spelling
+│   ├── path_list.mbt                Directional lists
+│   ├── README.mbt.md, *_test.mbt    Executable examples and tests
+│   └── pkg.generated.mbti           Public interface
 ├── internal/
-│   ├── cli/
-│   │   ├── moon.pkg
-│   │   ├── parse.mbt              argv → Command, option validation
-│   │   ├── types.mbt              Request / Converter and explicit context
-│   │   ├── error.mbt              Stable error categories and diagnostics
-│   │   ├── help.mbt               Help and implementation version
-│   │   └── *_test.mbt
-│   └── host/
-│       ├── moon.pkg
-│       ├── input.mbt              argv, UTF-8 files / standard input
-│       ├── output.mbt             Byte output, standard error, exit
-│       ├── error.mbt              Stable host error categories
-│       └── input_wbtest.mbt       Decoding and streaming boundary tests
+│   ├── cli/                         Pure argv, requests, record state, diagnostics
+│   ├── encoding/                    Pure numeric-codepage tables and encoder
+│   └── host/                        Runtime argv, input, byte streams, exit
 ├── testdata/
-│   ├── contracts/                 Independently specified pure-conversion contracts
-│   └── oracle/                    Official-tool observations and environment metadata
-├── scripts/                       .mbtx validation / collection programs
-│   ├── check_cli.mbtx             Portable contracts and backend comparison
-│   └── oracle.mbtx                Windows official collection and replay
-├── .github/workflows/check.yml    Linux / macOS / Windows acceptance jobs
-└── docs/                          This architecture book
+│   ├── contracts/                   Independent portable process contracts
+│   └── oracle/                      Immutable inputs and frozen P3 scope
+├── scripts/                         .mbtx automation only
+│   ├── check_cli.mbtx               Portable processes/backend comparison
+│   ├── check_consumer.mbtx          External public-library consumer
+│   ├── oracle.mbtx                  Official collection/replay/fault drills
+│   ├── ci_oracle.mbtx               Measured Windows contexts and strict gate
+│   ├── probe_windows_codepages.mbtx Independent Windows API diagnosis
+│   └── generate_codepages.mbtx      Verified data → pure mapping tables
+├── third_party/
+│   ├── unicode/                    Unicode-hosted mapping data and notice
+│   ├── microsoft/                  Microsoft archive data and permission
+│   └── newlib/                     BSD sorting adaptation attribution
+├── .github/workflows/              Three-host checks and Windows oracle jobs
+└── docs/                            Architecture, contracts, and evidence
 ```
 
-MoonBit package boundaries follow directories, not files. Parsing, conversion, and public types initially share the `lib/` package; private visibility isolates implementation details. File organization alone does not justify additional `parser`, `engine`, or `model` packages. Extract packages only when real independent reuse or a build boundary calls for them. The repository root holds only the thin CLI entry point and project-level configuration.
+MoonBit package boundaries follow directories, not files. Parsing, conversion, and public types share `lib/`; private visibility separates their implementation details. Each package contains its `moon.pkg` and generated interface. Only public domain types that library callers should name, construct, or match belong to `lib/`. Internal `Command`, `Request`, `Converter`, and host errors must not leak into its API.
 
-All public concrete types that users should be able to name, construct, or match belong to `lib/`. They must not be hidden in `internal/*` and then re-exported. The `Command`, diagnostics, and per-item execution results in `internal/cli` are module-internal and must not leak into the library API. Library callers import `ZSeanYves/cygpath/lib`. CLI users pass options and paths through `moonx ZSeanYves/cygpath`, for example `moonx ZSeanYves/cygpath -h`.
+Library callers import `ZSeanYves/cygpath/lib`. After owner publication, command users invoke `moonx ZSeanYves/cygpath -h` or another ordinary option directly. Root remains a thin composition layer and contains no path-conversion algorithm.
 
 ## 4. Dependency Direction
 
 ```mermaid
 flowchart TD
-    User[Library callers] --> Core[lib: pure conversion and Context]
-    Main[Root main.mbt: executable package] --> CLI[internal/cli: arguments and execution]
+    User[Library callers] --> Core[lib: paths and explicit Context]
+    Main[Root main.mbt] --> CLI[internal/cli: argv and record state]
+    Main --> Encoder[internal/encoding: output bytes]
     Main --> Host[internal/host: standard I/O]
     CLI --> Core
-    Host --> Runtime[Verified MoonBit runtime libraries]
-    Core --> Std[Pure data facilities in MoonBit core]
+    CLI --> Encoder
+    Host --> Runtime[Verified MoonBit runtime APIs]
+    Core --> Std[Pure MoonBit core facilities]
+    Encoder --> Std
 ```
 
-- `lib/` does not import `env`, filesystem, process, network, CLI, or `internal/host` facilities.
-- `internal/cli` does not read or write files or exit the process directly; it receives data from its caller.
-- `internal/host` does not interpret drives, mounts, or cygdrive, and does not depend on CLI or core business types.
-- Root `main.mbt` joins I/O and application behavior: it passes host data to the CLI and passes results to the host. Neither `lib/` nor `internal/*` depends on the root executable package.
-- The historical architecture baseline had no external dependencies. P2 pins `moonbitlang/async@0.22.4` for general-purpose file and standard-stream I/O and `moonbitlang/x@0.5.5` for process exit. Both dependencies declare Apache-2.0 licenses. Root uses the async runtime; `internal/host` owns runtime calls. The library and CLI parser still import no host packages.
+- `lib/` imports no environment, filesystem, process, CLI, or host facilities.
+- `internal/cli` parses already-tokenized argv, validates supported code pages, and operates on explicit values. It performs no I/O.
+- `internal/encoding` maps text to bytes without consulting the locale, filesystem, or operating-system codec.
+- `internal/host` performs argv, file/stream, and exit operations. It does not interpret drives, mounts, or cygdrive and does not depend on CLI or library business types.
+- Root composes those packages. No lower package depends on the executable root.
 
-The runtime dependencies contain their own backend implementation details; this
-is the standard runtime boundary permitted by the pure MoonBit agreement. No
-project C/C++ stubs, foreign imports, or system-command conversion fallback are
-introduced. Test scripts additionally use the official process API and SHA-256
-facilities; product conversion does not launch subprocesses. Pinning versions
-does not replace the host/backend evidence recorded in the index.
+`moonbitlang/async@0.22.4` supplies the async runtime and general file/stream facilities; `moonbitlang/x@0.5.5` supplies process exit. Both declare Apache-2.0. Test scripts additionally use process APIs and SHA-256. Their backend internals are runtime implementation details, not project-owned conversion FFI. Product conversion launches no subprocesses.
 
-Filenames and a few private types may change during implementation. Dependency direction, ownership of public types, and the pure MoonBit boundary remain ongoing constraints.
+The 111 archived table identities retain separate Unicode/Microsoft notices; 110 legacy numeric pages are enabled plus UTF-8. The MSYS2 sorting helpers adapt BSD-3-Clause newlib code with its full notice retained. These permissions do not relicense GPL/LGPL Cygwin runtime implementation. See [provenance](01-upstream-and-scope.md#3-licensing-and-implementation-provenance).
 
 ## 5. Data Flow and State Ownership
 
-A call proceeds as follows:
+1. Host supplies argv without the executable name. CLI parsing applies option order and recognition rules and returns `Help`, `Version`, `ExitSuccess`, or `Convert(Request)`.
+2. For a conversion, `Request::prepare` builds one validated immutable Context before reading a file or producing path results. Control commands skip that construction.
+3. NAME operands are processed in order. File/stdin input is streamed through the host text-record adapter; `-o` records go through the converter's state machine.
+4. The core classifies, resolves, maps, and renders each path/list using explicit syntax, options, and the selected profile.
+5. The CLI returns `Output(text)`, `Skip`, or `Stop(text)`. Root encodes conversion text using `Converter::codepage()`, then appends one raw LF byte and writes it. POSIX output always selects UTF-8; Windows/Mixed output uses the explicit supported encoder. Help/version and diagnostics use UTF-8.
+6. Host writes the exact supplied bytes and reports I/O errors. Root stops on a failure or successful control stop, formats the owning package's diagnostic, and exits with its assigned status.
 
-1. The host reads argv. The CLI first handles help, version, and syntax errors, without opening a `-f` file prematurely.
-2. The CLI produces a `Command` that explicitly determines output format, input direction, list mode, and context options.
-3. For `Convert(request)`, main calls `request.prepare()` to construct one validated Context before reading input or writing results. Help and version skip context construction. There is no automatic scanning of fstab, the registry, or installation directories.
-4. The core converts each input through classification, validation, relative-path resolution when requested, mount mapping, and rendering.
-5. The pure CLI returns each result or structured error. Main writes successful records in the prescribed order or stops processing; it formats CLI and host diagnostics through their owning packages.
-6. The host encodes UTF-8, writes the exact bytes supplied by main, handles I/O errors, and returns the exit code. Main appends the required LF explicitly.
+Context stores the profile, drive prefix, ordered mount snapshots, and optional POSIX/Windows cwd. It copies caller-owned collections and never reads global host state. `drive_cwds` values are validated compatibility metadata; they are not stored as resolution state and do not override cygpath's drive-root behavior.
 
-Context holds the profile, cygdrive prefix, mount collection, and optional cwd information. It is immutable after construction and copies mutable containers supplied by the caller, preventing later caller mutations from changing an existing converter. Calls are independent, with no global environment cache; a new context represents a new environment snapshot.
+Converter owns mutable per-file option state separately from Context. With `-o`, a record beginning with a hyphen is divided at its first whitespace into an option token and the remaining argument. Parsing such a record resets conversion flags while retaining the prepared Context; following plain records reuse the new flags. There is no shell quoting or arbitrary argv tokenization. A help/version/control stop prevents later records from being decoded or executed.
 
-A failed single-path library conversion never returns a partial string. List conversion first produces all member results; if any member fails, the entire list fails. The CLI processes multiple NAME arguments in order. Successful records already written are not retracted; processing stops at the first failure, which produces no stdout record. `-f` reads and processes lines incrementally instead of loading the entire file.
+Input follows the measured text-mode file loop: CRLF translation, retained BOM content, final unterminated records, C-string NUL interpretation, and chunks bounded by the official 8192-byte record buffer. Invalid UTF-8 is rejected deterministically before conversion; undefined upstream memory contents are not simulated. An empty stream succeeds with no output. Chapter 04 defines the exact empty-record, `-i`, and diagnostic behavior.
 
-## 6. Minimum Context Requirements
+A single library call returns a complete result or an error. A list is atomic within its call. A batch/file can already have emitted earlier successful records when a later record fails; those bytes remain. A write failure stops processing and must not cause a batch retry that duplicates output.
 
-Converting `C:\work` to `/cygdrive/c/work` needs only the profile and prefix. Converting `/usr/bin` to a Windows path needs a root or specific mount. Absolutizing `C:work` needs the cwd for drive C. Resolving `\work` needs the current drive, or a Windows cwd that determines that drive. Missing data produces `MissingContext`; a macOS/Linux host cwd must never stand in for a Windows cwd.
+## 6. Explicit Context and Profile Semantics
 
-Library callers supply context directly; the CLI exposes explicit extension options. The first version does not need a persistent configuration file or environment-variable precedence system. `--root` creates the root mount. Other mounts use the repeatable two-argument form `--mount POSIX WINDOWS`, avoiding a `:` delimiter that would conflict with drive letters. Add more complex fstab parsing only when a real need and corresponding tests justify it.
+An unmatched Windows drive path needs only the selected profile and prefix to become a POSIX drive path. A POSIX-rooted input outside that prefix needs a matching root or mount for Windows output. Ordinary relative paths and current-drive-rooted paths use the relevant explicitly supplied cwd when resolution requires it. Missing necessary context reports `MissingContext`; the build host's cwd is never substituted.
+
+`--root` declares the root mount; repeatable `--mount POSIX WINDOWS` uses two values to avoid drive-colon ambiguity. `--mount-case` selects sensitive or ASCII-insensitive matching for an explicit mount. Context construction rejects invalid/duplicate mappings and drive-prefix collisions. Per-drive cwd metadata is validated without changing the drive-root conversion rule.
+
+Cygwin and MSYS2 are separate semantic profiles, including mount ordering and mapped-root trailing separators as well as default drive prefixes. The MSYS2 implementation preserves the sorting behavior required by the measured explicit contexts; a generic stable longest-prefix sort is not equivalent. Context does not represent arbitrary runtime user/system provenance or recover hidden insertion history. New environment combinations require their own evidence.
+
+No product parser reads fstab, registry entries, `HOME`, or `MSYSTEM` to guess context. The independent Windows harness measures the installed environment and transcribes a documented equivalent Context; this separation makes the same request reproducible across backends.
 
 ## 7. Algorithms and Resource Policy
 
-Classify and render a single path with linear scans, preserving other Unicode content while scanning ASCII structural markers. The initial mount implementation uses presorted arrays and matches complete component boundaries. Construction costs approximately `O(m log m)` and lookup is bounded by `O(m × n)`, where m is the number of mounts and n is input length. Do not introduce tries, shared caches, or parallel pipelines without measurements that justify them.
+Path scanning and rendering follow input/output size, with ASCII markers separating structural parsing from Unicode content. Filename escaping and legacy encoding are pure transformations. Generated encoding tables use sorted UTF-16/encoded-value pairs and binary search; source/member/packed hashes bind regeneration to its data.
 
-Do not hard-code `MAX_PATH = 260`: lexical conversion differs from actual Windows file access, and extended namespaces have separate boundaries. Scan lists member by member; total work depends on the combined character count and mount matching. The CLI streams files but still requires a complete string for each path. Resource limits for enormous individual lines belong to later I/O acceptance testing; integer overflow or panics are not an acceptable policy.
+Mount lookup scans profile-ordered arrays and compares component prefixes. With m mounts and input length n, lookup is bounded by `O(m × n)`; report construction and profile-specific sorting costs separately. MSYS2's observable sorting algorithm must not be replaced solely on an assumed complexity improvement. No performance claim follows from compatibility tests.
 
-The standard async runtime serves file and stream I/O. Records are processed
-sequentially; this does not introduce concurrent conversion tasks. Do not add
-parallel tasks, threads, resident services, plugin registries, or persistent state
-without a product requirement.
+There is no blanket 260-character rejection. The measured Windows-output rules include 255-UTF-16-unit component checks, automatic long-path prefixes, and relative-path resolution where needed. These formatting checks are not assertions about filesystem access. File input uses fixed record chunks and sequential callbacks rather than retaining the entire stream. The core API still accepts caller-provided strings and allocates complete results; panics or integer overflow are not a resource policy.
 
-## 8. Initial Implementation Slices
+Do not add tries, caches, parallel conversion, resident services, or plugin systems without a measured need. The async runtime serves sequential I/O; it does not change path semantics or introduce concurrent record execution.
 
-The implemented P1 slice provides the path engine, mounts, cwd, lists, and error
-types in `lib/`. P2 adds pure argument parsing, root `main.mbt`, executable
-configuration, and the host boundary. Continue to require identical stdout,
-stderr, and exit status for the portable contract on Wasm and Native; existence
-of the packages does not close the cross-host acceptance matrix. Extend behavior
-according to [03](03-path-semantics.md) with corresponding evidence.
+## 8. Acceptance and Further Changes
 
-A functional phase is complete only when source, tests, generated interfaces, and documentation together establish a runnable and verified implementation. The initial baseline contained only documentation and module metadata. Its empty-package check results cannot establish that a newly implemented executable or public library has been verified; record current results in [docs/README.md](README.md).
+The implemented P1/P2 architecture is exercised by portable contracts and real processes on Linux, macOS, and Windows. The completed P3 gate covers the frozen explicit-context matrix with separate Cygwin/MSYS2 default/custom environments, both backends, collection/replay, coverage audits, and real Windows fault drills. Supported-domain comparisons must be exact. Malformed UTF-8 and unavailable CP29001 retain raw observations but pass only their separate deterministic rejection contracts.
+
+Source, tests, generated interfaces, documentation, and evidence must describe the same behavior. Historical discovery approvals do not waive new supported-domain differences. Feasible unimplemented algorithms such as stateful encodings or GB18030 remain extensions outside this freeze; 8.3 and system-directory queries additionally need unavailable equivalent host facilities. Neither category authorizes product FFI or command fallbacks.
+
+Release is separate: the repository owner chooses and publishes the version. Preserve root `main.mbt`, all required third-party notices, and the root command coordinate. Exact-version `moonx` retrieval and execution remain post-publication acceptance, not a consequence of green repository CI.

@@ -1,0 +1,2251 @@
+{
+  "schema_version": 1,
+  "validation_kind": "verified-p3-ci-summary",
+  "date": "2026-09-28",
+  "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+  "scope_file": "testdata/oracle/p3-scope.json",
+  "scope_sha256": "d73ef908d14e0de4630dfff5c4584cb876a53ae93e1a246a30452061ac832874",
+  "capability_rows": 152,
+  "unique_fixture_cases": 473,
+  "supported_fixture_cases": 461,
+  "malformed_utf8_fixture_cases": 10,
+  "unavailable_codepage_fixture_cases": 2,
+  "totals": {
+    "observations": 7336,
+    "supported_exact_comparisons": 7144,
+    "malformed_utf8_boundary_observations": 160,
+    "unavailable_codepage_boundary_observations": 32,
+    "supported_mismatches": 0,
+    "infrastructure_errors": 0
+  },
+  "contracts_run": {
+    "conclusion": "success",
+    "databaseId": 36385821361,
+    "headSha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+    "jobs": [
+      {
+        "completedAt": "2026-09-28T06:20:16Z",
+        "conclusion": "success",
+        "databaseId": 108810861680,
+        "name": "contracts (macos-latest)",
+        "startedAt": "2026-09-28T06:18:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:54Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:57Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:11Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:11Z",
+            "conclusion": "success",
+            "name": "Record toolchain",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:13Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:16Z",
+            "conclusion": "success",
+            "name": "Check all supported targets",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:19Z",
+            "conclusion": "success",
+            "name": "Test Wasm",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:31Z",
+            "conclusion": "success",
+            "name": "Test Native",
+            "number": 8,
+            "startedAt": "2026-09-28T06:19:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:33Z",
+            "conclusion": "success",
+            "name": "Test oracle collector mechanics",
+            "number": 9,
+            "startedAt": "2026-09-28T06:19:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:34Z",
+            "conclusion": "success",
+            "name": "Test Windows oracle gate mechanics",
+            "number": 10,
+            "startedAt": "2026-09-28T06:19:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:36Z",
+            "conclusion": "success",
+            "name": "Test process collector quoting",
+            "number": 11,
+            "startedAt": "2026-09-28T06:19:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:38Z",
+            "conclusion": "success",
+            "name": "Check formatting",
+            "number": 12,
+            "startedAt": "2026-09-28T06:19:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:38Z",
+            "conclusion": "success",
+            "name": "Check script formatting",
+            "number": 13,
+            "startedAt": "2026-09-28T06:19:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:39Z",
+            "conclusion": "success",
+            "name": "Check public interfaces",
+            "number": 14,
+            "startedAt": "2026-09-28T06:19:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:39Z",
+            "conclusion": "success",
+            "name": "Reject interface drift",
+            "number": 15,
+            "startedAt": "2026-09-28T06:19:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:43Z",
+            "conclusion": "success",
+            "name": "Verify external public API consumer",
+            "number": 16,
+            "startedAt": "2026-09-28T06:19:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:44Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 17,
+            "startedAt": "2026-09-28T06:19:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:02Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 18,
+            "startedAt": "2026-09-28T06:19:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:09Z",
+            "conclusion": "success",
+            "name": "Compare executable contracts",
+            "number": 19,
+            "startedAt": "2026-09-28T06:20:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:10Z",
+            "conclusion": "success",
+            "name": "Inspect package contents",
+            "number": 20,
+            "startedAt": "2026-09-28T06:20:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:12Z",
+            "conclusion": "success",
+            "name": "Upload process evidence",
+            "number": 21,
+            "startedAt": "2026-09-28T06:20:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:13Z",
+            "conclusion": "success",
+            "name": "Upload external consumer evidence",
+            "number": 22,
+            "startedAt": "2026-09-28T06:20:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:14Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 44,
+            "startedAt": "2026-09-28T06:20:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:15Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 45,
+            "startedAt": "2026-09-28T06:20:14Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821361/job/108810861680"
+      },
+      {
+        "completedAt": "2026-09-28T06:20:17Z",
+        "conclusion": "success",
+        "databaseId": 108810861870,
+        "name": "contracts (ubuntu-latest)",
+        "startedAt": "2026-09-28T06:18:45Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:47Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:01Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:01Z",
+            "conclusion": "success",
+            "name": "Record toolchain",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:04Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:07Z",
+            "conclusion": "success",
+            "name": "Check all supported targets",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:09Z",
+            "conclusion": "success",
+            "name": "Test Wasm",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:35Z",
+            "conclusion": "success",
+            "name": "Test Native",
+            "number": 8,
+            "startedAt": "2026-09-28T06:19:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:37Z",
+            "conclusion": "success",
+            "name": "Test oracle collector mechanics",
+            "number": 9,
+            "startedAt": "2026-09-28T06:19:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:38Z",
+            "conclusion": "success",
+            "name": "Test Windows oracle gate mechanics",
+            "number": 10,
+            "startedAt": "2026-09-28T06:19:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:39Z",
+            "conclusion": "success",
+            "name": "Test process collector quoting",
+            "number": 11,
+            "startedAt": "2026-09-28T06:19:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:40Z",
+            "conclusion": "success",
+            "name": "Check formatting",
+            "number": 12,
+            "startedAt": "2026-09-28T06:19:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:40Z",
+            "conclusion": "success",
+            "name": "Check script formatting",
+            "number": 13,
+            "startedAt": "2026-09-28T06:19:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:41Z",
+            "conclusion": "success",
+            "name": "Check public interfaces",
+            "number": 14,
+            "startedAt": "2026-09-28T06:19:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:41Z",
+            "conclusion": "success",
+            "name": "Reject interface drift",
+            "number": 15,
+            "startedAt": "2026-09-28T06:19:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:43Z",
+            "conclusion": "success",
+            "name": "Verify external public API consumer",
+            "number": 16,
+            "startedAt": "2026-09-28T06:19:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:44Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 17,
+            "startedAt": "2026-09-28T06:19:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:07Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 18,
+            "startedAt": "2026-09-28T06:19:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:12Z",
+            "conclusion": "success",
+            "name": "Compare executable contracts",
+            "number": 19,
+            "startedAt": "2026-09-28T06:20:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:12Z",
+            "conclusion": "success",
+            "name": "Inspect package contents",
+            "number": 20,
+            "startedAt": "2026-09-28T06:20:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:14Z",
+            "conclusion": "success",
+            "name": "Upload process evidence",
+            "number": 21,
+            "startedAt": "2026-09-28T06:20:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:15Z",
+            "conclusion": "success",
+            "name": "Upload external consumer evidence",
+            "number": 22,
+            "startedAt": "2026-09-28T06:20:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:15Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 44,
+            "startedAt": "2026-09-28T06:20:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:15Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 45,
+            "startedAt": "2026-09-28T06:20:15Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821361/job/108810861870"
+      },
+      {
+        "completedAt": "2026-09-28T06:20:38Z",
+        "conclusion": "success",
+        "databaseId": 108810861963,
+        "name": "contracts (windows-latest)",
+        "startedAt": "2026-09-28T06:18:44Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:52Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:11Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:11Z",
+            "conclusion": "success",
+            "name": "Record toolchain",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:20Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:23Z",
+            "conclusion": "success",
+            "name": "Check all supported targets",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:27Z",
+            "conclusion": "success",
+            "name": "Test Wasm",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:45Z",
+            "conclusion": "success",
+            "name": "Test Native",
+            "number": 8,
+            "startedAt": "2026-09-28T06:19:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:50Z",
+            "conclusion": "success",
+            "name": "Test oracle collector mechanics",
+            "number": 9,
+            "startedAt": "2026-09-28T06:19:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:53Z",
+            "conclusion": "success",
+            "name": "Test Windows oracle gate mechanics",
+            "number": 10,
+            "startedAt": "2026-09-28T06:19:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:55Z",
+            "conclusion": "success",
+            "name": "Test process collector quoting",
+            "number": 11,
+            "startedAt": "2026-09-28T06:19:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:58Z",
+            "conclusion": "success",
+            "name": "Check formatting",
+            "number": 12,
+            "startedAt": "2026-09-28T06:19:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:59Z",
+            "conclusion": "success",
+            "name": "Check script formatting",
+            "number": 13,
+            "startedAt": "2026-09-28T06:19:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:02Z",
+            "conclusion": "success",
+            "name": "Check public interfaces",
+            "number": 14,
+            "startedAt": "2026-09-28T06:19:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:03Z",
+            "conclusion": "success",
+            "name": "Reject interface drift",
+            "number": 15,
+            "startedAt": "2026-09-28T06:20:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:07Z",
+            "conclusion": "success",
+            "name": "Verify external public API consumer",
+            "number": 16,
+            "startedAt": "2026-09-28T06:20:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:09Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 17,
+            "startedAt": "2026-09-28T06:20:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:23Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 18,
+            "startedAt": "2026-09-28T06:20:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:31Z",
+            "conclusion": "success",
+            "name": "Compare executable contracts",
+            "number": 19,
+            "startedAt": "2026-09-28T06:20:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:32Z",
+            "conclusion": "success",
+            "name": "Inspect package contents",
+            "number": 20,
+            "startedAt": "2026-09-28T06:20:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:34Z",
+            "conclusion": "success",
+            "name": "Upload process evidence",
+            "number": 21,
+            "startedAt": "2026-09-28T06:20:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:35Z",
+            "conclusion": "success",
+            "name": "Upload external consumer evidence",
+            "number": 22,
+            "startedAt": "2026-09-28T06:20:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:37Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 44,
+            "startedAt": "2026-09-28T06:20:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:37Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 45,
+            "startedAt": "2026-09-28T06:20:37Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821361/job/108810861963"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821361"
+  },
+  "oracle_run": {
+    "conclusion": "success",
+    "databaseId": 36385821354,
+    "headSha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+    "jobs": [
+      {
+        "completedAt": "2026-09-28T06:25:34Z",
+        "conclusion": "success",
+        "databaseId": 108810861831,
+        "name": "oracle (msys2, default)",
+        "startedAt": "2026-09-28T06:18:45Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:54Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:21Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:32Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:35Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:53Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:53Z",
+            "conclusion": "skipped",
+            "name": "Install official Cygwin",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:37Z",
+            "conclusion": "success",
+            "name": "Install official MSYS2",
+            "number": 8,
+            "startedAt": "2026-09-28T06:19:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:20Z",
+            "conclusion": "success",
+            "name": "Collect, replay, audit exact comparisons and run Windows fault drills",
+            "number": 9,
+            "startedAt": "2026-09-28T06:20:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:31Z",
+            "conclusion": "success",
+            "name": "Upload official evidence",
+            "number": 10,
+            "startedAt": "2026-09-28T06:25:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:33Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 20,
+            "startedAt": "2026-09-28T06:25:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:33Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-09-28T06:25:33Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/job/108810861831"
+      },
+      {
+        "completedAt": "2026-09-28T06:25:55Z",
+        "conclusion": "success",
+        "databaseId": 108810862074,
+        "name": "oracle (cygwin, custom)",
+        "startedAt": "2026-09-28T06:18:45Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:47Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:53Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:10Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:17Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:20Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:37Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:42Z",
+            "conclusion": "success",
+            "name": "Install official Cygwin",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:42Z",
+            "conclusion": "skipped",
+            "name": "Install official MSYS2",
+            "number": 8,
+            "startedAt": "2026-09-28T06:20:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:41Z",
+            "conclusion": "success",
+            "name": "Collect, replay, audit exact comparisons and run Windows fault drills",
+            "number": 9,
+            "startedAt": "2026-09-28T06:20:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:52Z",
+            "conclusion": "success",
+            "name": "Upload official evidence",
+            "number": 10,
+            "startedAt": "2026-09-28T06:25:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:54Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 20,
+            "startedAt": "2026-09-28T06:25:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:54Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-09-28T06:25:54Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/job/108810862074"
+      },
+      {
+        "completedAt": "2026-09-28T06:25:13Z",
+        "conclusion": "success",
+        "databaseId": 108810862105,
+        "name": "oracle (msys2, custom)",
+        "startedAt": "2026-09-28T06:18:45Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:47Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:52Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:08Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:13Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:16Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:35Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:35Z",
+            "conclusion": "skipped",
+            "name": "Install official Cygwin",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:55Z",
+            "conclusion": "success",
+            "name": "Install official MSYS2",
+            "number": 8,
+            "startedAt": "2026-09-28T06:19:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:24:58Z",
+            "conclusion": "success",
+            "name": "Collect, replay, audit exact comparisons and run Windows fault drills",
+            "number": 9,
+            "startedAt": "2026-09-28T06:19:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:10Z",
+            "conclusion": "success",
+            "name": "Upload official evidence",
+            "number": 10,
+            "startedAt": "2026-09-28T06:24:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:12Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 20,
+            "startedAt": "2026-09-28T06:25:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:25:12Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-09-28T06:25:12Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/job/108810862105"
+      },
+      {
+        "completedAt": "2026-09-28T06:24:56Z",
+        "conclusion": "success",
+        "databaseId": 108810862125,
+        "name": "oracle (cygwin, default)",
+        "startedAt": "2026-09-28T06:18:45Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-28T06:18:47Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-28T06:18:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:18:53Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 2,
+            "startedAt": "2026-09-28T06:18:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:09Z",
+            "conclusion": "success",
+            "name": "Run hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921",
+            "number": 3,
+            "startedAt": "2026-09-28T06:18:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:20Z",
+            "conclusion": "success",
+            "name": "Refresh package registry",
+            "number": 4,
+            "startedAt": "2026-09-28T06:19:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:22Z",
+            "conclusion": "success",
+            "name": "Build Wasm executable",
+            "number": 5,
+            "startedAt": "2026-09-28T06:19:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:19:38Z",
+            "conclusion": "success",
+            "name": "Build Native executable",
+            "number": 6,
+            "startedAt": "2026-09-28T06:19:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:38Z",
+            "conclusion": "success",
+            "name": "Install official Cygwin",
+            "number": 7,
+            "startedAt": "2026-09-28T06:19:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:20:38Z",
+            "conclusion": "skipped",
+            "name": "Install official MSYS2",
+            "number": 8,
+            "startedAt": "2026-09-28T06:20:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:24:45Z",
+            "conclusion": "success",
+            "name": "Collect, replay, audit exact comparisons and run Windows fault drills",
+            "number": 9,
+            "startedAt": "2026-09-28T06:20:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:24:53Z",
+            "conclusion": "success",
+            "name": "Upload official evidence",
+            "number": 10,
+            "startedAt": "2026-09-28T06:24:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:24:55Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "number": 20,
+            "startedAt": "2026-09-28T06:24:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-28T06:24:55Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-09-28T06:24:55Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/job/108810862125"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354"
+  },
+  "environments": [
+    {
+      "profile": "cygwin",
+      "context_variant": "default",
+      "accepted": true,
+      "planned_cases": 444,
+      "covered_capability_rows": 149,
+      "comparisons": 1776,
+      "supported_exact_comparisons": 1728,
+      "malformed_utf8_boundary_observations": 40,
+      "unavailable_codepage_boundary_observations": 8,
+      "infrastructure_errors": [],
+      "scope_sha256": "d73ef908d14e0de4630dfff5c4584cb876a53ae93e1a246a30452061ac832874",
+      "summary_sha256": "3b9928ac1df07ccd4ee634ecefdbd6dae3cd7c2c2c38833a741bfe599f0d63db",
+      "coverage_audit_sha256": "7fb2353f650d51fd7acb97e7e03c2e3c43c6e4dbe9fa5e81bf029eef24f10452",
+      "artifact": {
+        "id": 10955090420,
+        "name": "oracle-cygwin",
+        "size_in_bytes": 7905465,
+        "sha256": "86e12805e3a93e8d284cb47ea523b922402751a87414aff30f0a87c626b9c71b",
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/artifacts/10955090420"
+      },
+      "upstream": {
+        "executable": {
+          "path": "C:/cygpath-cygwin/bin/cygpath.exe",
+          "sha256": "473cf4cab34c085d15563e290fc17d36fb69f742fd83c1f0fcf6e2f9666d2192"
+        },
+        "runtime_library": {
+          "path": "C:/cygpath-cygwin/bin/cygwin1.dll",
+          "sha256": "d66788fce4ef1ce787fc1a83f2dd1e063e58bbf0d48ad93164ee195a983c035e"
+        },
+        "source_url": "https://github.com/cygwin/cygwin",
+        "source_revision": "measured distribution package release identity (source Git commit not independently attested):\nCygwin Package Information\nPackage              Version   \tStatus\ncygwin               3.6.10-1       OK",
+        "distribution_version": "Cygwin Package Information\nPackage              Version   \tStatus\ncygwin               3.6.10-1       OK",
+        "runtime_version": "CYGWIN_NT-10.0-26100 runnervm99s1a 3.6.10-1.x86_64 2026-07-13 20:20 UTC x86_64 Cygwin",
+        "version_stdout_sha256": "9a4363b8be7f0298dba24fbfa77c742b5ae5ced6268279882c6d131657ef7bd3",
+        "version_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version_exit_code": 0
+      },
+      "host": {
+        "os": "windows",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "filesystem": "NTFS",
+        "installation_root": "C:/cygpath-cygwin",
+        "launch_method": "direct-process-argv",
+        "current_drive": "C",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/cygwin/cwd"
+        },
+        "mount_table": "C:/cygpath-cygwin/bin on /usr/bin type ntfs (binary,auto)\nC:/cygpath-cygwin/lib on /usr/lib type ntfs (binary,auto)\nC:/cygpath-cygwin on / type ntfs (binary,auto)\nC: on /cygdrive/c type ntfs (binary,posix=0,user,noumount,auto)\nD: on /cygdrive/d type ntfs (binary,posix=0,user,noumount,auto)",
+        "cygdrive_prefix": "/cygdrive",
+        "existence_permissions": "C:\\cygpath-ci\\cygwin\\cwd; attributes=Directory; SDDL=O:BAG:S-1-5-21-3162555376-3447873500-144036907-513D:AI(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;0x1200a9;;;BU)",
+        "locale": "LANG=C.UTF-8\nLC_CTYPE=\"C.UTF-8\"\nLC_NUMERIC=\"C.UTF-8\"\nLC_TIME=\"C.UTF-8\"\nLC_COLLATE=\"C.UTF-8\"\nLC_MONETARY=\"C.UTF-8\"\nLC_MESSAGES=\"C.UTF-8\"\nLC_ALL=C.UTF-8",
+        "input_code_page": "65001",
+        "output_code_page": "65001",
+        "io_mode": "redirected-binary",
+        "long_path_policy": "LongPathsEnabled=1",
+        "short_name_policy": "NtfsDisable8dot3NameCreation=2",
+        "test_volume": "C:\\; label=Windows",
+        "actual_short_names": "not exercised by read-only fixtures",
+        "symlinks_junctions": "cwd LinkType=; Target=; Attributes=Directory"
+      },
+      "context": {
+        "profile": "cygwin",
+        "drive_prefix": "/cygdrive",
+        "mounts": [
+          {
+            "posix": "/usr/bin",
+            "windows": "C:/cygpath-cygwin/bin",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/usr/lib",
+            "windows": "C:/cygpath-cygwin/lib",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/",
+            "windows": "C:/cygpath-cygwin",
+            "case_policy": "sensitive"
+          }
+        ],
+        "posix_cwd": "/cygdrive/c/cygpath-ci/cygwin/cwd/",
+        "windows_cwd": "C:/cygpath-ci/cygwin/cwd",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/cygwin/cwd"
+        }
+      },
+      "project_wasm": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/wasm/release/build/cygpath.wasm",
+          "sha256": "f679f73aa35a7da8a444bb1184994d666f2162a91bf2e9d94fd06ed8e265d7ac"
+        },
+        "launcher": {
+          "path": "C:/Users/runneradmin/.moon/bin/moonrun.exe",
+          "sha256": "7d9d0c5ca8bba498337334d32132fb8baf06a09a1cd1b785c3d5579f15dad4aa"
+        },
+        "backend": "wasm",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "project_native": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "5450f49706a17bed893f976768154dfe96a97cb8f09cbd9e011c39e400b20e49"
+        },
+        "launcher": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "5450f49706a17bed893f976768154dfe96a97cb8f09cbd9e011c39e400b20e49"
+        },
+        "backend": "native",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "windows_codepage_api": {
+        "schema_version": 1,
+        "purpose": "Direct Win32 oracle diagnosis; never used by the cygpath product",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "powershell": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "powershell_version": "7.6.6",
+        "kernel32_version": "10.0.26100.33296 (WinBuild.160101.0800)",
+        "parameters": {
+          "flags": 0,
+          "input_length": -1,
+          "default_character": "NULL",
+          "used_default": "NULL"
+        },
+        "observations": [
+          {
+            "codepage": 1252,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 9,
+            "size_last_error": 0,
+            "conversion_result": 9,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C415343494900",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C415343494900CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 1252,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 10,
+            "size_last_error": 0,
+            "conversion_result": 10,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C636166E95C8000",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C636166E95C8000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          }
+        ],
+        "assertions_passed": true,
+        "failures": [],
+        "last_error_note": "Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error."
+      },
+      "fault_drills": {
+        "schema_version": 1,
+        "validation_kind": "real-windows-fault-drills",
+        "complete": true,
+        "passed": 5,
+        "failed": 0,
+        "results": [
+          {
+            "id": "real-timeout-cancel-wait-partial-bytes",
+            "status": "pass",
+            "observation": "timeout.json",
+            "reap_check": "reaped.json"
+          },
+          {
+            "id": "real-spawn-failure",
+            "status": "pass",
+            "observation": "spawn-error.json"
+          },
+          {
+            "id": "tampered-stdout",
+            "status": "pass",
+            "source_blob": {
+              "path": "drive-unix/oracle/stdout.bin",
+              "length": 17,
+              "sha256": "970b153a781702b1d6e2221530d26e1ec61f1306f050bd57efd7d59b4361e79e"
+            },
+            "tampered_sha256": "9c8e19d80996928ab554e2bf3e9d80bb18b21430460b1a3d32c35cdf7f4b66eb",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: drive-unix/oracle/stdout.bin)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-fixtures",
+            "status": "pass",
+            "source_blob": {
+              "path": "fixtures.json",
+              "length": 5217,
+              "sha256": "671e9e28b5312bab7f65770125afd5665b9a5e200162b4c95951ce6e71b25e80"
+            },
+            "tampered_sha256": "774ea8502bc9e9724e0ddf986de899164fc9c5db8d4f96cba3b66ac2075533ee",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: fixtures.json)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-manifest",
+            "status": "pass",
+            "source_blob": {
+              "path": "manifest.json",
+              "length": 9731,
+              "sha256": "ca151079a4390db2a5406b75281f91a5dee9466d51bbf136143ec1c58cb15653"
+            },
+            "tampered_sha256": "5c04aaf97f07016fee0ce56a7add9056e6e7c7c40a749dc46ffd911dfb86f58f",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: manifest.json)",
+            "replay_output_created": false
+          }
+        ],
+        "source_run_sha256": "03134c730e15f16b5d6af679d7bfd1a7cd56ed209c2d429b7698392b2c0115fc",
+        "powershell": "C:/Program Files/PowerShell/7/pwsh.exe"
+      }
+    },
+    {
+      "profile": "cygwin",
+      "context_variant": "custom",
+      "accepted": true,
+      "planned_cases": 473,
+      "covered_capability_rows": 152,
+      "comparisons": 1892,
+      "supported_exact_comparisons": 1844,
+      "malformed_utf8_boundary_observations": 40,
+      "unavailable_codepage_boundary_observations": 8,
+      "infrastructure_errors": [],
+      "scope_sha256": "d73ef908d14e0de4630dfff5c4584cb876a53ae93e1a246a30452061ac832874",
+      "summary_sha256": "7c936fddce20cd2a0e8855c935c637001455af0a72a822b33f103c78a19bbe4b",
+      "coverage_audit_sha256": "a4dff04af940c7b0f1135e7cf4efc9c2be335d911e0383c4f99bd725d3294ae6",
+      "artifact": {
+        "id": 10954676562,
+        "name": "oracle-cygwin-custom",
+        "size_in_bytes": 8178747,
+        "sha256": "a84d131988ecc98f9b7feb6aad7e913bb816b427aa7740b2cb4a650d773ab4ce",
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/artifacts/10954676562"
+      },
+      "upstream": {
+        "executable": {
+          "path": "C:/cygpath-cygwin/bin/cygpath.exe",
+          "sha256": "473cf4cab34c085d15563e290fc17d36fb69f742fd83c1f0fcf6e2f9666d2192"
+        },
+        "runtime_library": {
+          "path": "C:/cygpath-cygwin/bin/cygwin1.dll",
+          "sha256": "d66788fce4ef1ce787fc1a83f2dd1e063e58bbf0d48ad93164ee195a983c035e"
+        },
+        "source_url": "https://github.com/cygwin/cygwin",
+        "source_revision": "measured distribution package release identity (source Git commit not independently attested):\nCygwin Package Information\nPackage              Version   \tStatus\ncygwin               3.6.10-1       OK",
+        "distribution_version": "Cygwin Package Information\nPackage              Version   \tStatus\ncygwin               3.6.10-1       OK",
+        "runtime_version": "CYGWIN_NT-10.0-26100 runnervm99s1a 3.6.10-1.x86_64 2026-07-13 20:20 UTC x86_64 Cygwin",
+        "version_stdout_sha256": "9a4363b8be7f0298dba24fbfa77c742b5ae5ced6268279882c6d131657ef7bd3",
+        "version_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version_exit_code": 0
+      },
+      "host": {
+        "os": "windows",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "filesystem": "NTFS",
+        "installation_root": "C:/cygpath-cygwin",
+        "launch_method": "direct-process-argv",
+        "current_drive": "C",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/cygwin/cwd"
+        },
+        "mount_table": "C:/cygpath-ci/cygwin/cwd/custom-shared/deep on /p3-alias-deep type ntfs (binary,user)\nC:/cygpath-ci/cygwin/cwd/custom-nested on /p3-mount/nested type ntfs (binary,user)\nC:/cygpath-ci/cygwin/cwd/custom-shared on /p3-alias-first type ntfs (binary,user)\nC:/cygpath-ci/cygwin/cwd/custom-shared on /p3-alias-second type ntfs (binary,user)\nC:/cygpath-ci/cygwin/cwd/custom-Fold on /P3Fold type ntfs (binary,posix=0,user)\nC:/cygpath-ci/cygwin/cwd/custom-base on /p3-mount type ntfs (binary,user)\nC:/cygpath-cygwin/bin on /usr/bin type ntfs (binary,auto)\nC:/cygpath-cygwin/lib on /usr/lib type ntfs (binary,auto)\nC:/cygpath-cygwin on / type ntfs (binary,auto)\nC: on /p3-drives/c type ntfs (binary,user,noumount,auto)\nD: on /p3-drives/d type ntfs (binary,user,noumount,auto)",
+        "cygdrive_prefix": "/p3-drives",
+        "existence_permissions": "C:\\cygpath-ci\\cygwin\\cwd; attributes=Directory; SDDL=O:BAG:S-1-5-21-3162555376-3447873500-144036907-513D:AI(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;0x1200a9;;;BU)",
+        "locale": "LANG=C.UTF-8\nLC_CTYPE=\"C.UTF-8\"\nLC_NUMERIC=\"C.UTF-8\"\nLC_TIME=\"C.UTF-8\"\nLC_COLLATE=\"C.UTF-8\"\nLC_MONETARY=\"C.UTF-8\"\nLC_MESSAGES=\"C.UTF-8\"\nLC_ALL=C.UTF-8",
+        "input_code_page": "65001",
+        "output_code_page": "65001",
+        "io_mode": "redirected-binary",
+        "long_path_policy": "LongPathsEnabled=1",
+        "short_name_policy": "NtfsDisable8dot3NameCreation=2",
+        "test_volume": "C:\\; label=Windows",
+        "actual_short_names": "not exercised by read-only fixtures",
+        "symlinks_junctions": "cwd LinkType=; Target=; Attributes=Directory"
+      },
+      "context": {
+        "profile": "cygwin",
+        "drive_prefix": "/p3-drives",
+        "mounts": [
+          {
+            "posix": "/p3-alias-deep",
+            "windows": "C:/cygpath-ci/cygwin/cwd/custom-shared/deep",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/p3-mount/nested",
+            "windows": "C:/cygpath-ci/cygwin/cwd/custom-nested",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/p3-alias-first",
+            "windows": "C:/cygpath-ci/cygwin/cwd/custom-shared",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/p3-alias-second",
+            "windows": "C:/cygpath-ci/cygwin/cwd/custom-shared",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/P3Fold",
+            "windows": "C:/cygpath-ci/cygwin/cwd/custom-Fold",
+            "case_policy": "ascii-insensitive"
+          },
+          {
+            "posix": "/p3-mount",
+            "windows": "C:/cygpath-ci/cygwin/cwd/custom-base",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/usr/bin",
+            "windows": "C:/cygpath-cygwin/bin",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/usr/lib",
+            "windows": "C:/cygpath-cygwin/lib",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/",
+            "windows": "C:/cygpath-cygwin",
+            "case_policy": "sensitive"
+          }
+        ],
+        "posix_cwd": "/p3-drives/c/cygpath-ci/cygwin/cwd/",
+        "windows_cwd": "C:/cygpath-ci/cygwin/cwd",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/cygwin/cwd"
+        }
+      },
+      "project_wasm": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/wasm/release/build/cygpath.wasm",
+          "sha256": "f679f73aa35a7da8a444bb1184994d666f2162a91bf2e9d94fd06ed8e265d7ac"
+        },
+        "launcher": {
+          "path": "C:/Users/runneradmin/.moon/bin/moonrun.exe",
+          "sha256": "7d9d0c5ca8bba498337334d32132fb8baf06a09a1cd1b785c3d5579f15dad4aa"
+        },
+        "backend": "wasm",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "project_native": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "e87475ac8dd4c19922e6718f65aaaefb0431aa46e63268dd1e39eea5761b83ac"
+        },
+        "launcher": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "e87475ac8dd4c19922e6718f65aaaefb0431aa46e63268dd1e39eea5761b83ac"
+        },
+        "backend": "native",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "windows_codepage_api": {
+        "schema_version": 1,
+        "purpose": "Direct Win32 oracle diagnosis; never used by the cygpath product",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "powershell": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "powershell_version": "7.6.6",
+        "kernel32_version": "10.0.26100.33296 (WinBuild.160101.0800)",
+        "parameters": {
+          "flags": 0,
+          "input_length": -1,
+          "default_character": "NULL",
+          "used_default": "NULL"
+        },
+        "observations": [
+          {
+            "codepage": 1252,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 9,
+            "size_last_error": 0,
+            "conversion_result": 9,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C415343494900",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C415343494900CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 1252,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 10,
+            "size_last_error": 0,
+            "conversion_result": 10,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C636166E95C8000",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C636166E95C8000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          }
+        ],
+        "assertions_passed": true,
+        "failures": [],
+        "last_error_note": "Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error."
+      },
+      "fault_drills": {
+        "schema_version": 1,
+        "validation_kind": "real-windows-fault-drills",
+        "complete": true,
+        "passed": 5,
+        "failed": 0,
+        "results": [
+          {
+            "id": "real-timeout-cancel-wait-partial-bytes",
+            "status": "pass",
+            "observation": "timeout.json",
+            "reap_check": "reaped.json"
+          },
+          {
+            "id": "real-spawn-failure",
+            "status": "pass",
+            "observation": "spawn-error.json"
+          },
+          {
+            "id": "tampered-stdout",
+            "status": "pass",
+            "source_blob": {
+              "path": "drive-unix/oracle/stdout.bin",
+              "length": 18,
+              "sha256": "a0a8b01e646670eb4d222299788394993795b27fa5f8e39b57ad8a0776afd701"
+            },
+            "tampered_sha256": "0149c4efce17824227bba6c2b8dc5edb11d3c288d6b4de6d73e99b5adea8b0fb",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: drive-unix/oracle/stdout.bin)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-fixtures",
+            "status": "pass",
+            "source_blob": {
+              "path": "fixtures.json",
+              "length": 5217,
+              "sha256": "671e9e28b5312bab7f65770125afd5665b9a5e200162b4c95951ce6e71b25e80"
+            },
+            "tampered_sha256": "774ea8502bc9e9724e0ddf986de899164fc9c5db8d4f96cba3b66ac2075533ee",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: fixtures.json)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-manifest",
+            "status": "pass",
+            "source_blob": {
+              "path": "manifest.json",
+              "length": 11104,
+              "sha256": "558d12571b4075070d53a2c2826e506ebe333423608064f88ef228224339a651"
+            },
+            "tampered_sha256": "78856be1b5ac724e79d88cc64da4b86f6c8473982ab50fc4ddc821d63f22d834",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: manifest.json)",
+            "replay_output_created": false
+          }
+        ],
+        "source_run_sha256": "b3f077d16ad712e74746427255fbf59a25da741e5296f2d1096559fbb5c7b99b",
+        "powershell": "C:/Program Files/PowerShell/7/pwsh.exe"
+      }
+    },
+    {
+      "profile": "msys2",
+      "context_variant": "default",
+      "accepted": true,
+      "planned_cases": 444,
+      "covered_capability_rows": 149,
+      "comparisons": 1776,
+      "supported_exact_comparisons": 1728,
+      "malformed_utf8_boundary_observations": 40,
+      "unavailable_codepage_boundary_observations": 8,
+      "infrastructure_errors": [],
+      "scope_sha256": "d73ef908d14e0de4630dfff5c4584cb876a53ae93e1a246a30452061ac832874",
+      "summary_sha256": "4b97e542ef2f5c13db73e0b28e1432e8aa9cdfa3abfef02e0ab5e889c79b7d74",
+      "coverage_audit_sha256": "7829d27edaf7e7fc0e0995fcd5f7b288d5db59e689e3e00818c5953443d39986",
+      "artifact": {
+        "id": 10955160105,
+        "name": "oracle-msys2",
+        "size_in_bytes": 2858994,
+        "sha256": "5283d3b205c522b94c4c0b54292d62fa75a3c391354738e9e4d7c7f9f1e5cdee",
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/artifacts/10955160105"
+      },
+      "upstream": {
+        "executable": {
+          "path": "C:/cygpath-msys2/msys64/usr/bin/cygpath.exe",
+          "sha256": "a70581980983340cd7d1358f50f8e9d8e98e015da78724d1b1e824d0cfcf6bce"
+        },
+        "runtime_library": {
+          "path": "C:/cygpath-msys2/msys64/usr/bin/msys-2.0.dll",
+          "sha256": "957d880559f0bfe7406a4cb27724610e7ce2f367030e299373d7ef37fbbb51b3"
+        },
+        "source_url": "https://github.com/msys2/msys2-runtime",
+        "source_revision": "measured distribution package release identity (source Git commit not independently attested):\nName            : msys2-runtime\nVersion         : 3.6.10-5\nDescription     : Posix emulation engine for Windows\nArchitecture    : x86_64\nURL             : https://www.cygwin.com/\nLicenses        : spdx:GPL-3.0-or-later\nGroups          : None\nProvides        : None\nDepends On      : None\nOptional Deps   : None\nRequired By     : base\nOptional For    : None\nConflicts With  : catgets  libcatgets  msys2-runtime-3.6\nReplaces        : catgets  libcatgets  msys2-runtime-3.6\nInstalled Size  : 6.31 MiB\nPackager        : CI (https://github.com/msys2/msys2-autobuild/actions/runs/36224327312/job/108355305717)\nBuild Date      : Sat Sep 26 06:38:50 2026\nInstall Date    : Sun Sep 27 11:24:47 2026\nInstall Reason  : Explicitly installed\nInstall Script  : No\nValidated By    : Signature",
+        "distribution_version": "Name            : msys2-runtime\nVersion         : 3.6.10-5\nDescription     : Posix emulation engine for Windows\nArchitecture    : x86_64\nURL             : https://www.cygwin.com/\nLicenses        : spdx:GPL-3.0-or-later\nGroups          : None\nProvides        : None\nDepends On      : None\nOptional Deps   : None\nRequired By     : base\nOptional For    : None\nConflicts With  : catgets  libcatgets  msys2-runtime-3.6\nReplaces        : catgets  libcatgets  msys2-runtime-3.6\nInstalled Size  : 6.31 MiB\nPackager        : CI (https://github.com/msys2/msys2-autobuild/actions/runs/36224327312/job/108355305717)\nBuild Date      : Sat Sep 26 06:38:50 2026\nInstall Date    : Sun Sep 27 11:24:47 2026\nInstall Reason  : Explicitly installed\nInstall Script  : No\nValidated By    : Signature",
+        "runtime_version": "MSYS_NT-10.0-26100 runnervm99s1a 3.6.10-c770e1b9.x86_64 2026-09-26 06:38 UTC x86_64 Msys",
+        "version_stdout_sha256": "9a4363b8be7f0298dba24fbfa77c742b5ae5ced6268279882c6d131657ef7bd3",
+        "version_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version_exit_code": 0
+      },
+      "host": {
+        "os": "windows",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "filesystem": "NTFS",
+        "installation_root": "C:/cygpath-msys2/msys64/",
+        "launch_method": "direct-process-argv",
+        "current_drive": "C",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/msys2/cwd"
+        },
+        "mount_table": "C:/cygpath-msys2/msys64 on / type ntfs (binary,noacl,auto)\nC:/cygpath-msys2/msys64/usr/bin on /bin type ntfs (binary,noacl,auto)\nC: on /c type ntfs (binary,noacl,posix=0,user,noumount,auto)\nD: on /d type ntfs (binary,noacl,posix=0,user,noumount,auto)",
+        "cygdrive_prefix": "/",
+        "existence_permissions": "C:\\cygpath-ci\\msys2\\cwd; attributes=Directory; SDDL=O:BAG:S-1-5-21-3162555376-3447873500-144036907-513D:AI(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;0x1200a9;;;BU)",
+        "locale": "LANG=C.UTF-8\nLC_CTYPE=\"C.UTF-8\"\nLC_NUMERIC=\"C.UTF-8\"\nLC_TIME=\"C.UTF-8\"\nLC_COLLATE=\"C.UTF-8\"\nLC_MONETARY=\"C.UTF-8\"\nLC_MESSAGES=\"C.UTF-8\"\nLC_ALL=C.UTF-8",
+        "input_code_page": "65001",
+        "output_code_page": "65001",
+        "io_mode": "redirected-binary",
+        "long_path_policy": "LongPathsEnabled=1",
+        "short_name_policy": "NtfsDisable8dot3NameCreation=2",
+        "test_volume": "C:\\; label=Windows",
+        "actual_short_names": "not exercised by read-only fixtures",
+        "symlinks_junctions": "cwd LinkType=; Target=; Attributes=Directory"
+      },
+      "context": {
+        "profile": "msys2",
+        "drive_prefix": "/",
+        "mounts": [
+          {
+            "posix": "/",
+            "windows": "C:/cygpath-msys2/msys64",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/bin",
+            "windows": "C:/cygpath-msys2/msys64/usr/bin",
+            "case_policy": "sensitive"
+          }
+        ],
+        "posix_cwd": "/c/cygpath-ci/msys2/cwd/",
+        "windows_cwd": "C:/cygpath-ci/msys2/cwd",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/msys2/cwd"
+        }
+      },
+      "project_wasm": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/wasm/release/build/cygpath.wasm",
+          "sha256": "f679f73aa35a7da8a444bb1184994d666f2162a91bf2e9d94fd06ed8e265d7ac"
+        },
+        "launcher": {
+          "path": "C:/Users/runneradmin/.moon/bin/moonrun.exe",
+          "sha256": "7d9d0c5ca8bba498337334d32132fb8baf06a09a1cd1b785c3d5579f15dad4aa"
+        },
+        "backend": "wasm",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "project_native": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "fbde22ae6af37b75c63e14b0666d6a4f8bc6941306b58f1afd8fb0d1c5fb6368"
+        },
+        "launcher": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "fbde22ae6af37b75c63e14b0666d6a4f8bc6941306b58f1afd8fb0d1c5fb6368"
+        },
+        "backend": "native",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "windows_codepage_api": {
+        "schema_version": 1,
+        "purpose": "Direct Win32 oracle diagnosis; never used by the cygpath product",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "powershell": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "powershell_version": "7.6.6",
+        "kernel32_version": "10.0.26100.33296 (WinBuild.160101.0800)",
+        "parameters": {
+          "flags": 0,
+          "input_length": -1,
+          "default_character": "NULL",
+          "used_default": "NULL"
+        },
+        "observations": [
+          {
+            "codepage": 1252,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 9,
+            "size_last_error": 0,
+            "conversion_result": 9,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C415343494900",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C415343494900CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 1252,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 10,
+            "size_last_error": 0,
+            "conversion_result": 10,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C636166E95C8000",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C636166E95C8000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          }
+        ],
+        "assertions_passed": true,
+        "failures": [],
+        "last_error_note": "Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error."
+      },
+      "fault_drills": {
+        "schema_version": 1,
+        "validation_kind": "real-windows-fault-drills",
+        "complete": true,
+        "passed": 5,
+        "failed": 0,
+        "results": [
+          {
+            "id": "real-timeout-cancel-wait-partial-bytes",
+            "status": "pass",
+            "observation": "timeout.json",
+            "reap_check": "reaped.json"
+          },
+          {
+            "id": "real-spawn-failure",
+            "status": "pass",
+            "observation": "spawn-error.json"
+          },
+          {
+            "id": "tampered-stdout",
+            "status": "pass",
+            "source_blob": {
+              "path": "drive-unix/oracle/stdout.bin",
+              "length": 8,
+              "sha256": "e0d007e18404ca69cb62d42f750062d22e2aec7e1b5e57bb9cfe13d73abd440d"
+            },
+            "tampered_sha256": "9459ba670cd0eaf540aa994e2f423d294d41c2de02f07b50db34caa30b9f8b0b",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: drive-unix/oracle/stdout.bin)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-fixtures",
+            "status": "pass",
+            "source_blob": {
+              "path": "fixtures.json",
+              "length": 5265,
+              "sha256": "55cd6d89ddad497d2727808832f173f6628e8452cbbc128cd332d14b29a51a92"
+            },
+            "tampered_sha256": "94fdf9183dac8333c2b3daa674ddafe0ea100ab2498cd49a4e1147619e379a16",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: fixtures.json)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-manifest",
+            "status": "pass",
+            "source_blob": {
+              "path": "manifest.json",
+              "length": 10997,
+              "sha256": "4821c87237e94d47c960c2cb91d04ec0b3b5fa182bc400274fbb57fd7a20cf70"
+            },
+            "tampered_sha256": "0f030b96fc38e68f0c1446164bac610a204d157c6ad96f7484179761c0490302",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: manifest.json)",
+            "replay_output_created": false
+          }
+        ],
+        "source_run_sha256": "613f21d78dc0eb42d8319e00f4f5933c0847b56e1fd4e9a6c922db42edbadc79",
+        "powershell": "C:/Program Files/PowerShell/7/pwsh.exe"
+      }
+    },
+    {
+      "profile": "msys2",
+      "context_variant": "custom",
+      "accepted": true,
+      "planned_cases": 473,
+      "covered_capability_rows": 152,
+      "comparisons": 1892,
+      "supported_exact_comparisons": 1844,
+      "malformed_utf8_boundary_observations": 40,
+      "unavailable_codepage_boundary_observations": 8,
+      "infrastructure_errors": [],
+      "scope_sha256": "d73ef908d14e0de4630dfff5c4584cb876a53ae93e1a246a30452061ac832874",
+      "summary_sha256": "1f0e1ff21f1d7078d0814f64b7ff2f4c410feb9ed84ce70700a97e04b991d6cf",
+      "coverage_audit_sha256": "0d512ebc6a3c4d7e16e5922021b17beb21da849d6365268583ed6719ce4720aa",
+      "artifact": {
+        "id": 10954223686,
+        "name": "oracle-msys2-custom",
+        "size_in_bytes": 3143980,
+        "sha256": "3b3ccab8f3f6a0543617b7023c9e91bc7eed77611e4f434a2b5bf9964f9d31b0",
+        "url": "https://github.com/moonbit-community/cygpath/actions/runs/36385821354/artifacts/10954223686"
+      },
+      "upstream": {
+        "executable": {
+          "path": "C:/cygpath-msys2/msys64/usr/bin/cygpath.exe",
+          "sha256": "a70581980983340cd7d1358f50f8e9d8e98e015da78724d1b1e824d0cfcf6bce"
+        },
+        "runtime_library": {
+          "path": "C:/cygpath-msys2/msys64/usr/bin/msys-2.0.dll",
+          "sha256": "957d880559f0bfe7406a4cb27724610e7ce2f367030e299373d7ef37fbbb51b3"
+        },
+        "source_url": "https://github.com/msys2/msys2-runtime",
+        "source_revision": "measured distribution package release identity (source Git commit not independently attested):\nName            : msys2-runtime\nVersion         : 3.6.10-5\nDescription     : Posix emulation engine for Windows\nArchitecture    : x86_64\nURL             : https://www.cygwin.com/\nLicenses        : spdx:GPL-3.0-or-later\nGroups          : None\nProvides        : None\nDepends On      : None\nOptional Deps   : None\nRequired By     : base\nOptional For    : None\nConflicts With  : catgets  libcatgets  msys2-runtime-3.6\nReplaces        : catgets  libcatgets  msys2-runtime-3.6\nInstalled Size  : 6.31 MiB\nPackager        : CI (https://github.com/msys2/msys2-autobuild/actions/runs/36224327312/job/108355305717)\nBuild Date      : Sat Sep 26 06:38:50 2026\nInstall Date    : Sun Sep 27 11:24:47 2026\nInstall Reason  : Explicitly installed\nInstall Script  : No\nValidated By    : Signature",
+        "distribution_version": "Name            : msys2-runtime\nVersion         : 3.6.10-5\nDescription     : Posix emulation engine for Windows\nArchitecture    : x86_64\nURL             : https://www.cygwin.com/\nLicenses        : spdx:GPL-3.0-or-later\nGroups          : None\nProvides        : None\nDepends On      : None\nOptional Deps   : None\nRequired By     : base\nOptional For    : None\nConflicts With  : catgets  libcatgets  msys2-runtime-3.6\nReplaces        : catgets  libcatgets  msys2-runtime-3.6\nInstalled Size  : 6.31 MiB\nPackager        : CI (https://github.com/msys2/msys2-autobuild/actions/runs/36224327312/job/108355305717)\nBuild Date      : Sat Sep 26 06:38:50 2026\nInstall Date    : Sun Sep 27 11:24:47 2026\nInstall Reason  : Explicitly installed\nInstall Script  : No\nValidated By    : Signature",
+        "runtime_version": "MSYS_NT-10.0-26100 runnervm99s1a 3.6.10-c770e1b9.x86_64 2026-09-26 06:38 UTC x86_64 Msys",
+        "version_stdout_sha256": "9a4363b8be7f0298dba24fbfa77c742b5ae5ced6268279882c6d131657ef7bd3",
+        "version_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version_exit_code": 0
+      },
+      "host": {
+        "os": "windows",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "filesystem": "NTFS",
+        "installation_root": "C:/cygpath-msys2/msys64/",
+        "launch_method": "direct-process-argv",
+        "current_drive": "C",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/msys2/cwd"
+        },
+        "mount_table": "C:/cygpath-ci/msys2/cwd/custom-shared on /p3-alias-second type ntfs (binary,user)\nC:/cygpath-ci/msys2/cwd/custom-nested on /p3-mount/nested type ntfs (binary,user)\nC:/cygpath-msys2/msys64 on / type ntfs (binary,noacl,auto)\nC:/cygpath-ci/msys2/cwd/custom-shared on /p3-alias-first type ntfs (binary,user)\nC:/cygpath-ci/msys2/cwd/custom-base on /p3-mount type ntfs (binary,user)\nC:/cygpath-msys2/msys64/usr/bin on /bin type ntfs (binary,noacl,auto)\nC:/cygpath-ci/msys2/cwd/custom-Fold on /P3Fold type ntfs (binary,posix=0,user)\nC:/cygpath-ci/msys2/cwd/custom-shared/deep on /p3-alias-deep type ntfs (binary,user)\nC: on /p3-drives/c type ntfs (binary,user,noumount,auto)\nD: on /p3-drives/d type ntfs (binary,user,noumount,auto)",
+        "cygdrive_prefix": "/p3-drives",
+        "existence_permissions": "C:\\cygpath-ci\\msys2\\cwd; attributes=Directory; SDDL=O:BAG:S-1-5-21-3162555376-3447873500-144036907-513D:AI(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;0x1200a9;;;BU)",
+        "locale": "LANG=C.UTF-8\nLC_CTYPE=\"C.UTF-8\"\nLC_NUMERIC=\"C.UTF-8\"\nLC_TIME=\"C.UTF-8\"\nLC_COLLATE=\"C.UTF-8\"\nLC_MONETARY=\"C.UTF-8\"\nLC_MESSAGES=\"C.UTF-8\"\nLC_ALL=C.UTF-8",
+        "input_code_page": "65001",
+        "output_code_page": "65001",
+        "io_mode": "redirected-binary",
+        "long_path_policy": "LongPathsEnabled=1",
+        "short_name_policy": "NtfsDisable8dot3NameCreation=2",
+        "test_volume": "C:\\; label=Windows",
+        "actual_short_names": "not exercised by read-only fixtures",
+        "symlinks_junctions": "cwd LinkType=; Target=; Attributes=Directory"
+      },
+      "context": {
+        "profile": "msys2",
+        "drive_prefix": "/p3-drives",
+        "mounts": [
+          {
+            "posix": "/p3-alias-second",
+            "windows": "C:/cygpath-ci/msys2/cwd/custom-shared",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/p3-mount/nested",
+            "windows": "C:/cygpath-ci/msys2/cwd/custom-nested",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/",
+            "windows": "C:/cygpath-msys2/msys64",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/p3-alias-first",
+            "windows": "C:/cygpath-ci/msys2/cwd/custom-shared",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/p3-mount",
+            "windows": "C:/cygpath-ci/msys2/cwd/custom-base",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/bin",
+            "windows": "C:/cygpath-msys2/msys64/usr/bin",
+            "case_policy": "sensitive"
+          },
+          {
+            "posix": "/P3Fold",
+            "windows": "C:/cygpath-ci/msys2/cwd/custom-Fold",
+            "case_policy": "ascii-insensitive"
+          },
+          {
+            "posix": "/p3-alias-deep",
+            "windows": "C:/cygpath-ci/msys2/cwd/custom-shared/deep",
+            "case_policy": "sensitive"
+          }
+        ],
+        "posix_cwd": "/p3-drives/c/cygpath-ci/msys2/cwd/",
+        "windows_cwd": "C:/cygpath-ci/msys2/cwd",
+        "drive_cwds": {
+          "C": "C:/cygpath-ci/msys2/cwd"
+        }
+      },
+      "project_wasm": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/wasm/release/build/cygpath.wasm",
+          "sha256": "f679f73aa35a7da8a444bb1184994d666f2162a91bf2e9d94fd06ed8e265d7ac"
+        },
+        "launcher": {
+          "path": "C:/Users/runneradmin/.moon/bin/moonrun.exe",
+          "sha256": "7d9d0c5ca8bba498337334d32132fb8baf06a09a1cd1b785c3d5579f15dad4aa"
+        },
+        "backend": "wasm",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "project_native": {
+        "artifact": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "bd5f1648b8d74aa6d0fa3440f5341268908e98c4e5959612068dcf40a7492792"
+        },
+        "launcher": {
+          "path": "D:/a/cygpath/cygpath/_build/native/release/build/cygpath.exe",
+          "sha256": "bd5f1648b8d74aa6d0fa3440f5341268908e98c4e5959612068dcf40a7492792"
+        },
+        "backend": "native",
+        "git_sha": "b32dd7448658bc251b216ba93a5c120ef54fdbc9",
+        "dirty": false,
+        "module_version": "0.1.0",
+        "moon_version": "moon 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moon.exe\nmoonc v0.10.14+7d59c7ec9 (2026-09-18) ~\\.moon\\bin\\moonc.exe\nmoonrun 0.1.20260920 (914d7da 2026-09-20) ~\\.moon\\bin\\moonrun.exe\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+        "build_mode": "release"
+      },
+      "windows_codepage_api": {
+        "schema_version": 1,
+        "purpose": "Direct Win32 oracle diagnosis; never used by the cygpath product",
+        "os_version": "Microsoft Windows NT 10.0.26100.0",
+        "architecture": "X64",
+        "powershell": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "powershell_version": "7.6.6",
+        "kernel32_version": "10.0.26100.33296 (WinBuild.160101.0800)",
+        "parameters": {
+          "flags": 0,
+          "input_length": -1,
+          "default_character": "NULL",
+          "used_default": "NULL"
+        },
+        "observations": [
+          {
+            "codepage": 1252,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 9,
+            "size_last_error": 0,
+            "conversion_result": 9,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C415343494900",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C415343494900CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 1252,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": true,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": true,
+            "get_cp_info_last_error": 0,
+            "maximum_character_bytes": 1,
+            "default_character_hex": "3F00",
+            "lead_bytes_hex": "000000000000000000000000",
+            "size_result": 10,
+            "size_last_error": 0,
+            "conversion_result": 10,
+            "conversion_last_error": 0,
+            "output_hex": "433A5C636166E95C8000",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": false,
+            "destination_after_hex": "433A5C636166E95C8000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\ASCII",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          },
+          {
+            "codepage": 29001,
+            "input": "C:\\café\\€",
+            "is_valid_codepage": false,
+            "is_valid_codepage_last_error": 0,
+            "get_cp_info_success": false,
+            "get_cp_info_last_error": 87,
+            "maximum_character_bytes": null,
+            "default_character_hex": null,
+            "lead_bytes_hex": null,
+            "size_result": 0,
+            "size_last_error": 87,
+            "conversion_result": 0,
+            "conversion_last_error": 87,
+            "output_hex": "",
+            "destination_capacity": 256,
+            "destination_initial_byte": 204,
+            "destination_unchanged": true,
+            "destination_after_hex": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+          }
+        ],
+        "assertions_passed": true,
+        "failures": [],
+        "last_error_note": "Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error."
+      },
+      "fault_drills": {
+        "schema_version": 1,
+        "validation_kind": "real-windows-fault-drills",
+        "complete": true,
+        "passed": 5,
+        "failed": 0,
+        "results": [
+          {
+            "id": "real-timeout-cancel-wait-partial-bytes",
+            "status": "pass",
+            "observation": "timeout.json",
+            "reap_check": "reaped.json"
+          },
+          {
+            "id": "real-spawn-failure",
+            "status": "pass",
+            "observation": "spawn-error.json"
+          },
+          {
+            "id": "tampered-stdout",
+            "status": "pass",
+            "source_blob": {
+              "path": "drive-unix/oracle/stdout.bin",
+              "length": 18,
+              "sha256": "a0a8b01e646670eb4d222299788394993795b27fa5f8e39b57ad8a0776afd701"
+            },
+            "tampered_sha256": "0149c4efce17824227bba6c2b8dc5edb11d3c288d6b4de6d73e99b5adea8b0fb",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: drive-unix/oracle/stdout.bin)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-fixtures",
+            "status": "pass",
+            "source_blob": {
+              "path": "fixtures.json",
+              "length": 5265,
+              "sha256": "55cd6d89ddad497d2727808832f173f6628e8452cbbc128cd332d14b29a51a92"
+            },
+            "tampered_sha256": "94fdf9183dac8333c2b3daa674ddafe0ea100ab2498cd49a4e1147619e379a16",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: fixtures.json)",
+            "replay_output_created": false
+          },
+          {
+            "id": "tampered-manifest",
+            "status": "pass",
+            "source_blob": {
+              "path": "manifest.json",
+              "length": 12389,
+              "sha256": "4c24643b38d91f648909213735dd85c29cc65a8e8ccddab3b667b71e9e97bc85"
+            },
+            "tampered_sha256": "4fd262ee7399b78cd3327b2b74eab844620095ee6d41eb08fc90c3cd60a55614",
+            "diagnostic": "Failure(oracle.mbtx:192:5-192:17@moon/test/single FAILED: evidence digest/length mismatch: manifest.json)",
+            "replay_output_created": false
+          }
+        ],
+        "source_run_sha256": "640f1a4e542a90178faeb2c82ff56f4677619a6c4235770b87071b012f37e1a6",
+        "powershell": "C:/Program Files/PowerShell/7/pwsh.exe"
+      }
+    }
+  ],
+  "limits": [
+    "P3 completion applies to the frozen explicit-context portable matrix, not full official compatibility or every theoretically feasible pure MoonBit extension.",
+    "Boundary observations are exact project rejection contracts and are not supported-domain parity.",
+    "Archive hashes were checked against GitHub artifact digests before this summary was saved. Raw binaries and full case evidence remain in the linked artifact archives and local retained ZIPs; hosted retention is finite.",
+    "Distribution package identities and runtime versions were measured. Exact installed-binary/source-Git equivalence was not independently attested.",
+    "Mooncakes publication and exact-version moonx retrieval are maintainer-owned pending gates."
+  ]
+}

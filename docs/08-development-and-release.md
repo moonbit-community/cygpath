@@ -1,15 +1,15 @@
 # Development and Release Acceptance
 
-The executable is the root package; the reusable library is
-`ZSeanYves/cygpath/lib`. This guide describes local execution and the remaining
-release gates. [Remote Validation](09-remote-validation.md) records the green
-three-host checks and bounded official Windows comparisons at commit
-`7dfe6ba58520a6f5249c41bd9aad39cfeb215440`.
+The root executable is `ZSeanYves/cygpath`; the reusable package is
+`ZSeanYves/cygpath/lib`. The verified baseline is
+`b32dd7448658bc251b216ba93a5c120ef54fdbc9`.
+[Remote Validation](09-remote-validation.md) records the three-host checks,
+frozen P3 scope, and separate publication boundary.
 
 ## Local execution
 
-Run commands from the repository root. The standalone `--` belongs to `moon`,
-and separates its options from the arguments passed to cygpath.
+Run from the repository root. The standalone `--` separates Moon options from
+cygpath arguments; ordinary cygpath options still include `-h`, `-u`, and `-w`.
 
 ```sh
 moon run --target wasm . -- -h
@@ -17,117 +17,112 @@ moon run --target wasm . -- -u 'C:\work\demo.txt'
 moon run --target native . -- -m --root 'C:\cygwin64' /usr/bin
 moon run --target wasm . -- -u -f paths.txt
 moon run --target wasm . -- -u -f -
+moon run --target wasm . -- -u -o -f paths-with-options.txt
+moon run --target native . -- -w -C1252 --root 'C:\cygwin64' /usr/café
 ```
 
-The last command reads stdin. Input is UTF-8 with LF or CRLF records and an
-optional initial BOM. Output uses UTF-8 and LF. Context options never change
-the process cwd, mounts, or environment. See [the CLI contract](04-api-and-cli.md)
-for short-option combinations, context arguments, unsupported capabilities,
-and exit codes.
+Input uses UTF-8. BOM bytes remain path content; CRLF, NUL visibility, final
+records, empty streams, and per-record option state follow the tested contract.
+Output uses the selected encoding with raw LF record endings. Context options
+describe conversion state without changing actual cwd, mounts, or environment.
+See [the CLI contract](04-api-and-cli.md) for supported selectors, option
+precedence, per-record state, errors, and remaining unsupported capabilities.
 
-## Dependencies and target boundary
+## Dependencies and licensing
 
-| Dependency | Pinned version | License | Use |
-| --- | --- | --- | --- |
-| [moonbitlang/async](https://github.com/moonbitlang/async) | 0.22.4 | Apache-2.0 | Runtime entry, asynchronous file reads and raw standard streams; subprocesses only in validation tools |
-| [moonbitlang/x](https://github.com/moonbitlang/x) | 0.5.5 | Apache-2.0 | `sys.exit` at the host boundary; pure SHA-256 for validation evidence |
-| MoonBit core | Bundled with the recorded compiler | Apache-2.0 | Collections, encoding, arguments, and debugging |
+| Dependency or source | Version/provenance | Use |
+| --- | --- | --- |
+| Official MoonBit async | 0.22.4, Apache-2.0 | General-purpose I/O/runtime; subprocesses in test tooling |
+| Official MoonBit x | 0.5.5, Apache-2.0 | Host exit; test-evidence SHA-256 |
+| MoonBit core | Recorded compiler, Apache-2.0 | Pure collections/encoding and runtime facilities |
+| Unicode/Microsoft encoding tables | Pinned source manifests in `third_party/` | Pure numeric-code-page data; preserve supplied licenses |
+| newlib sorting adaptation | Pinned source and BSD-3-Clause notice in `third_party/newlib/` | Observable MSYS2 mount-order behavior |
 
-The library and pure CLI packages import no host I/O facilities. The executable
-and `internal/host` declare Wasm and Native support, matching the verified
-runtime boundary. JavaScript and Wasm GC checks apply to the pure packages;
-they do not imply that the executable supports those targets.
+The product contains no project-owned foreign imports, C stubs, or official-tool
+fallback. The Win32 code-page probe uses PowerShell/PInvoke only for independent
+test evidence and is not imported by the executable. Package and binary
+distributions must preserve applicable third-party notices.
 
-Project source contains no foreign declarations, C stubs, external conversion
-commands, or backend-specific conversion branches. Official runtime packages
-provide the ordinary operating-system primitives needed for I/O and process
-exit. Their internal native implementation is outside the project business
-logic, as established in [the architecture](02-architecture.md).
+The library and pure CLI contain no host I/O. The executable/host adapter support
+Wasm and Native. All-target checks of pure packages do not imply executable
+JavaScript or Wasm GC support.
 
-## Reproduce portable acceptance
+## Reproduce acceptance
 
-Run build commands sequentially. The process collector takes existing
-artifacts and never rebuilds them during a run:
+Serialize Moon commands and use fresh evidence directories:
 
 ```sh
 moon check --target all --deny-warn
 moon test --target wasm --deny-warn
 moon test --target native --deny-warn
+moon run --deny-warn scripts/oracle.mbtx self-test
+moon run --deny-warn scripts/ci_oracle.mbtx self-test
+moon test --deny-warn scripts/check_cli.mbtx
+moon run --deny-warn scripts/check_consumer.mbtx _build/consumer-new
 moon build --target wasm --release --deny-warn
 moon build --target native --release --deny-warn
-moon run scripts/check_cli.mbtx --wasm _build/wasm/release/build/cygpath.wasm --native _build/native/release/build/cygpath.exe --out _build/cli-evidence
+moon run scripts/check_cli.mbtx --wasm _build/wasm/release/build/cygpath.wasm --native _build/native/release/build/cygpath.exe --out _build/cli-new
 moon info --target all
 moon fmt
 ```
 
-Use a new `--out` directory for each execution. The collector resolves artifact
-paths before changing child working directories. It saves the frozen inputs,
-artifact hashes, expected and actual byte files, integer exit statuses,
-deadlines, and separate contract/backend comparison results. Failures do not
-rewrite expected fixtures. Interrupted runs retain a checkpoint with
-unexecuted cases. These are project-contract tests, not official Windows
-comparisons.
+Review interface diffs and formatting, including standalone scripts. The process
+collector consumes existing artifacts, records exact input/expected/actual
+bytes and exits, and compares backends separately. Failures never refresh
+expectations; interrupted runs retain unexecuted identifiers.
 
-The [CI workflow](../.github/workflows/check.yml) schedules equivalent checks
-on Linux, macOS, and Windows and uploads process evidence even on failure.
-Action references are pinned; the selected toolchain is recorded in each run.
-[Check run 36371978473](https://github.com/moonbit-community/cygpath/actions/runs/36371978473)
-passed on Linux, macOS, and Windows: 59 tests per backend and 57 CLI process
-fixtures per backend, or 114 process executions per host. Wasm/Native byte and
-status comparisons passed in each host's actual runtime environment.
+[Check run 36385821361](https://github.com/moonbit-community/cygpath/actions/runs/36385821361)
+passed on Linux, macOS, and Windows: 99 MoonBit tests per backend, 57 CLI
+fixtures per backend (114 process observations per host), and all 57 backend
+comparisons per host. A separate public API consumer passed both backends
+through a local workspace dependency. This checks consumer visibility without
+claiming package-registry retrieval.
 
-The separate [Windows oracle workflow](../.github/workflows/oracle.yml) installs
-official Cygwin/MSYS2 and runs the manifest-generating CI wrapper. At the same
-commit, [run 36371978419](https://github.com/moonbit-community/cygpath/actions/runs/36371978419)
-completed 400 comparisons: 308 exact matches and 92 preserved reviewed
-differences. The latter correspond to 23 profile/case records bound to exact
-fixture and upstream hashes plus output bytes/status. Its green gate establishes
-the documented subset and backend consistency; it does not establish complete
-Cygwin/MSYS2 equivalence. See [the collection guide](07-oracle-collection.md).
+[Windows oracle run 36385821354](https://github.com/moonbit-community/cygpath/actions/runs/36385821354)
+passed all four profile/context jobs. The frozen 152-row scope produced 7,336
+observations: 7,144 supported exact comparisons, 160 malformed-input boundaries,
+and 32 independently measured CP29001 capability boundaries. Coverage audits
+and five real Windows fault drills per job passed. Historical reviewed output
+records are not consulted by the current gate. Follow
+[the collection guide](07-oracle-collection.md) to reproduce this environment;
+local portable tests cannot substitute for it.
 
-Native builds on the local macOS toolchain can print `libtool` warnings about
-empty platform-specific object files supplied by `moonbitlang/async`. The
-project's MoonBit sources must still pass `--deny-warn`; these external archive
-tool messages are recorded separately from compiler or behavioral failures.
+Official setup actions are commit-pinned, while installed package identities,
+binary hashes, and toolchain versions are measured per run. Source-to-binary
+Git provenance remains unattested. These runs establish the frozen supported
+scope, not every official or Windows-specific capability.
 
-## Local packaging and installation
+## Package review and local installation
 
 ```sh
 moon package --list
 moon install ./ --bin _build/local-bin
 ```
 
-Review the archive before publishing: it must contain root `main.mbt` and
-`moon.pkg`, the library and internal packages, module metadata, license, and
-documentation. Build outputs and local dependencies must be absent. Root
-`README.md` is an ordinary Markdown file; executable packages should not carry
-blackbox-only `.mbt.md` inputs. Executable documentation tests remain in `lib/`.
+Review root `main.mbt`/`moon.pkg`, the library/internal packages, metadata,
+documentation, and all licenses/notices. Build outputs and local dependencies
+must be absent. Root README is ordinary Markdown; executable documentation
+tests belong in the library. Use an isolated local installation directory.
 
-Local installation checks the root command coordinate and compiler packaging.
-It does not test registry download, installed account ownership, or `moonx`
-retrieval. Use an isolated installation directory to preserve existing tools.
+Local installation and the workspace consumer validate package layout and API
+visibility. They do not validate registry download, account ownership, or
+exact-version `moonx` execution.
 
-## Remaining release gates
+## Remaining release work
 
-1. Preserve the green three-host contract matrix and rerun relevant checks for
-   subsequent code or dependency changes.
-2. Expand the verified 50-case-per-profile Windows subset to the remaining P3
-   matrix using [the oracle collection guide](07-oracle-collection.md). Complete
-   real Windows collector timeout/termination and evidence-tampering drills.
-   Resolve unexplained differences and retain reviewed differences as raw
-   failures, with exact approved scopes. Installed package identities and binary
-   hashes are recorded; upstream source Git commits are not independently attested.
-3. Choose a release version, synchronize module metadata and CLI version text,
-   and record a reviewed commit and clean-workspace artifact hashes.
-4. The repository owner will publish to Mooncakes. Before that step, verify the
-   account and `ZSeanYves/cygpath` coordinates independently of the GitHub
-   organization and review package contents. These CI workflows do not publish.
-5. After publication, retrieve the exact version through
-   `moonx ZSeanYves/cygpath@<published-version>` on promised hosts and exercise
-   help, version, conversion, failure statuses, file input, and stdin.
+1. Preserve the green baseline and rerun affected portable/official evidence
+   after implementation, dependency, fixture, or scope changes.
+2. Select the release version, synchronize metadata and version output, and
+   retain clean-commit artifact identities and applicable third-party notices.
+3. The repository owner will publish separately. Confirm the account and
+   `ZSeanYves/cygpath` coordinates independently of GitHub organization ownership.
+   No automatic publishing workflow is installed.
+4. After publication, retrieve
+   `moonx ZSeanYves/cygpath@<published-version>` on promised hosts and test help,
+   version, conversions, failures, file input, and stdin.
 
-Publication has not been performed by this work, and registry retrieval remains
-unverified until the owner publishes an exact version. No automatic publication
-workflow is installed. Pure MoonBit
-extensions such as root-local output and per-line options require their own
-contracts and differential evidence before becoming supported capabilities.
+Publication and exact-version registry retrieval have not been performed by this
+work. P3 is complete for its frozen scope; future scope additions require their
+own contract, implementation, and official evidence. Unsupported filesystem
+identity and host-discovery features remain explicit rather than gaining a
+Native-only fallback.

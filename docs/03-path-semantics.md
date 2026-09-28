@@ -1,184 +1,263 @@
 # 03 Path Semantics and Algorithm Contracts
 
-Status: portable behavior contract. See [the architecture index](README.md) for implementation and verification status. This chapter defines the project's deterministic rules; behavior marked as a differential gate requires evidence collected on real Cygwin/MSYS2 before the corresponding compatibility can be claimed. See [01](01-upstream-and-scope.md) for the primary behavioral sources and immutable source links.
+Status: implemented portable conversion contract. P3 passed for the frozen pure
+MoonBit, explicit-context matrix at `b32dd7448658bc251b216ba93a5c120ef54fdbc9`.
+The [remote validation report](09-remote-validation.md) identifies the official
+binaries, environments, raw observations, and remaining release gates. This is
+a bounded compatibility result, not complete Cygwin or MSYS2 emulation.
+See [01](01-upstream-and-scope.md) for behavioral sources and provenance.
 
-The first real Windows runs now establish observations for the selected corpus;
-see [the remote validation report](09-remote-validation.md). Its recorded
-differences remain differences in raw output/status. They neither establish
-complete compatibility nor extend the supported scope beyond this chapter.
+## 1. Input, output, and profile
 
-## 1. Input, output, and profile are separate dimensions
+Library callers choose `InputSyntax::Windows` or `InputSyntax::Posix` explicitly.
+There is no `Auto` library syntax. Output is `Windows`, `Mixed`, or `Posix`;
+Mixed uses Windows path semantics and forward directory separators.
 
-The only input syntaxes are `Windows` and `Posix`, selected explicitly by the caller. Output formats are `Windows`, `Mixed`, and `Posix`. Mixed shares Windows path semantics and changes only the directory separator for ordinary paths. The profile is either `Cygwin` or `Msys2`; it determines the default drive prefix and the CLI's mode identification, not the host OS.
+`Profile::Cygwin` and `Profile::Msys2` select the default drive prefix, mount
+ordering, and mapped-root trailing-separator behavior. They never inspect the
+host OS. Cygwin defaults to `/cygdrive`; MSYS2 defaults to `/`. A custom prefix
+overrides that prefix without changing the profile's other rules. `/mnt/c`
+does not enable WSL rules, and `/c` is not a drive branch in the default Cygwin
+context.
 
-Both `C:\work` and `C:/work` are valid Windows inputs; `/cygdrive/c/work` is a POSIX input under the Cygwin profile. MSYS2's `/c/work` must not automatically become a drive path in the default Cygwin mode. Likewise, the similar-looking WSL path `/mnt/c/work` must not implicitly enable WSL rules.
+The CLI supplies deterministic recognition around the explicit library API:
+`-u` accepts ordinary Windows paths and preserves already-POSIX absolute
+spellings; `-w/-m` use POSIX input with recognition of ordinary Windows forms.
+`--from` overrides that recognition. Lists choose their delimiter before
+converting members. The complete CLI rules are in [04](04-api-and-cli.md).
 
-The library provides no ambiguous `Auto` input syntax. The CLI defaults to Windows input for `-u` and Posix input for `-w/-m`. It can recognize unambiguous drive-letter and backslash prefixes to perform idempotent conversion when the output remains Windows. Users can override this default interpretation with `--from`; see [04](04-api-and-cli.md).
+## 2. Path classification
 
-## 2. Path classification and recognition order
+Recognize namespace prefixes before ordinary path separators. The examples
+below contain literal path characters, without shell escaping.
 
-The scanner must recognize special prefixes before ordinary separators. It must not start by replacing every slash globally.
+| Input | Classification and behavior |
+| --- | --- |
+| `C:\a`, `C:/a` | Drive-absolute Windows path; the drive must be ASCII A–Z |
+| `C:a`, `C:` | Drive-relative syntax; preserved for non-absolute Windows/Mixed library output, anchored at C's root for POSIX or absolute conversion |
+| `\a` | Windows path rooted on the current drive; resolution needs a drive-absolute `windows_cwd` |
+| `\\server\share\a`, `//server/share/a` | Complete UNC path; server/share are part of the root |
+| `\\?\C:\a`, `\??\C:\a` | Supported ordinary extended drive spelling |
+| `\\?\UNC\server\share\a`, `\??\UNC\server\share\a` | Supported ordinary extended UNC spelling |
+| `\\.\COM1`, extended `GLOBALROOT` or other device forms | `UnsupportedNamespace` |
+| `/usr/bin` with POSIX source | POSIX absolute path; Windows output needs a drive mapping or mount |
+| `a/b`, `../a` | Ordinary relative path; source grammar determines whether backslashes are separators |
 
-| Example input (literal path, without shell escaping) | Classification | Required handling |
-| --- | --- | --- |
-| `C:\a`, `C:/a` | DriveAbsolute | ASCII drive letter, colon, and separator |
-| `C:a`, `C:` | DriveRelative | Relative to drive C's working directory; neither `C:\a` nor the drive root |
-| `\a` | WindowsRooted | Rooted on the current drive; not a POSIX root |
-| `\\server\share\a`, `//server/share/a` | UNC | Preserve the server and share root; never collapse to a single leading slash |
-| `\\?\C:\a`, `\\?\UNC\server\share\a` | ExtendedNamespace | Explicitly unsupported initially; do not remove the prefix and apply ordinary rules |
-| `\\.\COM1`, `\??\C:\a` | DeviceNamespace | Device namespace conversion is unsupported |
-| `/usr/bin` | PosixAbsolute | Interpret using POSIX source syntax; Windows output requires mount information |
-| `a/b`, `../a` | Relative | Preserve relative meaning; consume cwd only when making the path absolute |
+The supported extended prefixes are removed for ordinary drive/UNC conversion;
+rendering later decides whether an extended output prefix is required.
+Incomplete UNC forms such as `//` and `//server` remain unsupported. Complete
+double-forward-slash UNC input is recognized in either source syntax and does
+not use the POSIX root mount.
 
-In Windows source syntax, `/a` is rooted on the current drive. In Posix source syntax, `/a` is rooted at the POSIX root. The same text can therefore require different context. Only an explicit input syntax removes this ambiguity.
-
-Initial UNC support requires a complete `server/share`. The network-browsing meanings of `//` and `//server`, like device namespaces, fall outside portable ordinary file paths and produce `UnsupportedNamespace`. A complete double-slash UNC in POSIX source syntax follows UNC rules rather than the root mount.
+For Windows source and POSIX output, a single leading forward slash is an
+already-POSIX spelling: `/a/../b` remains `/a/../b`, including with `absolute=true`.
+Backslashes in that spelling become forward slashes. This branch requires no
+cwd or mount and also preserves `/dev/...` and `/proc/...` text. Explicit POSIX
+source instead uses POSIX normalization and virtual-namespace validation.
 
 ## 3. Context validity and immutability
 
-The logical Context fields are profile, drive_prefix, Mount entries in declaration order, optional posix_cwd, optional windows_cwd, and drive_cwds keyed by drive letter. Every cwd must be an absolute ordinary path in its own syntax. A Windows cwd may be drive-absolute or a complete UNC, but a UNC cwd cannot establish the current drive. Each drive_cwds key must be a single ASCII drive letter, and its value must be an absolute path on that drive: an entry for C rejects `D:\work` and UNC paths. Keys must remain unique after normalization.
+`Context::new` accepts a profile, drive prefix, mounts in declaration order,
+optional POSIX/Windows cwd, and per-drive cwd metadata. It validates inputs and
+copies mutable collections. Context and Mount fields are private; conversions
+do not mutate them or consult cwd, environment, registry, fstab, or the real
+mount table.
 
-Context construction must:
+- A drive prefix must be an absolute, dot-free POSIX path. Trailing separators
+  are normalized. `/dev`, `/proc`, and their subtrees are not valid prefixes.
+- Mount sources must be absolute, dot-free POSIX paths; targets must be
+  drive-absolute or complete UNC paths without `.` or `..`. Supported ordinary
+  extended target spellings are parsed into those ordinary roots.
+- Duplicate POSIX mount points and mounts below `/dev` or `/proc` are rejected.
+  Mounts overlapping the configured drive-prefix subtree are also rejected.
+  With prefix `/`, only single-letter drive branches and their descendants are
+  reserved; `/`, `/usr`, and other ordinary mount points remain available.
+- Cwds must be absolute in their source syntax and are normalized lexically.
+  A UNC Windows cwd supports ordinary relative resolution but cannot supply a
+  current drive for `\name`.
+- `drive_cwds` keys are single ASCII drive letters, unique after case folding.
+  Each value must be absolute on that same drive. These entries are **validated
+  metadata only**: they do not select conversion bases. Cygpath drive-relative
+  conversion uses the drive-root rule described below.
 
-- Validate that the prefix is a canonical POSIX absolute path. The Cygwin default is `/cygdrive`; the Msys2 default is `/`. Custom values such as `/drives` are allowed, with consistent trailing-separator normalization. Reject `/dev`, `/proc`, and their subtrees as custom prefixes. Access `/proc/cygdrive` through the dedicated UnixPrefix option.
-- Validate that each mount source is POSIX-absolute and its target is drive-absolute or a complete UNC. Reject relative targets, empty server/share names, namespace targets, and definitions containing unresolved `.` or `..` components.
-- Reject duplicate POSIX mount points. Different mount points may target the same Windows root, so the mapping need not be one-to-one.
-- Reject explicit mounts at `/dev`, `/proc`, or their subtrees, including the reserved `/proc/cygdrive`, and explicit mounts that conflict with the configured drive_prefix subtree. When drive_prefix is `/`, regardless of profile, reserve only the `/[a-zA-Z]` drive branches and their subtrees; ordinary `/usr` or root `/` mounts remain allowed.
-- Copy mutable collections and normalize drive-letter keys. An omitted cwd is valid until a conversion actually needs it.
+Omitting cwd or mounts is valid until a requested conversion needs them.
+The library does not interpret fstab permissions, text/binary mode, or
+user/system mount provenance. An external caller must supply resolved ordinary
+mappings, including the intended declaration priority.
 
-The library does not interpret fstab permissions, text mode, or bind/usertemp entries, and does not read the registry. Callers that need this information must first resolve actual mappings into ordinary Mount entries. Any future fstab support requires its own explicit semantics and tests.
+## 4. Mapping, profile ordering, and case
 
-## 4. Mapping and matching rules
+POSIX-to-Windows conversion first recognizes `/proc/cygdrive/<drive>`, then
+branches under the configured drive prefix, then explicit mounts. A malformed
+drive component under a nonempty configured prefix raises `InvalidDrivePrefix`;
+it does not fall through to the root mount. `/p3-drives/cat/file` is therefore
+different from `/p3-drives-extra/cat/file`. Missing ordinary root/mount context
+raises `MissingContext(field="root or mount")`.
 
-POSIX → Windows: first recognize `/proc/cygdrive/<drive>`, then drive paths under the configured prefix, and then select the longest matching explicit mount. Root `/` is also an explicit mount. If no mapping exists, return `MissingContext(RootOrMount)`. Never assume `C:\cygwin64` as an installation root.
+Windows-to-POSIX conversion tries explicit mounts first. An unmatched absolute
+drive uses the configured prefix, or `/proc/cygdrive` when requested through
+`UnixPrefix::ProcCygdrive`. `ProcCygdrive` never bypasses an explicit mount.
+Unmatched UNC paths retain UNC spelling with forward separators.
 
-Windows → POSIX: prefer explicit mounts. Only a drive-absolute path that matches no mount falls back to drive_prefix. Requesting `ProcCygdrive` changes only this fallback prefix to `/proc/cygdrive`; it must not bypass a matching mount. A UNC path without an explicit mount renders as `//server/share/...`.
+All mapping matches end at component boundaries: `/usr` does not match `/usr2`,
+and `C:\work` does not match `C:\workspace`. Ordering is profile-specific:
 
-Matches must end at component boundaries: `/usr` matches `/usr/bin` but not `/usr2`; `C:\work` does not match `C:\workspace`. Presorting context entries may improve lookup, but must not change the caller's declaration order.
-
-When several aliases have equally long Windows targets, the portable rule chooses the first declared Mount as the canonical reverse mapping. A longer target still takes precedence. This deterministic rule does not promise every detail of Cygwin's ordering; real alias preferences remain a differential gate.
-
-Drive letters are compared without ASCII case sensitivity. POSIX output uses lowercase drive letters; Windows/Mixed output uses uppercase drive letters. Other components preserve input case. Each mount has an explicit `Sensitive` or `AsciiInsensitive` comparison policy, defaulting to Sensitive. The latter folds ASCII only and does not claim to implement Windows' complete Unicode case rules. More complex case equivalence is outside the current compatibility commitment.
-
-Root mapping includes only caller-provided entries. `--root` must not silently create `/usr/bin`, `/usr/lib`, or other aliases. These default Cygwin mappings must be supplied as explicit Mount entries to make behavior reproducible across machines and installation layouts.
-
-## 5. Relative paths, absolute resolution, and normalization
-
-Without an absolute request, ordinary relative paths receive only syntax and separator conversion. They preserve `.` and `..`, do not read cwd, and do not check whether files exist. Inputs that are already absolute receive limited lexical normalization: remove repeated separators and `.`, resolve `..` component by component, and never move above a drive root, POSIX root, or UNC share root.
-
-When absolute resolution is requested, first join the path to the corresponding cwd in its source syntax, then resolve `.` and `..`, and finally map and render it. There is no symbolic-link inspection, so `link/../a` can only be resolved lexically; it must not be described as equivalent to real filesystem resolution. Behavior involving `..` across mount boundaries or symbolic links is an explicit differential gate. If official behavior differs, document the supported scope or revise the contract; do not hide the difference.
-
-Special relative inputs require the following context:
-
-| Input and target | Context requirement |
-| --- | --- |
-| Ordinary relative path, any format, absolute=false | No cwd required |
-| POSIX relative path, absolute=true | posix_cwd; Windows output also requires the corresponding mapping |
-| Windows ordinary relative path, absolute=true | windows_cwd |
-| `C:a` to Windows/Mixed, absolute=false | Drive-relative semantics may be preserved |
-| `C:a` to Posix, or absolute=true | C in drive_cwds; windows_cwd on C may serve as a fallback |
-| `\a` to Windows/Mixed, absolute=false | Preserve the form rooted on the current drive |
-| `\a` to Posix, or absolute=true | Obtain the drive from a drive-absolute windows_cwd; a UNC cwd is insufficient |
-
-Do not interpret `C:` as `C:\`, or assume a drive root when its per-drive cwd is missing. `absolute` is not `realpath`, and the output does not establish that a file exists.
-
-The pinned Windows runs observed that both official programs resolve the tested
-`-au C:child` and `-au C:` inputs from the drive root, while this project's
-explicit per-drive cwd produces the declared cwd plus `child`, or the cwd itself.
-The existing explicit-context rule above remains the portable contract. For the
-tested `-au \\server\share\..\file`, both official programs preserve the parent
-component; this project's existing lexical rule clamps traversal at the share
-and yields `//server/share/file`. These are bounded observations for those
-fixtures and environments, recorded with their byte digests in
-[the reviewed differences](../testdata/oracle/reviewed-differences.json).
-They do not resolve every drive-state or UNC differential gate.
-
-The portable trailing-separator rule is: roots retain the separator needed to
-express the output root; if a non-root input has a trailing separator, render
-exactly one target separator; preserve one trailing separator on ordinary
-relative `.`/`..` paths as well. The slash in the bare POSIX root `/` is structural,
-not an optional suffix. Mapping `/` to an ordinary Windows directory such as
-`C:\root` therefore produces `C:\root`, without an extra backslash. Mapping it
-to a drive root or UNC share still produces the required `C:\` or
-`\\server\share\` form. Determine optional trailing-separator intent before
-normalization: `/folder/` retains its suffix, and `/folder/../` mapped through `/ → C:\root`
-produces `C:\root\` because a non-root input explicitly supplied that suffix.
-
-Commit `476d6a8` corrected the parser's conflation of the bare POSIX root slash
-with optional trailing separators. Both profiles use the same rule. In the
-recorded `-w /` case, Cygwin agrees with the corrected ordinary-directory output;
-MSYS2 appends a trailing backslash and is retained as a reviewed raw difference.
-See [the remote validation report](09-remote-validation.md) for pinned programs
-and evidence. Other root/trailing-separator combinations remain subject to their
-differential gates. A different compatibility rule requires corresponding
-contract and fixture updates.
-
-## 6. Path lists are not simply batches of single paths
-
-The input direction of `convert_list` must be explicit. Do not classify individual members first and then guess the list separator. Windows lists use `;`; POSIX lists use `:`. Mixed is an output style and still uses the Windows list separator `;`.
-
-In Windows lists, `C:` contains a drive letter and is not split on the colon. In POSIX lists, a colon is always a list separator; do not accept a mixed-in `C:\a` and attempt to infer its meaning. The calling shell has already processed argv quoting. The library does not decode remaining quotes as CSV or shell quoting. If an ordinary path contains the target list separator, return `UnrepresentablePath` rather than silently splitting it into extra members.
-
-Empty-member rules follow the pinned upstream `conv_path_list` and are asymmetric:
-
-- POSIX → Windows: treat each empty member as `.`, then apply normal relative/absolute rules. Never discard a member representing the current directory.
-- Windows → POSIX: discard empty members. Never inject the host cwd.
-- Rerendering a list in the same direction preserves empty-member positions. A single empty path passed to `convert("")` still produces `EmptyPath`.
-
-An empty POSIX list string represents one empty member. Converting a Windows list
-containing only empty members to POSIX yields the empty string under the portable
-contract. The CLI writes that result as LF and exits 0. In the recorded
-`empty-windows-list` case, both official CLIs reject the empty operand before
-list conversion, write no stdout, and report an error with exit 1. This confirms
-a difference for that case; it does not change the library's established
-empty-member contract. The [remote validation report](09-remote-validation.md)
-retains the exact observations. Further endpoint and option combinations still
-require real-system differential checks.
-
-Preserve member order and do not deduplicate. If a valid member fails conversion, return an error containing its original member index, with no prefix result. The index counts original empty members so diagnostics can identify the user's input. One CLI `-p NAME` is an atomic conversion unit; separate NAME arguments follow the per-item output rules.
-
-## 7. Characters and unrepresentable input
-
-The core accepts String, recognizes path structure with ASCII characters, and preserves the contents and case of other valid Unicode scalars. Reject NUL and invalid surrogates. CLI UTF-8 decoding errors must not be replaced with U+FFFD to continue processing. Do not normalize combining characters to NFC/NFD. Chinese characters, emoji, and spaces need no special transliteration.
-
-Ordinary Windows naming cannot represent some POSIX components, including names containing `:`, `*`, `?`, literal backslashes, or control characters; reserved device names; and trailing dots/spaces that require a special namespace to preserve. The first version returns `UnrepresentablePath` for such conversions, retaining the original component and reason. It does not implement Cygwin private-use-area encoding or silently delete characters. Build the exact reserved-name test table from [Microsoft's naming rules](https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file).
-
-The core does not expand `~`, `$HOME`, `%USERPROFILE%`, or globs, and does not decode URIs. `file://...` is not a supported path protocol; if it creates an invalid component, handle it as an ordinary path error. Do not trim spaces. A backslash is not a shell escape, and path content must never be executed as a command.
-
-A single POSIX output path may retain `;` in a component, but its representability must be checked before placing it in a Windows PATH list. Likewise, a POSIX result containing `:` cannot be joined losslessly into a POSIX PATH list. Successful single-path conversion does not guarantee list serialization.
-
-## 8. Unsupported runtime semantics
-
-Generating or querying 8.3 names, restoring actual filename case, finding system special directories, binary/text mount modes, closing process HANDLEs, arbitrary Windows code pages, and extended/device namespaces cannot be implemented correctly through simple string operations. The current design reports explicit errors for these capabilities and prohibits approximate results.
-
-`/proc/cygdrive` is a specific implementable mapping. Other `/proc` and `/dev` virtual paths must not be mapped to disk files below an ordinary root directory; they produce `UnsupportedNamespace`. Future capabilities must still satisfy the pure MoonBit requirement and consistent backend behavior, and may only be enabled after the scope matrix and tests are updated.
-
-## 9. Expected cases
-
-These are design acceptance vectors, not a record of executed results. Backslashes represent literal path characters. The default context uses Cygwin, drive_prefix=`/cygdrive`, no mounts, and no cwd.
-
-| Source → target | Input / additional context | Expected result |
+| Profile | POSIX-to-Windows order | Windows-to-POSIX order |
 | --- | --- | --- |
-| Windows → Posix | `C:\work\a.txt` | `/cygdrive/c/work/a.txt` |
+| Cygwin | Longest matching POSIX component prefix, declaration order for equal priority | Longest matching Windows component prefix, declaration order for equal priority |
+| MSYS2 | Native target UTF-8 byte length ascending, native byte spelling as tie breaker, followed by the pinned runtime's POSIX-prefix ordering pass | Descending POSIX-length minus native-length in UTF-8 bytes, then POSIX byte spelling |
+
+The MSYS2 POSIX-prefix pass has equal comparisons for unrelated mounts. Its
+observable ordering is reproduced with the pinned newlib sorting behavior;
+substituting a stable generic sort would change some nested-mount results.
+Equal native aliases start with the supplied declaration priority before that
+second ordering pass; matching still checks full component boundaries.
+Consequently, the MSYS2 profile does not promise universal longest-prefix
+selection. The real default/custom mount and alias cases are part of P3's
+frozen evidence. See [the sorting provenance](../third_party/newlib/README.md).
+
+Drive letters compare without ASCII case sensitivity and render uppercase in
+Windows/Mixed output, lowercase in POSIX drive fallback. Other components retain
+their spelling. Each mount chooses `Sensitive` or `AsciiInsensitive`; the latter
+folds ASCII only. Non-ASCII Windows case folding is outside this contract.
+
+The root is an explicit mount. Supplying `/ → C:\cygwin64` does not create
+`/usr/bin`, `/usr/lib`, or any other alias. Callers must supply those mappings.
+
+## 5. Relative resolution and normalization
+
+Ordinary relative paths preserve `.` and `..` without an absolute request.
+Absolute resolution joins the applicable explicit cwd, normalizes in that path
+space, then maps and renders. This is lexical conversion: no file existence,
+symlink, junction, or realpath query occurs.
+
+| Library request | Base or result |
+| --- | --- |
+| Ordinary relative input, `absolute=false` | No cwd, except the long Windows-output fallback below |
+| POSIX relative input, `absolute=true` | `posix_cwd`; Windows output also needs its mapping |
+| Windows ordinary relative input, `absolute=true` | `windows_cwd` |
+| `C:a` to Windows/Mixed, `absolute=false` | Preserve `C:a` |
+| `C:a` or `C:` to POSIX, or with `absolute=true` | Resolve from `C:\`, without using per-drive cwd metadata |
+| `\a` to Windows/Mixed, `absolute=false` | Preserve its current-drive-rooted form |
+| `\a` to POSIX, or with `absolute=true` | Take the drive from drive-absolute `windows_cwd` |
+
+The CLI's natural recognition additionally treats bare `C:` and absolute
+Windows-output requests for `C:child` as literal POSIX-relative names, matching
+the official command behavior. This differs deliberately from an explicitly
+Windows library request; [04](04-api-and-cli.md) gives examples.
+
+Absolute POSIX/drive paths collapse repeated separators, remove `.`, and resolve
+`..` without crossing their root. UNC parents beyond the share boundary remain
+`..`. Unmatched Windows-to-POSIX UNC input preserves its original tail spelling,
+including internal dots, repeated separators, and terminal separators. A mapped
+UNC path uses the normalized mapping result. Relative Windows-to-POSIX input
+without an absolute request similarly preserves its slashified original spelling.
+
+Trailing-separator intent is determined before normalization. In the Cygwin
+profile, the slash in bare POSIX `/` expresses the root and is not an optional
+suffix: mapping it to `C:\root` yields `C:\root`. Mapping to a drive or share
+root retains its required separator. A non-root input `/folder/../` retains its
+explicit trailing separator and can therefore yield `C:\root\`. MSYS2 adds a
+trailing separator when an empty POSIX-root component sequence maps through a
+mount, including the observed `-w /` case. Neither profile trims path spaces.
+
+## 6. Long paths
+
+Windows/Mixed conversion checks input components for the 255 UTF-16-unit limit
+and raises `PathTooLong(original_path)` when exceeded. POSIX output does not
+apply that Windows component check. Thus both an argument and a file-input chunk
+can convert a longer Windows component to POSIX text.
+
+Ordinary rendered drive/UNC paths of at least 260 UTF-16 units gain `\\?\`
+or `\\?\UNC\` prefixes; Mixed uses forward slashes in that prefix as well.
+Long relative Windows/Mixed output is retried as an absolute request using the
+explicit source cwd. `-r` is a CLI modifier for requesting a root-local prefix
+on a single Windows result even when short.
+
+This is not a universal guarantee for every Windows path length or filesystem.
+The frozen threshold corpus distinguishes valid multi-component 259/260/261
+paths from overlong individual components, and covers relative resolution and
+the file reader's 8192-byte boundary. Inputs outside that validated matrix need
+additional evidence before broader compatibility claims.
+
+## 7. PATH lists
+
+`convert_list` selects the input delimiter from explicit source syntax:
+Windows uses `;`, POSIX uses `:`. Output uses `:` for POSIX and `;` otherwise.
+Choose the delimiter before processing members; a drive colon inside a declared
+POSIX list is still a separator. No CSV or shell quote decoding occurs.
+
+`recognize_windows=false` is the library default. With `recognize_windows=true`,
+POSIX-list members containing backslashes use Windows grammar after splitting;
+single-backslash-rooted members also resolve against the supplied current drive.
+The CLI enables this for natural recognition. It never changes the whole list's
+delimiter based on one member.
+
+- POSIX-to-Windows/Mixed converts every empty member as `.`.
+- Windows-to-POSIX skips empty members.
+- Same-syntax library conversions preserve empty-member positions.
+- The library accepts an empty list string according to those rules. The CLI
+  rejects an empty NAME/record before list conversion, unless `-i` skips it.
+
+Member order is retained and results are not deduplicated. Joining does not
+escape a target delimiter already present in path content and does not promise
+lossless serialization; callers needing structured results should keep arrays
+and call `convert` themselves. One invalid member raises
+`ListEntryError(index, cause)`, with an original zero-based index counting empty
+members, and returns no partial list.
+
+The CLI preserves the structured cause but uses the official whole-operand
+diagnostic for known runtime-style list failures. In the pinned runtime, a
+nested conversion return of `-1` becomes the list wrapper's errno, producing
+`Unknown error -1` for the tested length and invalid-drive-prefix list failures.
+This does not turn unsupported project namespaces into official runtime errors.
+
+## 8. Characters and namespace limits
+
+The core accepts Unicode strings, rejects NUL and unpaired UTF-16 surrogates,
+and does not normalize Unicode to NFC/NFD. Windows filename output maps ASCII
+controls U+0001–U+001F and `" * : < > ? |` to U+F000 plus the ASCII value.
+Windows-to-POSIX reverses those mappings and U+F020/U+F02E for space/dot; other
+private-use characters are preserved. These are filename rules, independent
+of the CLI's output byte encoding.
+
+Ordinary component spellings such as `CON`, trailing dots, and trailing spaces
+are preserved. A literal backslash in an explicitly POSIX component cannot be
+rendered as an ordinary Windows filename and raises `UnrepresentablePath`.
+UNC server/share validation also rejects invalid authority components. CR/LF
+are path content where allowed; the CLI does not impose a second blanket
+line-break rejection on argv or converted output.
+
+There is no tilde, variable, glob, or URI expansion. Path content is never
+executed. The product does not query 8.3 names, actual filename case, system
+directories, file modes, process HANDLEs, symlinks, junctions, or arbitrary device
+namespaces. POSIX-to-Windows `/dev` and `/proc` mappings are unsupported except
+the explicit `/proc/cygdrive/<drive>` rule. Already-POSIX Windows-to-POSIX
+passthrough is the separate spelling rule from section 2.
+
+## 9. Public API examples and invariants
+
+The default Context is Cygwin with prefix `/cygdrive`, no mounts, and no cwd.
+
+| Source → target | Input / additional context | Result |
+| --- | --- | --- |
+| Windows → POSIX | `C:\work\a.txt` | `/cygdrive/c/work/a.txt` |
 | Windows → Mixed | `c:\work\a.txt` | `C:/work/a.txt` |
-| Posix → Windows | `/cygdrive/d/a` | `D:\a` |
-| Posix → Mixed | `/proc/cygdrive/d/a` | `D:/a` |
-| Windows → Posix | `D:\a`, prefix=ProcCygdrive | `/proc/cygdrive/d/a` |
-| Posix → Windows | `/usr/bin`, no mounts | `MissingContext` |
-| Posix → Windows | `/usr/bin`, `/ → C:\cygwin64` | `C:\cygwin64\usr\bin` |
-| Posix → Windows | Add `/usr/bin → C:\cygwin64\bin` to the previous context | `C:\cygwin64\bin` |
-| Windows → Posix | `C:\cygwin64\bin`, previous mounts, prefix=ProcCygdrive | `/usr/bin` |
-| Windows → Posix | `C:a`, no cwd for C | `MissingContext` |
-| Windows → Posix | `C:a`, drive_cwds[C]=`C:\work` | `/cygdrive/c/work/a` |
-| Windows → Posix | `\\server\share\a` | `//server/share/a` |
-| Posix → Windows | `a/../b`, absolute=false | `a\..\b` |
-| Posix → Windows | `/c/a`, profile=Msys2 | `C:\a` |
-| Windows → Posix, list | `C:\a;;D:\b;` | `/cygdrive/c/a:/cygdrive/d/b` |
-| Posix → Windows, list | `/cygdrive/c/a::/cygdrive/d/b`, absolute=false | `C:\a;.;D:\b` |
-| Windows → Posix | `\\?\C:\a` | `UnsupportedNamespace` |
+| POSIX → Windows | `/cygdrive/d/a` | `D:\a` |
+| POSIX → Mixed | `/proc/cygdrive/d/a` | `D:/a` |
+| POSIX → Windows | `/usr/bin`, no mounts | `MissingContext` |
+| POSIX → Windows | `/usr/bin`, `/ → C:\cygwin64` | `C:\cygwin64\usr\bin` |
+| Windows → POSIX | `C:a`, with or without `drive_cwds` | `/cygdrive/c/a` |
+| Windows → POSIX | `\\?\C:\a` | `/cygdrive/c/a` |
+| Windows → POSIX | `\\server\share\..\file` | `//server/share/../file` |
+| POSIX → Windows | `a/../b`, `absolute=false` | `a\..\b` |
+| POSIX → Windows | `/c/a`, profile Msys2 | `C:\a` |
+| Windows → POSIX list | `C:\a;;D:\b;` | `/cygdrive/c/a:/cygdrive/d/b` |
+| POSIX → Windows list | `/cygdrive/c/a::/cygdrive/d/b` | `C:\a;.;D:\b` |
 
-## 10. Verifiable invariants
-
-Identical input, Context, and options produce identical results. Core calls do not mutate the Context or input collections. List ordering is stable. Rendering ordinary Windows versus Mixed paths differs only in directory separators. Mount matching respects component boundaries. Errors return no partial lists. Supported Unicode is never truncated.
-
-Round-trip properties apply only to canonical absolute paths that are representable, unambiguous, and free of competing aliases. Compare canonical forms, not original strings. Case normalization, mount aliases, empty list members, and redundant separators prevent a global string round-trip identity.
+Identical input, Context, and options give identical results across backends.
+Core calls preserve Context and caller-owned collections; list failure is
+atomic; mount matching respects component boundaries. Round trips apply only
+to canonical paths in a fixed, unambiguous mapping and character domain.
+Aliases, encoded filename characters, case normalization, delimiters, and
+empty members rule out a universal string round-trip identity.

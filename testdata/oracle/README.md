@@ -1,13 +1,78 @@
 # Official oracle inputs
 
-This directory contains immutable input corpora, a manifest template, and exact reviewed-difference records. Cygwin and MSYS2 have separate ten-case starter corpora, plus a shared forty-case `fixtures.readonly-matrix.json`: fifty inputs per profile. The matrix covers root/nested mounts, prefix boundaries, cwd forms, normalization boundaries, trailing separators, lists, type/code-page selection, and stdin/partial-failure policies. Expected bytes come from the fixed official program in each Windows run; raw outputs remain in its evidence artifact.
+This directory holds immutable input corpora, the environment template, the
+independent P3 scope index, and historical evidence annotations. Official
+expected bytes are captured from the selected real Cygwin/MSYS2 executable on
+Windows; they are never guessed or regenerated from the project.
 
-[Windows oracle run 36371978419](https://github.com/moonbit-community/cygpath/actions/runs/36371978419) executed both profiles on commit `7dfe6ba58520a6f5249c41bd9aad39cfeb215440`. Each profile ran collect and replay with Wasm and Native, totaling 400 comparisons: Cygwin 156 exact + 44 reviewed; MSYS2 152 exact + 48 reviewed. These are fifty cases per profile observed four ways, not 400 independent inputs. [Remote Validation](../../docs/09-remote-validation.md) records the evidence and remaining scope.
+The current baseline is `b32dd7448658bc251b216ba93a5c120ef54fdbc9`.
+[Windows run 36385821354](https://github.com/moonbit-community/cygpath/actions/runs/36385821354)
+passed Cygwin/MSYS2 in default/custom contexts, using collect/replay and
+Wasm/Native for every applicable case. See
+[Remote Validation](../../docs/09-remote-validation.md) for the retained evidence.
 
-The cases are independently authored from the project's contracts and the linked upstream usage/source references. No upstream implementation or GPL source fixture has been copied. The design-reference commits in the files do not assert that any installed executable was built from those commits. Current manifests record measured Cygwin `3.6.10-1` / MSYS2 `3.6.10-5` package identities and binary hashes, and explicitly qualify the source Git commit as not independently attested.
+| Input file | Cases | Use |
+| --- | ---: | --- |
+| `fixtures.cygwin.json` / `fixtures.msys2.json` | 10 each | Profile-specific starter inputs |
+| `fixtures.readonly-matrix.json` | 40 | Shared path, context, list, and input behavior |
+| `fixtures.p3.json` | 394 | Frozen path/option/encoding/input/error coverage |
+| `fixtures.custom.json` | 29 | Actual custom drive-prefix, nested/alias/case mount contexts |
 
-Read [Oracle Collection and Replay](../../docs/07-oracle-collection.md) before using `scripts/oracle.mbtx`. Fill every `REPLACE_` field in a copy of `environment.example.json`. For MSYS2, change the profile, executable/runtime paths, installation root, source metadata, mounts, and drive prefix together. For a Native project artifact, `project.launcher` must equal `project.artifact`.
+[`p3-scope.json`](p3-scope.json) maps 152 independently described capability
+rows to 473 distinct suite/case references: 461 supported, ten malformed-UTF-8
+boundaries, and two CP29001 boundaries. Default jobs execute 444 cases per
+profile; custom jobs execute 473. Across four jobs and four observations per
+case, 7,336 observations comprise 7,144 supported exact comparisons, 160 input
+boundaries, and 32 capability boundaries. A scope audit rejects missing,
+duplicate, or unmapped observations. Out-of-variant rows are recorded explicitly.
 
-Save collection outputs outside this input directory, in a new evidence directory for every run and suite. Never populate inputs with guessed output. A `known_difference_id` is an annotation: mismatched bytes still produce `fail`. [Policy identifiers](policy-differences.md) explain the observed portable-contract differences. [`reviewed-differences.json`](reviewed-differences.json) contains 23 exact profile/case approvals, bound to fixture and upstream executable/runtime hashes, policy/reason, output hashes, and exit statuses. The CI wrapper reports accepted entries separately as `reviewed-difference`; it never changes raw failures to passes.
+The frozen P3 scope and real Windows fault drills are complete. This is a
+bounded claim about the committed matrix and measured environments, not full
+official-tool compatibility or arbitrary Windows behavior.
 
-The bounded corpus and its green gate do not complete P3. Full supported-case coverage and real Windows collector fault drills remain pending. Publication is a separate step reserved for the repository owner.
+## Authoring and collection
+
+Read [Oracle Collection and Replay](../../docs/07-oracle-collection.md).
+Each fixture is independently authored and cites design/source provenance.
+Its source revision does not attest an installed executable's build commit.
+Current manifests freeze measured Cygwin `3.6.10-1` / MSYS2 `3.6.10-5`
+package identities and executable/runtime hashes, with source correspondence
+explicitly qualified.
+
+Fill every placeholder in a copy of `environment.example.json`. Change profile,
+installation paths, upstream identity, prefix, mounts, and context together.
+Native uses the artifact itself as its launcher. Record actual mount declarations
+only: `usr-bin-mapping` describes an independently measured path, and does not
+require or create a separate `/usr/bin` mount.
+
+The project receives explicit context while retaining natural CLI source
+detection. Source-type fixture metadata does not inject `--from`. Stdin uses
+literal hex; optional file bytes are prepared once and verified unchanged.
+The wrapper records directory preparation and actual custom mount commands.
+Input/output paths and byte hashes remain in the evidence.
+
+Use a new collection directory outside this directory for each run. Replay
+uses the retained fixture/input/oracle bytes, and may update project artifact
+identity only while preserving the upstream/environment/context snapshot.
+Required cases never silently skip.
+
+## Acceptance domains
+
+Supported cases require exact raw stdout, stderr, and integer exit equality,
+plus project/backend/replay consistency. No output allowlist is used.
+
+Malformed UTF-8 is outside the defined upstream conversion domain. Its raw
+official observations remain visible; the gate separately requires exact
+deterministic project rejection and any prior successful output. CP29001 is an
+observed unavailable capability: each job must first prove direct Win32
+conversion failure with an untouched buffer and a passing control encoding,
+then verify exact project rejection. Neither boundary contributes to supported
+exact comparisons. Process failures/timeouts cannot satisfy either boundary.
+
+[policy-differences.md](policy-differences.md) explains these boundaries and the
+historical policy records. `reviewed-differences.json` is retained solely for
+the earlier baseline; current scripts do not read it. A `known_difference_id`
+annotation never grants an exemption.
+
+Publication is reserved for the repository owner. Exact-version `moonx`
+retrieval remains a separate, unverified release step.

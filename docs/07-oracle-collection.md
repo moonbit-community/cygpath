@@ -1,97 +1,107 @@
 # Oracle Collection and Replay
 
-The collector in [`scripts/oracle.mbtx`](../scripts/oracle.mbtx) now has real Windows evidence for a bounded Cygwin/MSYS2 corpus. At commit `7dfe6ba58520a6f5249c41bd9aad39cfeb215440`, [Windows oracle CI](https://github.com/moonbit-community/cygpath/actions/runs/36371978419) completed both profiles with 308 exact comparisons and 92 preserved, reviewed differences. This is a verified subset, not completion of the full P3 compatibility matrix. [Remote Validation](09-remote-validation.md) records the frozen versions, counts, and evidence links; the mechanics self-test remains a separate tool check.
+The frozen P3 scope passed at commit `b32dd7448658bc251b216ba93a5c120ef54fdbc9` in [Windows oracle run 36385821354](https://github.com/moonbit-community/cygpath/actions/runs/36385821354). Its four jobs cover Cygwin/MSYS2 and default/custom contexts, with both project backends and collection/replay. There are 7,336 observations: 7,144 supported-domain exact comparisons, 160 malformed-UTF-8 boundary observations, and 32 CP29001 capability-boundary observations. No supported difference is approved or ignored. [Remote Validation](09-remote-validation.md) records the evidence and limits.
 
-## Supported collection scope
+## Scope and process boundary
 
-Version 1 launches the official executable and this project's Wasm or Native artifact directly, using argument arrays. It compares redirected stdout/stderr bytes and integer exit status without decoding, trimming, newline conversion, or diagnostic normalization. It supports immutable stdin bytes and read-only conversion cases whose directory preparation is `none-read-only`. It does not prepare files, mutate a mount table, create 8.3 names, or configure symlinks/junctions. Such cases need an explicit extension before collection.
+[`p3-scope.json`](../testdata/oracle/p3-scope.json) independently maps 152 capability rows to 473 distinct suite/case references: 461 supported cases, ten malformed-input cases, and two CP29001 cases. Each profile executes 444 cases in the default context and 473 in the custom context. Each case has four observations: collect/replay × Wasm/Native. Repeated observations are not additional independent inputs.
 
-The two [starter corpora](../testdata/oracle/README.md) contain ten inputs each, and the shared `fixtures.readonly-matrix.json` adds forty inputs for each profile. These fifty inputs per profile cover drive/UNC paths, explicit cwd, root/nested mounts, normalization boundaries, trailing separators, lists, type/code-page selection, and stdin/partial-failure policies. Their input JSON carries no guessed expected output; collection obtains actual bytes from the official executable. Both corpora have now run with Wasm and Native, followed by replay: 50 cases × 2 profiles × 2 backends × 2 modes = 400 comparisons. This is not a comprehensive acceptance suite. Neither another implementation nor a synthetic fixture is accepted as the official oracle.
+The corpus comprises ten profile-specific inputs, forty shared matrix inputs, 394 P3 inputs, and 29 custom-context inputs. It covers the promised path/option/list/input/encoding behavior, measured mount and cwd contexts, ordinary extended namespaces, root-local output, per-record options, GNU parsing, and documented failure behavior. Custom jobs additionally configure a drive prefix, nested mappings, same-target aliases, and ASCII-insensitive mounts. The frozen scope is complete; this does not claim all possible Windows or official-tool behavior.
 
-The runtime's `@async.platform` must report `Windows` for both collection and replay. A manifest string alone cannot bypass this check. Executables, the upstream runtime library, and the project launcher/artifact are verified by SHA-256 before execution and again after the run. Artifact, cwd, and installation-root paths must be drive-absolute or complete UNC Windows paths; current-drive-relative `/tools/cygpath.exe`, `\tools\cygpath.exe`, and `C:cygpath.exe` are rejected. There is no PATH search for `cygpath` and no shell wrapper. Wasm is launched as the pinned `moonrun` executable with the artifact as its first argument. Native launches the artifact directly.
+The low-level [collector](../scripts/oracle.mbtx) launches executable paths with argument arrays. It compares redirected stdout/stderr bytes and integer exits without decoding, trimming, newline conversion, or diagnostic normalization. `@async.platform` must report Windows for both collection and replay. Executable/runtime/launcher/artifact hashes are checked before and after execution. Paths must be drive-absolute or complete UNC paths. Wasm launches the recorded `moonrun` with the artifact followed by `--`; Native launches the artifact directly. No PATH lookup or shell wrapper selects the official program.
+
+These are test-only processes. The product never invokes official cygpath, discovers the runtime installation, or uses custom FFI.
 
 ## Manifest schema version 1
 
-Start with [`environment.example.json`](../testdata/oracle/environment.example.json). Fields are required unless their script type is optional. For an absent Context cwd, omit `posix_cwd` or `windows_cwd`; do not write JSON `null`. MoonBit's derived object encoding omits `None` fields and stores the unwrapped value for `Some`. The script's `Manifest`, `Upstream`, `Project`, `HostSnapshot`, `CoreContext`, and `Artifact` declarations are the executable schema. Unknown profiles, missing required fields, invalid hashes, placeholder metadata, unsupported launch modes, and unavailable required capabilities fail preflight.
+Start with [environment.example.json](../testdata/oracle/environment.example.json). The script's typed records are the executable schema. Replace every placeholder; a template is not measured evidence. Omit absent optional fields instead of writing JSON `null`.
 
 | Group | Required meaning |
 | --- | --- |
-| `schema_version`, `profile` | `1`, and exactly `cygwin` or `msys2` |
-| `upstream` | Absolute executable and runtime-library paths/hashes; source URL and revision provenance (current CI records measured package identity and an unattested source Git commit); distribution/runtime versions; raw `--version` stdout/stderr SHA-256 and expected integer exit |
-| `project` | Artifact and launcher paths/hashes; `wasm` or `native`; full Git SHA and dirty flag; module/toolchain version; `debug` or `release` |
-| `host` | Actual Windows version/build, architecture/filesystem/install root, direct launch, current-drive/per-drive cwd and mount observation, locale/code pages, redirected I/O, directory existence/permissions, long-path/8.3/volume/symlink conditions |
+| `schema_version`, `profile` | `1`, and `cygwin` or `msys2` |
+| `upstream` | Absolute executable/runtime paths and SHA-256; distribution/runtime identity; source provenance; raw version-stream hashes and integer exit |
+| `project` | Artifact/launcher paths and SHA-256; backend; full Git SHA and dirty state; module/toolchain version and build mode |
+| `host` | Windows version, architecture, filesystem/install root, drive/cwd/mount observations, locale/code pages, permissions, long-path/8.3/volume/reparse conditions |
 | `cwd`, `environment`, `cleared_environment` | Absolute child cwd, complete explicit environment, and deliberately absent variables |
-| `context`, `context_mapping_evidence` | Explicit library Context equivalent and an explanation linking it to actual host observations |
-| `capabilities`, `deadline_ms` | Available case prerequisites and per-process deadline from 1 to 60000 milliseconds |
+| `context`, `context_mapping_evidence` | Explicit conversion context and its link to actual host measurements |
+| `capabilities`, `deadline_ms` | Explicit case prerequisites and a 1–60000 ms per-process deadline |
 
-Environment inheritance is always disabled. Variables not in `environment` are absent; `cleared_environment` documents deliberate exclusions and cannot overlap set keys. Supply Windows runtime necessities such as `SystemRoot` explicitly. The recorded environment is passed directly to both programs. The collector does not invoke a Cygwin/MSYS shell, so shell argv rewriting is not introduced by this launch path. The launch method is `direct-process-argv`, and I/O mode is `redirected-binary`.
+Environment inheritance is disabled. The CI wrapper supplies Windows necessities and a limited environment, sets `CYGWIN=noglob` and `MSYS=noglob`, fixes `LANG=LC_ALL=C.UTF-8`, and records MSYS argument/environment conversion exclusions. Direct same-installation `printf.exe` probes prove the selected argv payloads arrive unchanged. Extended-namespace stdin cases separately isolate conversion from argv transport.
 
-The low-level collector verifies runtime platform, binary hashes, `--version` bytes, cwd existence, input hashes, process results, and evidence integrity. A manually supplied manifest still relies on operator observations for its host descriptions. The CI wrapper described below measures and retains those observations automatically. Neither path independently proves that a claimed source Git revision produced an installed binary. Current evidence records measured distribution package identities and explicitly states that the source Git commit is not independently attested.
+Context contains profile, drive prefix, ordered mount declarations, optional POSIX/Windows cwd, and per-drive cwd. Mount policies are `sensitive` or `ascii-insensitive`; the collector generates `--mount-case` explicitly. Raw mount declarations alone populate context. Independent queries for `/` and `/usr/bin` are retained without inventing additional mounts. MSYS2 may select a different matching mount from Cygwin; custom mapping observations preserve both declared targets and measured results.
 
-`context` contains `profile`, `drive_prefix`, ordered `{posix, windows, case_policy}` mounts, optional POSIX/Windows cwd, and per-drive cwd. Version 1 requires `case_policy: "sensitive"`, matching the current CLI. The collector generates the corresponding context options itself and rejects fixture attempts to override them. No environment probing populates the product Context. Keep the complete official mount observation and explain every mapping or intentionally excluded mount.
+The low-level collector verifies platform, artifacts, version bytes, cwd, immutable inputs, and evidence integrity. A manual manifest still relies on its author for descriptive host facts. The wrapper measures those facts. Neither route independently attests that an installed binary was built from a particular source commit.
 
 ## Fixture schema version 1
 
-Each suite has `schema_version: 1`, `validation_kind: "official-comparison"`, applicable `profiles`, source URL/revision, and a nonempty `cases` array. Each case requires:
+A suite declares `validation_kind: "official-comparison"`, applicable profiles, source provenance, and nonempty cases. Each case has:
 
-- A unique lowercase `case_id` using letters, digits, and hyphens, plus semantic `category` and `source_type` (`windows` or `posix`).
-- Separate `upstream_argv` and `project_argv` arrays. The collector prepends source/context options only to the project command. Values are already tokenized; shell quotes must not be embedded.
-- `stdin_hex`, whose bytes are saved as a separate immutable `stdin.bin` in the run directory.
-- `required`, `required_capabilities`, `allowed_backends`, and `directory_preparation: "none-read-only"`.
-- An optional `known_difference_id` string, omitted when no identifier applies; a known mismatch retains status `fail`. Explicit JSON `null` is not accepted for this field.
+- A unique lowercase case ID, category, and descriptive source syntax.
+- Separate upstream/project argv arrays. The project receives explicit context options; source syntax is naturally detected by its CLI. The collector does not inject `--from`.
+- Literal `stdin_hex`, plus optional `file_hex` for an immutable input file.
+- Required capabilities, allowed backends, a required/optional flag, and directory-preparation metadata.
+- Optional boundary-contract fields or a historical `known_difference_id` annotation. An annotation never permits a mismatch.
 
-Missing capabilities for a required case stop preflight. Optional unavailable cases receive `skip`. The recognized capabilities are `portable-paths`, `utf8`, `stdin`, `root-mount`, `usr-bin-mount`, `posix-cwd`, `windows-cwd`, and `drive-cwd-c`. Context-dependent capabilities also check that the corresponding explicit mount/cwd field exists. The forty-case shared matrix requires all eight, including a real observed `/usr/bin` alias transcribed into Context; the template alone does not establish those conditions.
+Recognized capabilities are `portable-paths`, `utf8`, `stdin`, `root-mount`, `usr-bin-mapping`, `posix-cwd`, `windows-cwd`, and `drive-cwd-c`. The `usr-bin-mapping` capability means the path mapping was measured and an applicable context mount exists; it does not require a distinct `/usr/bin` mount. MSYS2's ordinary root/bin declarations satisfy the matrix without an invented alias.
 
-The sole argv template token is `{installation_root}`, expanded from the manifest and recorded in full in the process observation. Unknown brace tokens fail preflight. It allows one shared input matrix to refer to each installation's actual root without a hardcoded Cygwin/MSYS2 path. Stdin hex is literal bytes and has no substitution. Input JSON is copied byte-for-byte to the run directory and hashed before any case executes. Replay reads that saved copy; it never edits the source suite or refreshes expected bytes.
+Required unavailable capabilities stop preflight. Although the low-level format permits optional skips, every case in the frozen scope is required and CI rejects skips or missing observations.
 
-## Commands and evidence
+Supported argv tokens are `{installation_root}`, `{input_file}`, `{missing_file}`, `{drive_prefix}`, `{cwd_windows}`, `{custom_base}`, `{custom_nested}`, `{custom_shared}`, `{custom_fold}`, and `{custom_fold_case}`. Unknown tokens fail preflight. Stdin bytes have no substitution. Full expanded argv is recorded.
 
-Run the mechanics self-test on any supported script host:
+Input files are created once below the fixed cwd or verified byte-identical if already present. They are checked before and after use; replay verifies the same bytes. The wrapper records directory/mount/file preparation separately. No fixture creates 8.3 names or symlinks/junctions. Shared source JSON is copied byte-for-byte and hashed, never populated with guessed official output.
 
-```text
-moon run scripts/oracle.mbtx self-test
-```
+## Commands and retained evidence
 
-On Windows, after replacing and verifying every template field:
+Mechanics self-tests run on supported script hosts:
 
 ```text
-moon run scripts/oracle.mbtx collect C:/evidence/cygwin-manifest.json testdata/oracle/fixtures.cygwin.json C:/evidence/cygwin-run-001
-moon run scripts/oracle.mbtx collect C:/evidence/msys2-manifest.json testdata/oracle/fixtures.msys2.json C:/evidence/msys2-run-001
-moon run scripts/oracle.mbtx collect C:/evidence/cygwin-manifest.json testdata/oracle/fixtures.readonly-matrix.json C:/evidence/cygwin-matrix-001
-moon run scripts/oracle.mbtx collect C:/evidence/msys2-manifest.json testdata/oracle/fixtures.readonly-matrix.json C:/evidence/msys2-matrix-001
-moon run scripts/oracle.mbtx replay C:/evidence/cygwin-new-project.json C:/evidence/cygwin-run-001 C:/evidence/cygwin-replay-001
+moon run --deny-warn scripts/oracle.mbtx self-test
+moon run --deny-warn scripts/ci_oracle.mbtx self-test
 ```
 
-These are command shapes with environment-specific paths, not evidence that those files or Windows installations exist. Use a new output directory every time; an existing directory is refused. No command publishes a package or changes an upstream installation.
-
-The output includes `manifest.json`, `fixtures.json`, `run.json`, raw version output, and separate `<case>/oracle/` and `<case>/project/` stream files. Each stream reference contains a run-relative path, byte length, and SHA-256. Each observation records executable/argv, cwd/environment, wall-clock start, monotonic elapsed time, deadline, integer exit status when observed, and termination information. Bytes go directly into files before they are hashed, preserving partial output on cancellation or spawn failure. Cancellation requests immediate termination through the official process API and waits for the child; process cleanup time can exceed the nominal deadline.
-
-An observation's `execution_status` is `completed`, `error`, or `timeout`; a completed upstream capture by itself is **not a pass**. Case comparison separately produces `pass`, `fail`, `skip`, `error`, or `timeout`. Equality includes both streams and the raw integer exit status. Nonzero exits can match; timeouts never pass. The run summary records planned/executed counts, all status counts, and unexecuted case IDs. `complete` means every case has a recorded outcome, not that all passed. The script exits nonzero when any case is not a pass.
-
-`run.json` is checkpointed after each case; immutable input/stream blobs are never overwritten. `integrity_verified` becomes true only after the final artifact verification succeeds; replay refuses a source run without it. If version validation fails, it retains the raw version observation with all cases unexecuted. If a later collector exception interrupts the run, the last checkpoint and already-written raw files remain available. Do not treat a partial directory as a successful run.
-
-Replay verifies the saved manifest/fixture/blob hashes before starting a new output directory. It requires the same upstream identity, Windows/environment snapshot, cwd, and explicit Context; update only the project build identity for an ordinary regression replay. A changed upstream or environment requires a new collection. Replay copies verified official bytes into its own `oracle` subtree and executes only the new project artifact. It never reruns, mutates, or replaces the original oracle. Version 1 requires the pinned official artifacts still be available locally for preflight integrity checks.
-
-## Windows CI orchestration and reviewed differences
-
-[`scripts/ci_oracle.mbtx`](../scripts/ci_oracle.mbtx) orchestrates the low-level collector in [the Windows oracle workflow](../.github/workflows/oracle.yml). The workflow installs official Cygwin and MSYS2 using commit-pinned official setup actions. The MSYS2 action pins its installer release and digest; the Cygwin setup selects packages from the configured official mirror. Each run freezes the actual installed executable/runtime hashes and distribution metadata before comparison. Current observed runtime packages are Cygwin `3.6.10-1` and MSYS2 `3.6.10-5`; an action pin alone is not a source-commit attestation for either binary.
-
-The wrapper retains raw `--version`, package-manager, `uname`, `mount`, locale, root mapping, and cwd observations, including command arrays, status, lengths, hashes, and deadlines. PowerShell 7 queries Windows version, architecture, drive/filesystem, registry policies, and directory ACL/reparse metadata. Per-drive C cwd comes from Windows `.NET Path.GetFullPath("C:.")` in the fixed `C:/cygpath-ci/<profile>/cwd`, avoiding ambiguous POSIX interpretation of `C:`. The wrapper transcribes ordinary mounts into explicit Context and separately records excluded virtual/cygdrive mounts. For Cygwin, optional setup/cache outputs retain installer hashes, `installed.db`, setup metadata, and relevant runtime archive digests. The child environment is an explicit whitelist with no inherited CI-token environment.
-
-For an existing installation and built artifacts, the equivalent invocation is:
+On Windows, using prepared installations and measured manifests:
 
 ```text
-moon run --deny-warn scripts/ci_oracle.mbtx -- --profile cygwin --root C:/cygpath-cygwin --wasm C:/repo/_build/wasm/release/build/cygpath.wasm --native C:/repo/_build/native/release/build/cygpath.exe --moon C:/tools/moon.exe --moonrun C:/tools/moonrun.exe --out C:/evidence/cygwin-new-run
+moon run scripts/oracle.mbtx collect C:/evidence/manifest.json testdata/oracle/fixtures.p3.json C:/evidence/collect-001
+moon run scripts/oracle.mbtx replay C:/evidence/new-project-manifest.json C:/evidence/collect-001 C:/evidence/replay-001
+moon run scripts/oracle.mbtx fault-drill C:/evidence/manifest.json C:/evidence/collect-001 C:/evidence/fault-001 C:/tools/pwsh.exe
 ```
 
-The wrapper runs both suites through collect and replay for both backends: eight runs and 200 comparisons per profile. It independently checks run identity, fixture IDs/digests, recorded byte lengths/hashes, complete execution, collector exits, and equality between Wasm/Native and collect/replay observations. It fails on unexplained differences, missing cases, skips, errors, timeouts, altered evidence, or backend inconsistency. Artifacts upload even when a job fails.
+Use a new output directory every time. These command shapes neither publish a package nor prove that the placeholder installations exist.
 
-[`reviewed-differences.json`](../testdata/oracle/reviewed-differences.json) contains 23 reviewed profile/case records: 11 Cygwin and 12 MSYS2. Each approval is bound to the profile, case ID, complete fixture-file SHA-256, upstream executable/runtime SHA-256, policy ID and reason, both stdout/stderr SHA-256 pairs, and both integer exit statuses. Where a fixture declares a policy ID, it must match. Changing any bound identity or output invalidates the approval. The wrapper never creates approvals automatically.
+Each run retains `manifest.json`, `fixtures.json`, `run.json`, version observations, and `<case>/oracle/` and `<case>/project/` byte files. Stream references include relative path, byte length, and SHA-256. Process observations record exact program/argv, cwd/environment, wall-clock start, monotonic elapsed time, deadline, integer exit, and execution status. Bytes reach files before hashing, preserving partial output.
 
-An approved mismatch stays `fail` in the immutable low-level `run.json`; only the wrapper's separate `gate_status` becomes `reviewed-difference`. Thus the green result comprises Cygwin 156 exact + 44 reviewed comparisons and MSYS2 152 exact + 48 reviewed comparisons. The 92 reviewed observations repeat the 23 reviewed profile/case differences across two backends and collect/replay. A green gate does not mean 400 exact matches. [Policy differences](../testdata/oracle/policy-differences.md) explains the retained portable contracts and their observed scope.
+Case status is `pass`, `fail`, `skip`, `error`, or `timeout`. Nonzero exits can match. A timeout or an upstream-only capture cannot pass. `complete` means all planned cases have recorded outcomes, not that they passed. The collector exits nonzero for any raw nonpass, including the separately classified domain boundaries.
 
-## Acceptance limits and further work
+Only `run.json` is checkpointed; inputs and stream blobs are immutable. Unexecuted IDs remain visible after interruption. `integrity_verified` becomes true only after final artifact verification, and replay requires it. Replay checks saved input/blob hashes and identical upstream/environment/context before starting. It copies verified official bytes and executes the new project artifact; it does not rerun or overwrite the oracle. Changed upstream or environment requires fresh collection.
 
-The mechanics self-test checks hash correctness, invalid-profile/artifact/schema/capability/token rejection, Windows full-path requirements, safe evidence paths, binary fidelity, digest tampering, immutable file creation, and comparison handling for nonzero exits, missing observations, failures, and timeouts. It parses all three checked-in fixture files through the typed schema and validates all one hundred case/profile combinations using an explicitly synthetic manifest. Its observations are synthetic and clearly labeled. It does not test real process cancellation, Windows launcher argv fidelity, official conversion, or the metadata attestations.
+## CI orchestration and acceptance
 
-The first real Windows runs now establish the recorded 50-case subset for both profiles, with zero unexplained differences or required skip/error/timeout outcomes and matching Wasm/Native observations. Before P3 completion, expand the matrix to all promised capabilities and retain evidence for the remaining environment-dependent cases. Real Windows collector fault drills for timeout/termination and evidence tampering also remain open; successful normal collection and synthetic mechanics tests do not establish those failure paths. Publication and exact-version `moonx` retrieval remain separate release gates.
+The [Windows workflow](../.github/workflows/oracle.yml) runs four isolated profile/context jobs through [ci_oracle.mbtx](../scripts/ci_oracle.mbtx). Setup actions are pinned to commits. MSYS2's action pins its installer release/digest; Cygwin selects packages from its configured mirror. The actual installed package identities and executable/runtime hashes are frozen in each manifest. Setup pins do not attest source-to-binary correspondence.
+
+The wrapper retains package, version, uname, mount, locale, root/path/cwd, argv-transport, and Windows metadata observations. Native per-drive C cwd is measured with `.NET Path.GetFullPath("C:.")`. Custom jobs create and record test directories and mount commands, verify the actual table and case flags, and keep an official runtime process alive while temporary mounts are used. The product receives an immutable snapshot; it does not share the test host's mutable mount state.
+
+An equivalent manual wrapper invocation is:
+
+```text
+moon run --deny-warn scripts/ci_oracle.mbtx -- --profile msys2 --context-variant custom --root C:/cygpath-msys2/msys64 --wasm C:/repo/_build/wasm/release/build/cygpath.wasm --native C:/repo/_build/native/release/build/cygpath.exe --moon C:/tools/moon.exe --moonrun C:/tools/moonrun.exe --out C:/evidence/msys2-custom-new
+```
+
+Default jobs run profile/matrix/P3 suites; custom jobs also run the custom suite. Each suite executes collect/replay with both backends. The wrapper independently verifies exact manifest and fixture identities, complete cases, stream lengths/hashes, collector exit, raw equality, and backend/replay consistency. A scope audit requires exactly four unique observations for each applicable case, rejects duplicate/missing/unmapped references, and records out-of-variant rows explicitly.
+
+Supported-domain results pass only through exact stdout/stderr/exit equality. Two separate boundary domains require exact deterministic project rejection:
+
+| Domain | Required evidence and interpretation |
+| --- | --- |
+| Malformed UTF-8 | Retain actual upstream bytes, including instability; verify the project's fixed diagnostic/exit and any earlier successful output across both backends and replay. Pinned upstream source exposes an unchecked failed conversion, so these inputs do not establish defined upstream-output parity. |
+| CP29001 | Each Windows job must first pass the direct Win32 probe, including a correct CP1252 control and CP29001 conversion failure with an untouched initialized buffer. The project must emit exactly the unsupported-capability diagnostic, empty stdout, and exit 1. The observed platform is unavailable for this encoding; this is not a universal claim about every Windows installation. |
+
+The Win32 probe's PowerShell/PInvoke code exists only in validation tooling. It is not a product dependency. Probe failure prevents boundary acceptance. Boundaries are counted separately from `supported_exact_comparisons`; raw failures remain in low-level evidence. A process error or timeout cannot be reclassified as a boundary.
+
+The historical [reviewed-differences.json](../testdata/oracle/reviewed-differences.json) is retained for the earlier baseline. Current scripts do not read it. There is no reviewed-output acceptance category or supported-domain exemption.
+
+Real Windows fault drills now cover a child that emits partial output then exceeds its deadline, hard termination and confirmed process absence, a missing executable, and replay rejection after independently tampering stdout, fixture, and manifest bytes. Five recorded drills pass in each job. Normal comparisons, the scope audit, and fault drills must all pass; artifacts upload on failures too.
+
+## Limits
+
+The self-tests establish tool mechanics, not official behavior. The linked four-job run establishes the frozen P3 scope and its two explicit boundaries against measured distributions. Filesystem identity, 8.3 discovery, system-directory queries, automatic host-state discovery, unimplemented encoding families, and arbitrary future upstream versions are outside that claim. New scope requires fixtures and fresh evidence. Publication belongs to the repository owner; exact-version `moonx` retrieval is still unverified.
