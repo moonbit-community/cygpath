@@ -19,6 +19,7 @@
     {"case_id":"msys2","category":"context","argv":["-u","--profile","msys2","C:\\work"],"stdout_text":"/c/work\n","stderr_text":"","exit_code":0},
     {"case_id":"custom-prefix","category":"context","argv":["-u","--drive-prefix","/drives","D:\\work"],"stdout_text":"/drives/d/work\n","stderr_text":"","exit_code":0},
     {"case_id":"root-and-nested-mount","category":"context","argv":["-w","--root","C:\\cygwin64","--mount","/usr/bin","C:\\cygwin64\\bin","/usr/bin/tool"],"stdout_text":"C:\\cygwin64\\bin\\tool\n","stderr_text":"","exit_code":0},
+    {"case_id":"mapped-root","category":"context","argv":["-w","--root","C:\\root","/"],"stdout_text":"C:\\root\n","stderr_text":"","exit_code":0},
     {"case_id":"proc-prefix-keeps-mount","category":"context","argv":["-uU","--root","C:\\cygwin64","C:\\cygwin64\\bin","D:\\work"],"stdout_text":"/bin\n/proc/cygdrive/d/work\n","stderr_text":"","exit_code":0},
     {"case_id":"absolute-posix","category":"context","argv":["-aw","--root","C:\\cygwin64","--posix-cwd","/home/user","../work"],"stdout_text":"C:\\cygwin64\\home\\work\n","stderr_text":"","exit_code":0},
     {"case_id":"drive-cwd","category":"context","argv":["-u","--drive-cwd","C","C:\\work","C:demo"],"stdout_text":"/cygdrive/c/work/demo\n","stderr_text":"","exit_code":0},

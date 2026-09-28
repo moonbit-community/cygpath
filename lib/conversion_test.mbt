@@ -90,6 +90,38 @@ test "absolute normalization cannot escape a root and retains trailing separator
 }
 
 ///|
+test "POSIX root mapping distinguishes structural and optional separators" {
+  for profile in [@lib.Cygwin, @lib.Msys2] {
+    let directory = @lib.Context::new(profile~, mounts=[
+      @lib.Mount::new("/", "C:\\root"),
+    ])
+    assert_eq(directory.convert("/", from=Posix, to=Windows), "C:\\root")
+    assert_eq(directory.convert("/", from=Posix, to=Mixed), "C:/root")
+    assert_eq(directory.convert("/", from=Posix, to=Posix), "/")
+    for input in ["/folder/", "/folder//"] {
+      assert_eq(
+        directory.convert(input, from=Posix, to=Windows),
+        "C:\\root\\folder\\",
+      )
+    }
+    for input in ["/folder/../", "/folder//..//"] {
+      assert_eq(directory.convert(input, from=Posix, to=Windows), "C:\\root\\")
+    }
+    for
+      (target, windows, mixed) in [
+        ("C:\\", "C:\\", "C:/"),
+        ("//server/share", "\\\\server\\share\\", "//server/share/"),
+      ] {
+      let root = @lib.Context::new(profile~, mounts=[
+        @lib.Mount::new("/", target),
+      ])
+      assert_eq(root.convert("/", from=Posix, to=Windows), windows)
+      assert_eq(root.convert("/", from=Posix, to=Mixed), mixed)
+    }
+  }
+}
+
+///|
 test "absolute resolution consumes only the source syntax cwd" {
   let context = @lib.Context::new(
     posix_cwd="/cygdrive/c/work/base",

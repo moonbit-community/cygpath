@@ -109,7 +109,13 @@ fn parse_path(
       validate_windows_component(part)
     }
   }
-  { root, components, trailing: text.has_suffix("/"), }
+  // A bare POSIX root's slash expresses its root, not an optional trailing
+  // separator to append after a mount maps it to an ordinary directory.
+  // Decide before normalization so non-root inputs such as /a/../ retain
+  // their explicitly supplied trailing separator.
+  let trailing = text.has_suffix("/") &&
+    !(root == PosixRoot && components.is_empty())
+  { root, components, trailing, }
 }
 
 ///|
