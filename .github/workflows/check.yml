@@ -20,6 +20,8 @@ jobs:
       - uses: hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921 # v1.22
       - name: Record toolchain
         run: moon version --all
+      - name: Refresh package registry
+        run: moon update
       - name: Check all supported targets
         run: moon check --target all --deny-warn
       - name: Test Wasm
