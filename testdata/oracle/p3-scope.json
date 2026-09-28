@@ -1924,6 +1924,3081 @@
           "validation_domain": "supported"
         }
       ]
+    },
+    {
+      "id": "A-source-spelling-and-NUL-visibility",
+      "requirement": "Already POSIX absolute spellings preserve dots/separators/virtual-looking names; bytes beyond the C-string terminator do not enter decoding.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "idempotent-posix-absolute-dots",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-posix-absolute-repeat",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-posix-virtual-spelling",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-posix-virtual-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-invalid-after-nul-ignored",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-MAX-PATH-namespace-threshold",
+      "requirement": "259/260/261 UTF-16 unit drive/UNC inputs expose ordinary extended-prefix thresholds; long relative Windows/mixed outputs resolve against the recorded native cwd.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "max-path-drive-w-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-drive-m-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-unc-w-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-unc-m-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-drive-w-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-drive-m-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-unc-w-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-unc-m-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-drive-w-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-drive-m-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-unc-w-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-unc-m-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-relative-w",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-relative-m",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-437",
+      "requirement": "OEM/ASCII/Latin-1 numeric selectors cover scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-437-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-437-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-850",
+      "requirement": "OEM/ASCII/Latin-1 numeric selectors cover scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-850-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-850-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-866",
+      "requirement": "OEM/ASCII/Latin-1 numeric selectors cover scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-866-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-866-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20127",
+      "requirement": "OEM/ASCII/Latin-1 numeric selectors cover scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20127-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20127-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28591",
+      "requirement": "OEM/ASCII/Latin-1 numeric selectors cover scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28591-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28591-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "B-custom-drive-prefix-and-nested-mounts",
+      "variants": [
+        "custom"
+      ],
+      "requirement": "A separately configured official runtime exposes nondefault cygdrive prefix plus independently targeted nested mounts, forward/reverse/component/case/normalization/list/root-local behavior and proc bypass.",
+      "cases": [
+        {
+          "suite": "custom",
+          "case_id": "custom-drive-prefix-forward",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-drive-prefix-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-drive-prefix-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-proc-prefix-bypass",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-proc-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-mount-forward",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-mount-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-nested-forward",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-nested-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-mount-component-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-mount-case",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-mount-parent-traversal",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-nested-root-local",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-root-and-mount-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-drive-prefix-component-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "C-extended-namespace-stdin-transport",
+      "requirement": "Extended drive/UNC bytes supplied through stdin isolate conversion from native-parent runtime argv wildcard handling, with the same u/w/m/wr modes as argv.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-stdin-u",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-stdin-w",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-stdin-m",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-stdin-wr",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-stdin-u",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-stdin-w",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-stdin-m",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-stdin-wr",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-708",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-708-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-708-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-720",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-720-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-720-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-737",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-737-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-737-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-775",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-775-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-775-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-852",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-852-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-852-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-855",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-855-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-855-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-857",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-857-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-857-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-858",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-858-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-858-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-860",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-860-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-860-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-861",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-861-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-861-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-862",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-862-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-862-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-863",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-863-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-863-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-864",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-864-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-864-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-865",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-865-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-865-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-869",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-869-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-869-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20866",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20866-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20866-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-21866",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-21866-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-21866-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28592",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28592-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28592-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28593",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28593-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28593-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28594",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28594-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28594-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28595",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28595-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28595-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28596",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28596-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28596-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28597",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28597-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28597-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28598",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28598-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28598-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28599",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28599-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28599-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28603",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28603-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28603-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-28605",
+      "requirement": "Official numeric Windows codepage table covers mapped scripts, best-fit Latin/fullwidth characters and supplementary fallback.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-28605-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-28605-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "C-GNU-long-prefix-and-modifier",
+      "requirement": "Unambiguous long prefixes select output; ambiguous prefixes retain diagnostics; all-users modifier does not alter ordinary path conversion.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "long-option-unambiguous-prefix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "long-option-ambiguous-prefix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "all-users-modifier-noop",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-37",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-37-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-37-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-500",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-500-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-500-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-870",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-870-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-870-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-875",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-875-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-875-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1026",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1026-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1026-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1047",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1047-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1047-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1140",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1140-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1140-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1141",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1141-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1141-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1142",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1142-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1142-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1143",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1143-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1143-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1144",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1144-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1144-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1145",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1145-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1145-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1146",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1146-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1146-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1147",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1147-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1147-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1148",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1148-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1148-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1149",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1149-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1149-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10000",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10000-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10000-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10001",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10001-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10001-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10002",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10002-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10002-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10003",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10003-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10003-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10004",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10004-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10004-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10005",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10005-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10005-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10006",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10006-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10006-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10007",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10007-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10007-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10008",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10008-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10008-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10010",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10010-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10010-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10017",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10017-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10017-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10021",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10021-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10021-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10029",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10029-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10029-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10079",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10079-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10079-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10081",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10081-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10081-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-10082",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10082-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-10082-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20000",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20000-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20000-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20001",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20001-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20001-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20002",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20002-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20002-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20003",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20003-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20003-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20004",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20004-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20004-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20005",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20005-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20005-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20105",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20105-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20105-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20106",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20106-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20106-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20107",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20107-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20107-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20108",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20108-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20108-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20261",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20261-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20261-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20269",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20269-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20269-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20273",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20273-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20273-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20277",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20277-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20277-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20278",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20278-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20278-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20280",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20280-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20280-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20284",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20284-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20284-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20285",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20285-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20285-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20290",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20290-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20290-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20297",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20297-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20297-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20420",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20420-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20420-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20423",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20423-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20423-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20424",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20424-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20424-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20833",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20833-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20833-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20838",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20838-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20838-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20871",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20871-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20871-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20880",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20880-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20880-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20905",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20905-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20905-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-20924",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20924-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-20924-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-21025",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-21025-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-21025-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-21027",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-21027-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-21027-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-29001",
+      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-29001-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-29001-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "F-first-error-and-ignore-precedence",
+      "requirement": "Getopt error/ignore precedence stops at the first official action rather than validating unrelated later options.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "first-error-invalid-type-before-unknown",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "first-error-ignore-invalid-type-before-unknown",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "first-error-unknown-before-invalid-type",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "first-error-ignore-unknown",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "B-real-same-target-mount-aliases",
+      "variants": [
+        "custom"
+      ],
+      "requirement": "Two separately installed POSIX aliases target one Windows directory; observed mount order determines reverse alias choice, while a longer Windows target wins independently and component boundaries remain strict.",
+      "cases": [
+        {
+          "suite": "custom",
+          "case_id": "custom-alias-first-forward",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-alias-second-forward",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-alias-reverse-order",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-alias-longer-target",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-alias-target-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-alias-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "B-real-ASCII-insensitive-mount",
+      "variants": [
+        "custom"
+      ],
+      "requirement": "An actual posix=0 mount is transcribed through explicit per-mount ASCII-insensitive context; only ASCII mount spelling case is varied, with unchanged Unicode tail and component-boundary checks. This does not claim non-ASCII Windows case folding.",
+      "cases": [
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-lower-posix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-upper-posix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-exact-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-ascii-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-posix-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-windows-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "custom",
+          "case_id": "custom-fold-unicode-tail",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-codepage-10005-conflicting-archive-mapping",
+      "requirement": "Resolve every conflicting WCTABLE codepoint in the retained archive order using actual official Windows output; no arbitrary duplicate selection.",
+      "source_conflicts": {
+        "codepage": 10005,
+        "archive_member": "CodpageFiles/10005.txt",
+        "source_sha256": "949ec6515b588956d8c947ef21710aa3aa4538f7f620bafb81484b64b9a9384b",
+        "source_bytes": 15532,
+        "source_entries": 256,
+        "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
+        "conflicts": [
+          {
+            "unicode_word": 1464,
+            "encoded_values": [
+              203,
+              222
+            ]
+          }
+        ]
+      },
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10005-conflicting-table-entries",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-codepage-10008-conflicting-archive-mapping",
+      "requirement": "Resolve every conflicting WCTABLE codepoint in the retained archive order using actual official Windows output; no arbitrary duplicate selection.",
+      "source_conflicts": {
+        "codepage": 10008,
+        "archive_member": "CodpageFiles/10008.txt",
+        "source_sha256": "46b48ef3411d9d40c2105a40e17415b04e254dff7874dc606ad1ca1472548a32",
+        "source_bytes": 316601,
+        "source_entries": 7614,
+        "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
+        "conflicts": [
+          {
+            "unicode_word": 8741,
+            "encoded_values": [
+              41388,
+              41422
+            ]
+          }
+        ]
+      },
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-10008-conflicting-table-entries",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-codepage-20269-conflicting-archive-mapping",
+      "requirement": "Resolve every conflicting WCTABLE codepoint in the retained archive order using actual official Windows output; no arbitrary duplicate selection.",
+      "source_conflicts": {
+        "codepage": 20269,
+        "archive_member": "CodpageFiles/20269.txt",
+        "source_sha256": "894193392424c8379068fb921a31aa12dedcabe4373a02c4724427991d4b1a39",
+        "source_bytes": 13828,
+        "source_entries": 256,
+        "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
+        "conflicts": [
+          {
+            "unicode_word": 35,
+            "encoded_values": [
+              35,
+              166
+            ]
+          },
+          {
+            "unicode_word": 94,
+            "encoded_values": [
+              94,
+              195
+            ]
+          },
+          {
+            "unicode_word": 96,
+            "encoded_values": [
+              96,
+              193
+            ]
+          },
+          {
+            "unicode_word": 126,
+            "encoded_values": [
+              126,
+              196
+            ]
+          },
+          {
+            "unicode_word": 164,
+            "encoded_values": [
+              36,
+              168
+            ]
+          }
+        ]
+      },
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20269-conflicting-table-entries",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-codepage-20924-conflicting-archive-mapping",
+      "requirement": "Resolve every conflicting WCTABLE codepoint in the retained archive order using actual official Windows output; no arbitrary duplicate selection.",
+      "source_conflicts": {
+        "codepage": 20924,
+        "archive_member": "CodpageFiles/20924.txt",
+        "source_sha256": "abd8bb1687afddbd4ff6b48406d1e4d7a65c7393492574f10c625f1acb1022a1",
+        "source_bytes": 21867,
+        "source_entries": 352,
+        "reason": "conflicting WCTABLE mappings; requires direct Windows evidence before enabling",
+        "conflicts": [
+          {
+            "unicode_word": 376,
+            "encoded_values": [
+              185,
+              232
+            ]
+          }
+        ]
+      },
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-20924-conflicting-table-entries",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
     }
   ],
   "supported_domain": "All supported-domain observations require exact raw stdout, stderr and exit equality; no reviewed difference approvals are consulted.",
@@ -1946,13 +5021,14 @@
     "tampered-fixtures",
     "tampered-manifest"
   ],
-  "pending_discovery": [
-    "explicit custom cygdrive prefix and nested mount variants"
-  ],
+  "pending_discovery": [],
   "excluded_host_capabilities": [
     "8.3 short/long filename lookup",
     "Windows system directories",
     "host ANSI/OEM codepage discovery",
-    "device/symlink/junction canonicalization"
-  ]
+    "device/symlink/junction canonicalization",
+    "non-ASCII Windows mount case folding",
+    "stateful encodings and numeric codepages without an implemented stateless mapping table"
+  ],
+  "scope_freeze": "After 111 stateless Microsoft table identities, natural argv detection, explicit measured default/custom environments, same-target aliases and ASCII-only insensitive mount matching. Subsequent changes resolve observed differences within these declared rows rather than increasing arbitrary test counts."
 }

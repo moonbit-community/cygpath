@@ -331,8 +331,8 @@
         "-w"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: invalid-options: \"conflicting output formats\"\n",
-      "exit_code": 1
+      "exit_code": 1,
+      "stderr_file": "testdata/contracts/usage-error.txt"
     },
     {
       "case_id": "file-bom-crlf-final",
@@ -415,8 +415,8 @@
       "category": "empty",
       "argv": [],
       "stdout_text": "",
-      "stderr_text": "cygpath: missing-input: supply a NAME or --file\n",
-      "exit_code": 1
+      "exit_code": 1,
+      "stderr_file": "testdata/contracts/usage-error.txt"
     },
     {
       "case_id": "empty-file",
@@ -498,7 +498,7 @@
         "--bogus"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: unknown-option: \"--bogus\"\n",
+      "stderr_text": "cygpath: unknown option -- bogus\nTry `cygpath --help' for more information.\n",
       "exit_code": 1
     },
     {
@@ -508,7 +508,7 @@
         "-f"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: missing-value: \"--file\"\n",
+      "stderr_text": "cygpath: option requires an argument -- f\nTry `cygpath --help' for more information.\n",
       "exit_code": 1
     },
     {
@@ -519,8 +519,8 @@
         "C:\\work"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: invalid-options: \"conflicting output formats\"\n",
-      "exit_code": 1
+      "exit_code": 1,
+      "stderr_file": "testdata/contracts/usage-error.txt"
     },
     {
       "case_id": "proc-windows-ignored",
@@ -552,8 +552,8 @@
         "C:\\work"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: invalid-options: \"--short-name, --long-name and --root-local conflict\"\n",
-      "exit_code": 1
+      "exit_code": 1,
+      "stderr_file": "testdata/contracts/usage-error.txt"
     },
     {
       "case_id": "unsupported-codepage",
@@ -622,8 +622,8 @@
         "C:\\work"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: invalid-options: \"--file cannot be combined with NAME arguments\"\n",
-      "exit_code": 1
+      "exit_code": 1,
+      "stderr_file": "testdata/contracts/usage-error.txt"
     },
     {
       "case_id": "file-read-error",

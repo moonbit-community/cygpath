@@ -1,0 +1,27 @@
+///|
+test "external consumer constructs and uses the public conversion API" {
+  let mounts = [@cygpath.Mount::new("/", "C:/cygwin"), @cygpath.Mount::new("/usr/bin", "C:/cygwin/bin")]
+  let context = @cygpath.Context::new(mounts~, posix_cwd="/home/user", windows_cwd="C:/work")
+  assert_eq(context.convert("/usr/bin/tool", from=Posix, to=Windows), "C:\\cygwin\\bin\\tool")
+  assert_eq(context.convert("D:\\work", from=Windows, to=Posix), "/cygdrive/d/work")
+  assert_eq(context.convert_list("C:\\one;D:\\two", from=Windows, to=Posix), "/cygdrive/c/one:/cygdrive/d/two")
+  assert_eq(context.convert("../next", from=Posix, to=Mixed, absolute=true), "C:/cygwin/home/next")
+}
+
+///|
+test "external consumers can match typed errors and profile enums" {
+  let context = @cygpath.Context::new(profile=Msys2)
+  assert_eq(context.convert("D:\\work", from=Windows, to=Posix), "/d/work")
+  assert_eq(context.convert("D:\\work", from=Windows, to=Posix, unix_prefix=ProcCygdrive), "/proc/cygdrive/d/work")
+  try context.convert("", from=Windows, to=Posix) catch {
+    @cygpath.EmptyPath => ()
+    _ => fail("unexpected public error")
+  } noraise {
+    _ => fail("empty input accepted")
+  }
+  let syntax : @cygpath.InputSyntax = Windows
+  let format : @cygpath.OutputFormat = Mixed
+  let profile : @cygpath.Profile = Msys2
+  let policy : @cygpath.MountCase = Sensitive
+  assert_true(syntax is Windows && format is Mixed && profile is Msys2 && policy is Sensitive)
+}

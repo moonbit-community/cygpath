@@ -20,7 +20,20 @@ pub fn Context::convert(
   unix_prefix? : UnixPrefix = Configured,
 ) -> String raise ConversionError {
   validate_options(to, unix_prefix)
+  let path = if from == Windows && to == Posix {
+    decode_windows_filename(path)
+  } else {
+    path
+  }
   let original = parse_path(path, from)
+  if from == Windows &&
+    to == Posix &&
+    original.root == WindowsRooted &&
+    path.has_prefix("/") {
+    // A single forward slash is already POSIX spelling. Cygwin preserves the
+    // original spelling in its unmatched non-drive conversion branch.
+    return path.replace_all(old="\\", new="/")
+  }
   let parsed = self.resolve(original, from, to, absolute)
   let output = if to == Posix {
     if from == Windows || parsed.root is Unc(_, _) {
@@ -41,14 +54,16 @@ pub fn Context::convert(
     // Cygwin without canonicalizing their original component spelling.
     let text = path.replace_all(old="\\", new="/")
     if text.has_prefix("//?/UNC/") || text.has_prefix("/??/UNC/") {
-      return decode_windows_filename("//" + text[8:].to_owned())
+      return "//" + text[8:].to_owned()
     }
-    return decode_windows_filename(text)
+    return text
   }
   let rendered = output.render(to)
-  if from == Windows && to == Posix {
-    decode_windows_filename(rendered)
-  } else {
-    rendered
+  if to != Posix &&
+    !absolute &&
+    output.root is (Relative | DriveRelative(_)) &&
+    rendered.length() >= 260 {
+    return self.convert(path, from~, to~, absolute=true, unix_prefix~)
   }
+  rendered
 }

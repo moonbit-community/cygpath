@@ -37,11 +37,13 @@ jobs:
       - name: Check formatting
         run: moon fmt --check
       - name: Check script formatting
-        run: moon fmt --check scripts/check_cli.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx
+        run: moon fmt --check scripts/check_cli.mbtx scripts/check_consumer.mbtx scripts/generate_codepages.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx
       - name: Check public interfaces
         run: moon info --target all
       - name: Reject interface drift
         run: git diff --exit-code -- '*.mbti'
+      - name: Verify external public API consumer
+        run: moon run --deny-warn scripts/check_consumer.mbtx _build/consumer-evidence
       - name: Build Wasm executable
         run: moon build --target wasm --release
       - name: Build Native executable
@@ -60,4 +62,16 @@ jobs:
         with:
           name: cli-evidence-${{ matrix.os }}
           path: _build/cli-evidence
+          if-no-files-found: warn
+      - name: Upload external consumer evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: consumer-evidence-${{ matrix.os }}
+          path: |
+            _build/consumer-evidence/summary.json
+            _build/consumer-evidence/*.bin
+            _build/consumer-evidence/consumer/*.mbt
+            _build/consumer-evidence/consumer/moon.*
+            _build/consumer-evidence/moon.work
           if-no-files-found: warn

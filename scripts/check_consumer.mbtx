@@ -1,0 +1,78 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn main {
+  guard @env.args()[1:] is [output] else {
+    fail("usage: check_consumer.mbtx NEW_OUTPUT_DIRECTORY")
+  }
+  let repository = @fs.realpath(".").replace_all(old="\\", new="/")
+  guard !@fs.exists(output) else { fail("output directory already exists") }
+  @fs.mkdir(output)
+  let output = @fs.realpath(output).replace_all(old="\\", new="/")
+  let consumer = output + "/consumer"
+  @fs.mkdir(consumer)
+  @fs.write_file(
+    output + "/moon.work",
+    "members = [\"./consumer\", " + repository.to_json().stringify() + "]\n",
+  )
+  @fs.write_file(
+    consumer + "/moon.mod",
+    "name = \"cygpath-tests/consumer\"\nimport {\n  \"ZSeanYves/cygpath@0.1.0\",\n}\n",
+  )
+  @fs.write_file(
+    consumer + "/moon.pkg",
+    "import {\n  \"ZSeanYves/cygpath/lib\" @cygpath,\n} for \"test\"\n",
+  )
+  @fs.write_file(
+    consumer + "/api_test.mbt",
+    @fs.read_file("testdata/contracts/consumer.mbt.txt").binary(),
+  )
+  @fs.write_file(output + "/empty.bin", b"")
+  let results : Array[Json] = []
+  for target in ["wasm", "native"] {
+    let args = ["test", ".", "--target", target, "--deny-warn"]
+    let code = @async.with_timeout_opt(180000, () => {
+      @process.run(
+        "moon",
+        args,
+        cwd=consumer,
+        stdin=@process.redirect_from_file(output + "/empty.bin"),
+        stdout=@process.redirect_to_file(
+          output + "/" + target + ".stdout.bin",
+          create_mode=CreateNew,
+        ),
+        stderr=@process.redirect_to_file(
+          output + "/" + target + ".stderr.bin",
+          create_mode=CreateNew,
+        ),
+        cancel_handler=@process.hard_cancel(),
+      )
+    })
+    results.push({
+      "backend": target,
+      "command": ["moon", ..args].to_json(),
+      "exit_code": code.to_json(),
+    })
+    @fs.write_file(
+      output + "/summary.json",
+      (
+        {
+          "validation_kind": "external-public-api-consumer",
+          "source": repository,
+          "results": results.to_json(),
+        } : Json).stringify(indent=2) +
+      "\n",
+    )
+    guard code == Some(0) else {
+      fail("external consumer failed: " + target + "; inspect " + output)
+    }
+  }
+  println("External public API consumer passed Wasm and Native: " + output)
+}

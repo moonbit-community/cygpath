@@ -14,7 +14,12 @@ test "default syntax and single Windows recognition are deterministic" {
     request(["-m", "--from=windows", "C:a"]).prepare().convert("C:a"),
     "C:a",
   )
-  assert_eq(request(["-w", "\\name"]).prepare().convert("\\name"), "\\name")
+  assert_eq(
+    request(["-w", "--windows-cwd=C:/cwd", "\\name"])
+    .prepare()
+    .convert("\\name"),
+    "C:\\name",
+  )
   assert_eq(
     request(["-w", "/\\?/C:/name"]).prepare().convert("/\\?/C:/name"),
     "C:\\name",
@@ -23,6 +28,12 @@ test "default syntax and single Windows recognition are deterministic" {
     request(["-u", "/usr/bin"]).prepare().convert("/usr/bin"),
     "/usr/bin",
   )
+  assert_eq(
+    request(["-u", "/dev/null"]).prepare().convert("/dev/null"),
+    "/dev/null",
+  )
+  assert_eq(request(["-au", "/a/../b"]).prepare().convert("/a/../b"), "/a/../b")
+  assert_eq(request(["-w", "a\\b"]).prepare().convert("a\\b"), "a\\b")
 }
 
 ///|
@@ -109,8 +120,10 @@ test "operand line breaks are preserved while diagnostics escape control text" {
   for text in ["line\nname", "line\rname", "\r\n"] {
     assert_eq(converter.convert(text), text)
   }
-  let error = parse_failure(["--bad\noption"])
-  assert_true(!error.diagnostic().contains_char('\n'))
-  assert_true(error.diagnostic().contains("\\n"))
+  let error = parse_failure(["--bad"])
+  assert_eq(
+    error.diagnostic(),
+    "cygpath: unknown option -- bad\nTry `cygpath --help' for more information.",
+  )
   assert_eq(error.exit_code(), 1)
 }

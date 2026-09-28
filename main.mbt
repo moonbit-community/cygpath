@@ -2,7 +2,7 @@
 async fn write_record(action : @cli.RecordAction, codepage : Int) -> Bool {
   match action {
     Output(text) => {
-      @host.write_stdout_bytes(@encoding.encode(text + "\n", codepage))
+      @host.write_stdout_bytes(@encoding.encode(text, codepage) + b"\n")
       true
     }
     Skip => true
@@ -18,6 +18,7 @@ async fn execute() -> Unit {
   match @cli.parse_args(@host.args()) {
     Help => @host.write_stdout(@cli.help_text())
     Version => @host.write_stdout(@cli.version_text())
+    ExitSuccess => ()
     Convert(request) => {
       let converter = request.prepare()
       match request.input() {

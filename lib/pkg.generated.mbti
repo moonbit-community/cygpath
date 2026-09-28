@@ -27,7 +27,7 @@ pub struct Context {
   // private fields
 }
 pub fn Context::convert(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
-pub fn Context::convert_list(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
+pub fn Context::convert_list(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, recognize_windows? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
 pub fn Context::new(profile? : Profile, drive_prefix? : String, mounts? : Array[Mount], posix_cwd? : String, windows_cwd? : String, drive_cwds? : Map[String, String]) -> Self raise ConversionError
 
 pub(all) enum InputSyntax {

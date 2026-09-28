@@ -350,7 +350,11 @@ fn mounted_context(
           mounts.push({
             "posix": posix,
             "windows": windows,
-            "case_policy": "sensitive",
+            "case_policy": if tail[1].contains("posix=0") {
+              "ascii-insensitive"
+            } else {
+              "sensitive"
+            },
           })
           seen[posix] = true
         }
@@ -409,6 +413,7 @@ async fn validate_run(
   suite : String,
   mode : String,
   backend : String,
+  manifest_path : String,
   fixture_path : String,
   collector_exit : Int?,
   signatures : Map[String, String],
@@ -435,9 +440,12 @@ async fn validate_run(
     require(!expected_ids.contains(id), "duplicate fixture case_id")
     expected_ids[id] = fixture_case
   }
-  let manifest = @json.parse(
-    @utf8.decode(verify_blob(directory, field(run, "manifest"))),
+  let manifest_bytes = verify_blob(directory, field(run, "manifest"))
+  require(
+    manifest_bytes == @fs.read_file(manifest_path).binary(),
+    "oracle run manifest differs from the exact requested immutable manifest",
   )
+  let manifest = @json.parse(@utf8.decode(manifest_bytes))
   require(
     text_field(field(manifest, "project"), "backend") == backend,
     "wrong backend in oracle manifest",
@@ -587,7 +595,7 @@ fn parse_options(args : ArrayView[String]) -> Map[String, String] raise {
   let options : Map[String, String] = Map([])
   let valid = [
     "--profile", "--root", "--wasm", "--native", "--moon", "--moonrun", "--out",
-    "--source-revision",
+    "--source-revision", "--context-variant",
   ]
   for index = 0; index < args.length(); {
     let name = args[index]
@@ -610,6 +618,7 @@ async fn audit_scope(
   repository : String,
   output : String,
   profile : String,
+  variant : String,
   results : Array[GateCase],
 ) -> Bool {
   let bytes = @fs.read_file(repository + "/testdata/oracle/p3-scope.json").binary()
@@ -625,10 +634,23 @@ async fn audit_scope(
   let covered : Map[String, Bool] = Map([])
   let row_ids : Map[String, Bool] = Map([])
   let mut complete = true
+  let excluded : Array[Json] = []
+  let mut planned_cases = 0
   for row in rows {
     let id = text_field(row, "id")
     require(!row_ids.contains(id), "duplicate scope row")
     row_ids[id] = true
+    let variants : Array[String] = optional_field(row, "variants")
+      .map(value => @json.from_json(value))
+      .unwrap_or(["default", "custom"])
+    if !variants.contains(variant) {
+      excluded.push({
+        "id": id,
+        "reason": "outside selected context variant",
+        "variants": @json.to_json(variants),
+      })
+      continue
+    }
     let cases : Array[Json] = @json.from_json(field(row, "cases"))
     require(!cases.is_empty(), "empty scope capability row")
     let evidence : Array[Json] = []
@@ -638,7 +660,12 @@ async fn audit_scope(
         continue
       }
       let suite = text_field(item, "suite")
+      planned_cases += 1
       let case_id = text_field(item, "case_id")
+      require(
+        !covered.contains(suite + "/" + case_id),
+        "scope assigns the same case more than once for selected profile/context",
+      )
       let domain = text_field(item, "validation_domain")
       let matching = results.filter(result => {
         result.suite == suite && result.case_id == case_id
@@ -683,6 +710,10 @@ async fn audit_scope(
   save_json(output + "/coverage-audit.json", {
     "schema_version": 1,
     "profile": profile,
+    "context_variant": variant,
+    "planned_cases": planned_cases,
+    "planned_comparisons": planned_cases * 4,
+    "out_of_variant_rows": @json.to_json(excluded),
     "scope_sha256": digest(bytes),
     "complete": complete,
     "rows": @json.to_json(audit),
@@ -698,6 +729,11 @@ async fn run(options : Map[String, String]) -> Unit {
     "CI official-oracle orchestration requires Windows",
   )
   let profile = options.get("--profile").unwrap()
+  let variant = options.get("--context-variant").unwrap_or("default")
+  require(
+    variant == "default" || variant == "custom",
+    "unknown context variant",
+  )
   require(profile == "cygwin" || profile == "msys2", "unknown profile")
   let root = path_text(@fs.realpath(options.get("--root").unwrap()))
   let bin = root + (if profile == "cygwin" { "/bin" } else { "/usr/bin" })
@@ -737,6 +773,8 @@ async fn run(options : Map[String, String]) -> Unit {
   environment["LC_ALL"] = "C.UTF-8"
   environment["MSYS2_ARG_CONV_EXCL"] = "*"
   environment["MSYS2_ENV_CONV_EXCL"] = "*"
+  environment["CYGWIN"] = "noglob"
+  environment["MSYS"] = "noglob"
   let system_root = @env.get_env_var("SystemRoot").unwrap_or(
     @env.get_env_var("SYSTEMROOT").unwrap_or(""),
   )
@@ -792,6 +830,53 @@ async fn run(options : Map[String, String]) -> Unit {
     environment,
   )
   ignore(successful_text(output, version))
+  // Official runtime startup must deliver the recorded argv literally. Its
+  // native-parent wildcard expansion is unrelated to path conversion.
+  let transport : Array[Json] = []
+  for
+    (id, payload) in [
+      ("extended-drive", "\\\\?\\C:\\work\\file"),
+      ("extended-unc", "\\\\?\\UNC\\server\\share\\file"),
+      ("literal-wildcards", "a?b*c[0]"),
+    ] {
+    let check = probe(
+      output,
+      "argv-transport-" + id,
+      bin + "/bash.exe",
+      [
+        "--noprofile", "--norc", "-c", "printf '%s\\0' \"$@\"", "cygpath-argv-probe",
+        payload,
+      ],
+      cwd,
+      environment,
+    )
+    require(
+      check.status == "completed" && check.exit_code == Some(0),
+      "official runtime argv transport probe failed",
+    )
+    let expected = @utf8.encode(payload) + b"\x00"
+    require(
+      @fs.read_file(output + "/" + check.stdout_path).binary() == expected &&
+      check.stderr_length == 0,
+      "official runtime startup changed literal argv despite noglob",
+    )
+    transport.push({
+      "id": id,
+      "payload": payload,
+      "expected_stdout_sha256": digest(expected),
+      "observation": @json.to_json(check),
+    })
+  }
+  save_json(output + "/argv-transport.json", {
+    "schema_version": 1,
+    "verified": true,
+    "runtime_environment": { "CYGWIN": "noglob", "MSYS": "noglob" },
+    "source_urls": [
+      "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/environ.cc",
+      "https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/cygwin/environ.cc",
+    ],
+    "probes": @json.to_json(transport),
+  })
   let runtime_version = successful_text(
     output,
     probe(output, "runtime-uname", bin + "/uname.exe", ["-a"], cwd, environment),
@@ -809,6 +894,74 @@ async fn run(options : Map[String, String]) -> Unit {
       output, "runtime-package", package_program, package_args, cwd, environment,
     ),
   )
+  let prepared : Array[Json] = [{ "path": cwd, "kind": "working-directory" }]
+  if variant == "custom" {
+    for
+      directory in [
+        cwd + "/custom-base/nested",
+        cwd + "/custom-nested",
+        cwd + "/custom-shared/deep",
+        cwd + "/custom-Fold",
+        root + "/p3-mount/nested",
+        root + "/p3-alias-first",
+        root + "/p3-alias-second",
+        root + "/p3-alias-deep",
+        root + "/P3Fold",
+      ] {
+      @fs.mkdir(directory, recursive=true, allow_exist=true)
+      require(
+        @fs.kind(directory) is Directory,
+        "custom mount preparation failed",
+      )
+      prepared.push({
+        "path": path_text(@fs.realpath(directory)),
+        "kind": "mount-directory",
+      })
+    }
+    save_json(output + "/directory-preparation.json", {
+      "schema_version": 1,
+      "context_variant": variant,
+      "directories": @json.to_json(prepared),
+    })
+    for
+      (name, argv) in [
+        ("set-custom-drive-prefix", ["-c", "/p3-drives"]),
+        ("set-custom-base-mount", ["-f", cwd + "/custom-base", "/p3-mount"]),
+        (
+          "set-custom-nested-mount",
+          ["-f", cwd + "/custom-nested", "/p3-mount/nested"],
+        ),
+        (
+          "set-custom-first-alias",
+          ["-f", cwd + "/custom-shared", "/p3-alias-first"],
+        ),
+        (
+          "set-custom-second-alias",
+          ["-f", cwd + "/custom-shared", "/p3-alias-second"],
+        ),
+        (
+          "set-custom-deeper-alias",
+          ["-f", cwd + "/custom-shared/deep", "/p3-alias-deep"],
+        ),
+        (
+          "set-custom-fold-mount",
+          ["-f", "-o", "posix=0", cwd + "/custom-Fold", "/P3Fold"],
+        ),
+      ] {
+      ignore(
+        successful_text(
+          output,
+          probe(output, name, bin + "/mount.exe", argv, cwd, environment),
+        ),
+      )
+    }
+  } else {
+    save_json(output + "/directory-preparation.json", {
+      "schema_version": 1,
+      "context_variant": variant,
+      "directories": @json.to_json(prepared),
+    })
+  }
   let mount_table = successful_text(
     output,
     probe(output, "mount-table", bin + "/mount.exe", [], cwd, environment),
@@ -842,6 +995,55 @@ async fn run(options : Map[String, String]) -> Unit {
       probe(output, "drive-prefix", cygpath, ["-u", "C:\\"], cwd, environment),
     ),
   )
+  if variant == "custom" {
+    require(
+      prefix == "/p3-drives",
+      "official runtime did not retain the configured custom drive prefix",
+    )
+    let mounted = mounted_context(mount_table, prefix, official_root, usr_bin)
+    for
+      (posix, windows) in [
+        ("/p3-mount", cwd + "/custom-base"),
+        ("/p3-mount/nested", cwd + "/custom-nested"),
+        ("/p3-alias-first", cwd + "/custom-shared"),
+        ("/p3-alias-second", cwd + "/custom-shared"),
+        ("/p3-alias-deep", cwd + "/custom-shared/deep"),
+        ("/P3Fold", cwd + "/custom-Fold"),
+      ] {
+      require(
+        mounted.any(mount => {
+          text_field(mount, "posix") == posix &&
+          text_field(mount, "windows") == windows
+        }),
+        "official mount table does not match configured fixture mapping: " +
+        posix,
+      )
+      let measured = path_text(
+        successful_text(
+          output,
+          probe(
+            output,
+            "custom-mapping-" + posix.replace_all(old="/", new="-"),
+            cygpath,
+            ["-w", posix],
+            cwd,
+            environment,
+          ),
+        ),
+      )
+      require(
+        measured.trim_end(chars="/").to_owned() == windows,
+        "independent custom mount mapping probe differs",
+      )
+    }
+    require(
+      mounted.any(mount => {
+        text_field(mount, "posix") == "/P3Fold" &&
+        text_field(mount, "case_policy") == "ascii-insensitive"
+      }),
+      "official mount did not report requested posix=0 policy",
+    )
+  }
   let windows_cwd = path_text(
     successful_text(
       output,
@@ -963,7 +1165,7 @@ async fn run(options : Map[String, String]) -> Unit {
     },
     "cwd": cwd,
     "environment": @json.to_json(environment),
-    "cleared_environment": ["MSYSTEM", "CYGWIN"],
+    "cleared_environment": ["MSYSTEM"],
     "context": {
       "profile": profile,
       "drive_prefix": prefix,
@@ -1006,12 +1208,41 @@ async fn run(options : Map[String, String]) -> Unit {
   let results : Array[GateCase] = []
   let infrastructure : Array[Json] = []
   let mut accepted = true
-  for
-    (suite, fixtures) in [
-      ("profile", repository + "/testdata/oracle/fixtures." + profile + ".json"),
-      ("matrix", repository + "/testdata/oracle/fixtures.readonly-matrix.json"),
-      ("p3", repository + "/testdata/oracle/fixtures.p3.json"),
-    ] {
+  let suites = [
+    ("profile", repository + "/testdata/oracle/fixtures." + profile + ".json"),
+    ("matrix", repository + "/testdata/oracle/fixtures.readonly-matrix.json"),
+    ("p3", repository + "/testdata/oracle/fixtures.p3.json"),
+  ]
+  if variant == "custom" {
+    suites.push(
+      ("custom", repository + "/testdata/oracle/fixtures.custom.json"),
+    )
+  }
+  let fixture_preparations : Array[Json] = []
+  for (suite, path) in suites {
+    let fixture = @json.parse(@fs.read_file(path).text())
+    let cases : Array[Json] = @json.from_json(field(fixture, "cases"))
+    for item in cases {
+      if optional_field(item, "file_hex") is Some(hex) {
+        fixture_preparations.push({
+          "suite": suite,
+          "case_id": text_field(item, "case_id"),
+          "path": cwd +
+          "/.cygpath-oracle-fixtures/" +
+          text_field(item, "case_id") +
+          ".bin",
+          "file_hex": hex,
+          "policy": "create-new or verify identical before and after each process; replay verifies identical bytes",
+        })
+      }
+    }
+  }
+  save_json(output + "/fixture-preparation-plan.json", {
+    "schema_version": 1,
+    "context_variant": variant,
+    "files": @json.to_json(fixture_preparations),
+  })
+  for (suite, fixtures) in suites {
     for backend in ["wasm", "native"] {
       let manifest = manifests.get(backend).unwrap()
       let collection = output + "/" + suite + "-" + backend + "-collect"
@@ -1052,6 +1283,7 @@ async fn run(options : Map[String, String]) -> Unit {
               suite,
               mode,
               backend,
+              manifest,
               fixtures,
               execution.exit_code,
               signatures,
@@ -1072,6 +1304,7 @@ async fn run(options : Map[String, String]) -> Unit {
         save_json(output + "/summary.json", {
           "schema_version": 1,
           "profile": profile,
+          "context_variant": variant,
           "complete": false,
           "accepted": false,
           "raw_results_preserved": true,
@@ -1083,7 +1316,9 @@ async fn run(options : Map[String, String]) -> Unit {
   }
   let mut coverage_verified = false
   try {
-    coverage_verified = audit_scope(repository, output, profile, results)
+    coverage_verified = audit_scope(
+      repository, output, profile, variant, results,
+    )
   } catch {
     error =>
       infrastructure.push({
@@ -1142,6 +1377,8 @@ async fn run(options : Map[String, String]) -> Unit {
   save_json(output + "/summary.json", {
     "schema_version": 1,
     "profile": profile,
+    "context_variant": variant,
+    "source_detection": "natural CLI auto-detection; source_type is descriptive fixture metadata only",
     "complete": infrastructure.is_empty(),
     "accepted": accepted,
     "raw_results_preserved": true,
@@ -1187,6 +1424,11 @@ fn self_test() -> Unit raise {
   )
   assert_eq(mounts.length(), 2)
   assert_eq(text_field(mounts[1], "posix"), "/usr/bin")
+  let folded = mounted_context(
+    "C:/fold on /P3Fold type ntfs (binary,posix=0,user)", "/cygdrive", "C:/root",
+    "C:/root/bin",
+  )
+  assert_eq(text_field(folded[0], "case_policy"), "ascii-insensitive")
   let oracle : Json = {
     "stdout": { "sha256": digest(b"official"), "length": 8 },
     "stderr": { "sha256": digest(b""), "length": 0 },

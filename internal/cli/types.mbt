@@ -2,6 +2,7 @@
 pub(all) enum Command {
   Help
   Version
+  ExitSuccess
   Convert(Request)
 }
 
@@ -24,6 +25,7 @@ pub struct Request {
   priv profile : @lib.Profile
   priv drive_prefix : String?
   priv mounts : Array[(String, String)]
+  priv mount_cases : Map[String, @lib.MountCase]
   priv posix_cwd : String?
   priv windows_cwd : String?
   priv drive_cwds : Map[String, String]
@@ -83,7 +85,13 @@ pub fn Request::ignore_missing(self : Request) -> Bool {
 ///|
 pub fn Request::prepare(self : Request) -> Converter raise CliError {
   let context = try {
-    let mounts = self.mounts.map(pair => @lib.Mount::new(pair.0, pair.1))
+    let mounts = self.mounts.map(pair => {
+      @lib.Mount::new(
+        pair.0,
+        pair.1,
+        case=self.mount_cases.get(mount_case_key(pair.0)).unwrap_or(Sensitive),
+      )
+    })
     @lib.Context::new(
       profile=self.profile,
       drive_prefix?=self.drive_prefix,
@@ -112,7 +120,7 @@ pub fn Request::prepare(self : Request) -> Converter raise CliError {
 ///|
 fn recognizable_windows(path : String) -> Bool {
   let prefix = path.replace_all(old="\\", new="/")
-  path.has_prefix("\\") ||
+  path.contains_char('\\') ||
   prefix.has_prefix("//?/") ||
   prefix.has_prefix("//./") ||
   (path.length() >= 2 && path[0] is ('a'..='z' | 'A'..='Z') && path[1] == ':')
@@ -126,13 +134,19 @@ pub fn Converter::convert(
   if path.is_empty() {
     raise Conversion(@lib.EmptyPath)
   }
+  let drive_relative = path.length() >= 2 &&
+    path[0] is ('a'..='z' | 'A'..='Z') &&
+    path[1] == ':' &&
+    (path.length() == 2 || !(path[2] is ('/' | '\\')))
+  let literal_drive = self.from is None &&
+    !self.list &&
+    self.to != Posix &&
+    drive_relative &&
+    (self.absolute || path.length() == 2)
   let from = match self.from {
     Some(syntax) => syntax
     None =>
-      if !self.list &&
-        self.to == Posix &&
-        path.has_prefix("/") &&
-        !path.has_prefix("//") {
+      if literal_drive {
         @lib.Posix
       } else if self.to == Posix || (!self.list && recognizable_windows(path)) {
         @lib.Windows
@@ -140,13 +154,22 @@ pub fn Converter::convert(
         @lib.Posix
       }
   }
+  let absolute = self.absolute ||
+    literal_drive ||
+    (
+      self.from is None &&
+      self.to != Posix &&
+      path.has_prefix("\\") &&
+      !path.has_prefix("\\\\")
+    )
   let converted = try {
     if self.list {
       self.context.convert_list(
         path,
         from~,
         to=self.to,
-        absolute=self.absolute,
+        absolute~,
+        recognize_windows=self.from is None,
         unix_prefix=if self.to == Posix { self.unix_prefix } else { Configured },
       )
     } else {
@@ -154,7 +177,7 @@ pub fn Converter::convert(
         path,
         from~,
         to=self.to,
-        absolute=self.absolute,
+        absolute~,
         unix_prefix=if self.to == Posix { self.unix_prefix } else { Configured },
       )
     }
@@ -195,15 +218,10 @@ pub fn Converter::convert_file_record(
 ) -> RecordAction raise CliError {
   if self.file_options && record.has_prefix("-") {
     let args = file_option_arguments(record)
-    let (options, _) = collect_options(args)
-    if options.any(pair => pair.0 is ("--file" | "--option")) {
-      raise InvalidOptions(
-        "--file and --option cannot appear inside input records",
-      )
-    }
-    match parse_args(args) {
+    match parse_record_args(args) {
       Help => return Stop(help_text())
       Version => return Stop(version_text())
+      ExitSuccess => return Stop("")
       Convert(request) => {
         self.from = request.from
         self.to = request.to

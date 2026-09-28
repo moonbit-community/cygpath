@@ -11,6 +11,7 @@ fn option_arity(option : String) -> Int raise CliError {
     | "--short-name"
     | "--long-name"
     | "--root-local"
+    | "-r"
     | "--mode"
     | "--desktop"
     | "--homeroot"
@@ -34,7 +35,7 @@ fn option_arity(option : String) -> Int raise CliError {
     | "--drive-prefix"
     | "--posix-cwd"
     | "--windows-cwd" => 1
-    "--mount" | "--drive-cwd" => 2
+    "--mount" | "--mount-case" | "--drive-cwd" => 2
     _ => raise UnknownOption(option)
   }
 }
@@ -52,7 +53,7 @@ fn short_option(unit : UInt16, token : String) -> String raise CliError {
     'd' => "--dos"
     's' => "--short-name"
     'l' => "--long-name"
-    'r' => "--root-local"
+    'r' => "-r"
     'C' => "--codepage"
     'M' => "--mode"
     'D' => "--desktop"
@@ -74,79 +75,116 @@ fn short_option(unit : UInt16, token : String) -> String raise CliError {
 }
 
 ///|
+priv enum ScannedOption {
+  Found(String, Array[String])
+  Failure(CliError)
+}
+
+///|
+fn canonical_option(option : String) -> String raise CliError {
+  let official = [
+    "--unix", "--windows", "--mixed", "--path", "--absolute", "--proc-cygdrive",
+    "--dos", "--short-name", "--long-name", "--root-local", "--mode", "--desktop",
+    "--homeroot", "--mydocs", "--smprograms", "--sysdir", "--windir", "--allusers",
+    "--option", "--ignore", "--help", "--version", "--type", "--codepage", "--folder",
+    "--file", "--close",
+  ]
+  if official.contains(option) || is_project_option(option) {
+    return option
+  }
+  let candidates = official.filter(name => name.has_prefix(option))
+  match candidates {
+    [name] => name
+    [] => raise UnknownOption(option)
+    _ => raise OptionError("ambiguous option -- " + option[2:].to_owned())
+  }
+}
+
+///|
 fn collect_options(
   args : Array[String],
-) -> (Array[(String, Array[String])], Array[String]) raise CliError {
-  let options : Array[(String, Array[String])] = []
+) -> (Array[ScannedOption], Array[String]) {
+  let options : Array[ScannedOption] = []
   let names : Array[String] = []
-  for i = 0; i < args.length(); {
-    let token = args[i]
-    if token == "--" {
-      for j = i + 1; j < args.length(); j = j + 1 {
-        names.push(args[j])
-      }
-      break
-    }
-    if token == "-" || !token.has_prefix("-") {
-      names.push(token)
-      continue i + 1
-    }
-    if token.has_prefix("--") {
-      let (option, attached) = match token.split_once("=") {
-        Some((option, value)) => (option.to_owned(), Some(value.to_owned()))
-        None => (token, None)
-      }
-      let arity = option_arity(option)
-      let values = match attached {
-        Some(value) => {
-          if arity == 0 {
-            raise InvalidOptions(option + " does not accept a value")
-          }
-          [value]
+  try {
+    for i = 0; i < args.length(); {
+      let token = args[i]
+      if token == "--" {
+        for j = i + 1; j < args.length(); j = j + 1 {
+          names.push(args[j])
         }
-        None => []
+        break
       }
-      let needed = arity - values.length()
-      if i + needed >= args.length() {
-        raise MissingValue(option)
+      if token == "-" || !token.has_prefix("-") {
+        names.push(token)
+        continue i + 1
       }
-      for n = 0; n < needed; n = n + 1 {
-        values.push(args[i + 1 + n])
-      }
-      options.push((option, values))
-      if option is ("--help" | "--version") {
-        return (options, names)
-      }
-      continue i + 1 + needed
-    } else {
-      let mut next = i + 1
-      for offset = 1; offset < token.length(); {
-        let option = short_option(token[offset], token)
+      if token.has_prefix("--") {
+        let (raw_option, attached) = match token.split_once("=") {
+          Some((option, value)) => (option.to_owned(), Some(value.to_owned()))
+          None => (token, None)
+        }
+        let option = canonical_option(raw_option)
         let arity = option_arity(option)
-        if arity == 0 {
-          options.push((option, []))
-          if option is ("--help" | "--version") {
-            return (options, names)
-          }
-          continue offset + 1
-        } else {
-          // All short options take at most one operand. The rest of a bundle
-          // is that operand, not another sequence of flags.
-          let value = if offset + 1 < token.length() {
-            token[offset + 1:].to_owned()
-          } else {
-            guard args.get(next) is Some(value) else {
-              raise MissingValue(option)
+        let values = match attached {
+          Some(value) => {
+            if arity == 0 {
+              raise OptionError(
+                "option doesn't take an argument -- " +
+                raw_option[2:].to_owned(),
+              )
             }
-            next = next + 1
-            value
+            [value]
           }
-          options.push((option, [value]))
-          break
+          None => []
         }
+        let needed = arity - values.length()
+        if i + needed >= args.length() {
+          raise MissingValue(raw_option)
+        }
+        for n = 0; n < needed; n = n + 1 {
+          values.push(args[i + 1 + n])
+        }
+        options.push(Found(option, values))
+        if option is ("--help" | "--version") {
+          return (options, names)
+        }
+        continue i + 1 + needed
+      } else {
+        let mut next = i + 1
+        for offset = 1; offset < token.length(); {
+          let option = short_option(
+            token[offset],
+            "-" + token[offset:offset + 1].to_owned(),
+          )
+          let arity = option_arity(option)
+          if arity == 0 {
+            options.push(Found(option, []))
+            if option is ("--help" | "--version") {
+              return (options, names)
+            }
+            continue offset + 1
+          } else {
+            // All short options take at most one operand. The rest of a bundle
+            // is that operand, not another sequence of flags.
+            let value = if offset + 1 < token.length() {
+              token[offset + 1:].to_owned()
+            } else {
+              guard args.get(next) is Some(value) else {
+                raise MissingValue("-" + token[offset:offset + 1].to_owned())
+              }
+              next = next + 1
+              value
+            }
+            options.push(Found(option, [value]))
+            break
+          }
+        }
+        continue next
       }
-      continue next
     }
+  } catch {
+    error => options.push(Failure(error))
   }
   (options, names)
 }
@@ -167,6 +205,58 @@ fn repeated_value(
 /// Parses argv after the executable name. No environment or I/O is consulted.
 /// Identical scalar declarations are accepted; conflicting declarations fail.
 pub fn parse_args(args : Array[String]) -> Command raise CliError {
+  parse_args_inner(args, false) catch {
+    IgnoredUsage => ExitSuccess
+    error => raise error
+  }
+}
+
+///|
+fn parse_record_args(args : Array[String]) -> Command raise CliError {
+  parse_args_inner(args, true) catch {
+    IgnoredUsage => ExitSuccess
+    error => raise error
+  }
+}
+
+///|
+fn is_project_option(option : String) -> Bool {
+  option
+  is ("--from"
+  | "--profile"
+  | "--root"
+  | "--mount"
+  | "--mount-case"
+  | "--drive-prefix"
+  | "--posix-cwd"
+  | "--windows-cwd"
+  | "--drive-cwd")
+}
+
+///|
+fn mount_case_key(posix : String) -> String {
+  let key = posix.trim_end(chars="/").to_owned()
+  if key.is_empty() {
+    "/"
+  } else {
+    key
+  }
+}
+
+///|
+fn option_usage(ignore : Bool) -> Unit raise CliError {
+  if ignore {
+    raise IgnoredUsage
+  } else {
+    raise Usage
+  }
+}
+
+///|
+fn parse_args_inner(
+  args : Array[String],
+  from_file : Bool,
+) -> Command raise CliError {
   let (options, names) = collect_options(args)
   let mut unix = false
   let mut windows = false
@@ -179,6 +269,7 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
   let mut windows_cwd : String? = None
   let mut file : String? = None
   let mounts : Array[(String, String)] = []
+  let mount_cases : Map[String, @lib.MountCase] = Map([])
   let drive_cwds : Map[String, String] = Map([])
   let mut absolute = false
   let mut list = false
@@ -191,7 +282,11 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
   let mut unavailable_codepage : String? = None
   let mut file_options = false
   let unsupported : Array[String] = []
-  for (option, values) in options {
+  for token in options {
+    let (option, values) = match token {
+      Found(option, values) => (option, values)
+      Failure(error) => raise error
+    }
     match option {
       "--unix" => unix = true
       "--windows" => windows = true
@@ -219,7 +314,7 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
             mixed = true
           }
         } else {
-          raise InvalidOptions("unknown output type " + value)
+          option_usage(ignore)
         }
       }
       "--dos" => {
@@ -235,7 +330,8 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
         long = true
         unsupported.push("long names require Windows filesystem queries")
       }
-      "--root-local" => root_local = true
+      "--root-local" => raise UnknownOption("--root-local")
+      "-r" => root_local = true
       "--codepage" =>
         if values[0].to_upper() is ("UTF8" | "UTF-8") {
           codepage = 65001
@@ -244,7 +340,10 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
           unavailable_codepage = Some(values[0])
         } else {
           codepage = @string.parse_int(values[0]) catch {
-            _ => raise InvalidOptions("invalid code page " + values[0])
+            _ => {
+              option_usage(ignore)
+              65001
+            }
           }
           unavailable_codepage = if @encoding.supported(codepage) {
             None
@@ -258,7 +357,12 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
       "--ignore" => ignore = true
       "--help" => return Help
       "--version" => return Version
-      "--file" => file = repeated_value(file, values[0], option)
+      "--file" => {
+        if from_file {
+          option_usage(ignore)
+        }
+        file = Some(values[0])
+      }
       "--from" => {
         if !(values[0] is ("windows" | "posix")) {
           raise InvalidOptions("--from requires windows or posix")
@@ -278,6 +382,21 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
         root = repeated_value(root, values[0], option)
       }
       "--mount" => mounts.push((values[0], values[1]))
+      "--mount-case" => {
+        let policy : @lib.MountCase = match values[1] {
+          "sensitive" => Sensitive
+          "ascii-insensitive" => AsciiInsensitive
+          _ =>
+            raise InvalidOptions(
+              "--mount-case requires sensitive or ascii-insensitive",
+            )
+        }
+        let key = mount_case_key(values[0])
+        if mount_cases.get(key) is Some(old) && old != policy {
+          raise InvalidOptions("conflicting --mount-case for " + key)
+        }
+        mount_cases[key] = policy
+      }
       "--drive-prefix" =>
         drive_prefix = repeated_value(drive_prefix, values[0], option)
       "--posix-cwd" => posix_cwd = repeated_value(posix_cwd, values[0], option)
@@ -298,7 +417,12 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
       }
       "--mode" => unsupported.push("file modes require the Cygwin runtime")
       "--allusers" => ()
-      "--option" => file_options = true
+      "--option" => {
+        if from_file {
+          option_usage(ignore)
+        }
+        file_options = true
+      }
       "--close" =>
         unsupported.push("closing host process handles is not supported")
       _ =>
@@ -306,10 +430,10 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
     }
   }
   if (short && long) || (short && root_local) || (long && root_local) {
-    raise InvalidOptions("--short-name, --long-name and --root-local conflict")
+    option_usage(ignore)
   }
   if unix && windows && !file_options {
-    raise InvalidOptions("conflicting output formats")
+    option_usage(ignore)
   }
   let to : @lib.OutputFormat = if unix || (!windows && !file_options) {
     Posix
@@ -319,12 +443,10 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
     Windows
   }
   if root_local && to != Windows {
-    raise InvalidOptions(
-      "root-local requires Windows output without mixed mode",
-    )
+    option_usage(ignore)
   }
   if (short || long) && !windows {
-    raise InvalidOptions("short and long names require Windows output")
+    option_usage(ignore)
   }
   if to != Posix && unavailable_codepage is Some(page) {
     raise UnsupportedCapability(
@@ -335,18 +457,27 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
     raise UnsupportedCapability(reason)
   }
   if file_options && file is None {
-    raise InvalidOptions("--option requires --file")
+    option_usage(ignore)
   }
   if file is Some(_) && !names.is_empty() {
-    raise InvalidOptions("--file cannot be combined with NAME arguments")
+    option_usage(ignore)
   }
   let source = match file {
     Some(path) => File(path)
     None => {
-      if names.is_empty() && !ignore {
-        raise MissingInput
+      if names.is_empty() {
+        if ignore {
+          raise IgnoredUsage
+        } else {
+          raise MissingInput
+        }
       }
       Names(names)
+    }
+  }
+  for key, _ in mount_cases {
+    if !mounts.any(pair => mount_case_key(pair.0) == key) {
+      raise InvalidOptions("--mount-case has no matching mount: " + key)
     }
   }
   Convert({
@@ -372,6 +503,7 @@ pub fn parse_args(args : Array[String]) -> Command raise CliError {
     },
     drive_prefix,
     mounts,
+    mount_cases,
     posix_cwd,
     windows_cwd,
     drive_cwds,

@@ -408,8 +408,9 @@ fn validate_manifest(manifest : Manifest) -> Unit raise {
   }
   for mount in manifest.context.mounts {
     require(
-      mount.case_policy == "sensitive",
-      "CLI mapping supports sensitive mounts only",
+      mount.case_policy == "sensitive" ||
+      mount.case_policy == "ascii-insensitive",
+      "unknown explicit mount case policy",
     )
     require(
       mount.posix.has_prefix("/") && windows_absolute(mount.windows),
@@ -455,6 +456,11 @@ fn expand_arg(
   )
   .replace_all(old="{drive_prefix}", new=manifest.context.drive_prefix)
   .replace_all(old="{cwd_windows}", new=manifest.cwd)
+  .replace_all(old="{custom_base}", new=manifest.cwd + "/custom-base")
+  .replace_all(old="{custom_nested}", new=manifest.cwd + "/custom-nested")
+  .replace_all(old="{custom_shared}", new=manifest.cwd + "/custom-shared")
+  .replace_all(old="{custom_fold}", new=manifest.cwd + "/custom-Fold")
+  .replace_all(old="{custom_fold_case}", new=manifest.cwd + "/CUSTOM-fold")
 }
 
 ///|
@@ -581,7 +587,7 @@ fn validate_suite(suite : Suite, manifest : Manifest) -> Unit raise {
       require(
         ![
           "--profile", "--root", "--mount", "--drive-prefix", "--posix-cwd", "--windows-cwd",
-          "--drive-cwd", "--from",
+          "--drive-cwd", "--from", "--mount-case",
         ].any(option => arg == option || arg.has_prefix(option + "=")),
         "fixture overrides explicit context",
       )
@@ -626,6 +632,9 @@ fn context_args(context : CoreContext) -> Array[String] {
     args.push("--mount")
     args.push(mount.posix)
     args.push(mount.windows)
+    args.push("--mount-case")
+    args.push(mount.posix)
+    args.push(mount.case_policy)
   }
   if context.posix_cwd is Some(cwd) {
     args.push("--posix-cwd")
@@ -856,7 +865,6 @@ async fn project_observation(
     manifest.project.launcher.path,
     prefix +
     context_args(manifest.context) +
-    ["--from", fixture.source_type] +
     fixture.project_argv.map(arg => {
       expand_arg(arg, manifest, case_id=fixture.case_id)
     }),
@@ -1516,6 +1524,7 @@ async fn self_test() -> Unit {
     path in [
       "testdata/oracle/fixtures.cygwin.json", "testdata/oracle/fixtures.msys2.json",
       "testdata/oracle/fixtures.readonly-matrix.json", "testdata/oracle/fixtures.p3.json",
+      "testdata/oracle/fixtures.custom.json",
     ] {
     let suite : Suite = @json.from_json(@json.parse(@fs.read_file(path).text()))
     check_json_roundtrip(suite)

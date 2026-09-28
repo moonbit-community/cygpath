@@ -18,7 +18,7 @@ pub fn help_text() -> String {
     #|  -p, --path                 Convert each NAME as a path list
     #|  -a, --absolute             Resolve relative paths using supplied cwd
     #|  -U, --proc-cygdrive        Use /proc/cygdrive for drive fallback
-    #|  -r, --root-local          Prefix single Windows paths with \\\\?\\
+    #|  -r                        Prefix single Windows paths with \\\\?\\
     #|  -f, --file FILE            Read UTF-8 lines; - reads standard input
     #|  -o, --option              Read options from leading - records in FILE
     #|  -i, --ignore               Skip empty path operands
@@ -31,6 +31,7 @@ pub fn help_text() -> String {
     #|      --profile cygwin|msys2 Select drive-prefix profile
     #|      --root WINDOWS        Mount / at an absolute Windows path
     #|      --mount POSIX WINDOWS Add an explicit mount (repeatable)
+    #|      --mount-case POSIX POLICY sensitive or ascii-insensitive
     #|      --drive-prefix POSIX  Override the drive-prefix profile
     #|      --posix-cwd POSIX      Supply an absolute POSIX cwd
     #|      --windows-cwd WINDOWS Supply an absolute Windows cwd
@@ -40,16 +41,21 @@ pub fn help_text() -> String {
     #|be combined; option values may be attached. No cwd or root is guessed.
     #|Without --from, -u recognizes POSIX absolute and Windows paths;
     #|-w/-m read POSIX syntax and recognize ordinary Windows prefixes.
-    #|single paths with a drive or backslash prefix are recognized as Windows.
+    #|Single paths with a drive prefix or backslashes are recognized as Windows.
     #|Output uses LF records. -C affects Windows output; POSIX stays UTF-8.
-    #|Numeric pages: 874, 932, 936, 949, 950, 1250-1258, 1361, 65001.
+    #|Numeric pages use the generated Microsoft mapping catalog (92 enabled
+    #|Windows pages plus 15 Unicode pages and UTF-8/65001); unsupported or
+    #|ambiguous pages are errors.
     #|-f cannot be combined with NAME. No shell quoting is applied to records.
     #|
     #|Recognized but unsupported:
     #|  -d/--dos, -s/--short-name, -l/--long-name,
-    #|  -M/--mode, -c/--close HANDLE, ANSI/OEM host code-page selection,
+    #|  -M/--mode, -c/--close HANDLE, ANSI/OEM host code-page selection in
+    #|  Windows output,
     #|  -D/--desktop, -H/--homeroot, -O/--mydocs, -P/--smprograms,
-    #|  -S/--sysdir, -W/--windir, -F/--folder ID, -A/--allusers.
+    #|  -S/--sysdir, -W/--windir, -F/--folder ID.
+    #|-A/--allusers has no effect on ordinary path conversion.
+    #|The upstream --root-local long spelling is rejected; use -r.
     #|
     #|Exit codes: 0 success, 1 options/context/I/O, 2 path conversion failure.
     #|

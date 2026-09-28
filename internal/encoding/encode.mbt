@@ -50,8 +50,10 @@ pub fn encode(text : String, codepage : Int) -> Bytes raise UnsupportedCodePage 
     raise UnsupportedCodePage(codepage)
   }
   let output = @buffer.Buffer()
-  for scalar in text.iter() {
-    let encoded = lookup(table, scalar.to_int(), fallback)
+  // Windows' legacy tables map UTF-16 words independently. A supplementary
+  // character therefore uses two default characters, one for each surrogate.
+  for unit in text.code_units() {
+    let encoded = lookup(table, unit.to_int(), fallback)
     if encoded > 255 {
       output.write_byte((encoded >> 8).to_byte())
     }

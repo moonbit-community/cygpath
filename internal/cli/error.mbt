@@ -2,9 +2,12 @@
 pub(all) suberror CliError {
   UnknownOption(String)
   MissingValue(String)
+  OptionError(String)
   InvalidOptions(String)
   UnsupportedCapability(String)
   MissingInput
+  Usage
+  IgnoredUsage
   InvalidRecord
   Conversion(@lib.ConversionError)
 }
@@ -26,6 +29,7 @@ pub fn CliError::exit_code(self : CliError) -> Int {
   match self {
     Conversion(error) => conversion_exit_code(error)
     InvalidRecord => 2
+    IgnoredUsage => 0
     _ => 1
   }
 }
@@ -49,15 +53,49 @@ fn conversion_diagnostic(error : @lib.ConversionError) -> String {
 }
 
 ///|
-/// One diagnostic line, without its terminator. User-controlled text is escaped.
+/// A diagnostic without its final LF. Official option errors retain cygpath's
+/// multiline usage protocol; project context errors use typed diagnostics.
 pub fn CliError::diagnostic(self : CliError) -> String {
+  match self {
+    Usage | MissingInput => return official_usage_error()
+    IgnoredUsage => return ""
+    OptionError(detail) =>
+      return "cygpath: " +
+        detail +
+        "\nTry `cygpath --help' for more information."
+    UnknownOption("--root-local") =>
+      return "Try `cygpath --help' for more information."
+    UnknownOption(option) => {
+      let option = if option.has_prefix("--") {
+        option[2:].to_owned()
+      } else {
+        option[1:].to_owned()
+      }
+      return "cygpath: unknown option -- " +
+        option +
+        "\nTry `cygpath --help' for more information."
+    }
+    MissingValue(option) if !is_project_option(option) => {
+      let option = if option.has_prefix("--") {
+        option[2:].to_owned()
+      } else {
+        option[1:].to_owned()
+      }
+      return "cygpath: option requires an argument -- " +
+        option +
+        "\nTry `cygpath --help' for more information."
+    }
+    _ => ()
+  }
   let detail = match self {
     UnknownOption(option) => "unknown-option: " + option.escape()
+    OptionError(detail) => detail
     MissingValue(option) => "missing-value: " + option.escape()
     InvalidOptions(reason) => "invalid-options: " + reason.escape()
     UnsupportedCapability(reason) =>
       "unsupported-capability: " + reason.escape()
     MissingInput => "missing-input: supply a NAME or --file"
+    Usage | IgnoredUsage => ""
     InvalidRecord => "invalid-record: embedded CR or LF is not allowed"
     Conversion(error) => conversion_diagnostic(error)
   }

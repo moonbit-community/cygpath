@@ -9,6 +9,7 @@ pub fn Context::convert_list(
   from~ : InputSyntax,
   to~ : OutputFormat,
   absolute? : Bool = false,
+  recognize_windows? : Bool = false,
   unix_prefix? : UnixPrefix = Configured,
 ) -> String raise ConversionError {
   validate_options(to, unix_prefix)
@@ -28,13 +29,26 @@ pub fn Context::convert_list(
     }
     try {
       let value = if value.is_empty() { "." } else { value }
-      let converted = self.convert(value, from~, to~, absolute~, unix_prefix~)
-      if converted.contains(output_sep) {
-        raise UnrepresentablePath(
-          component=converted,
-          reason="path contains target list separator",
-        )
+      let entry_syntax : InputSyntax = if recognize_windows &&
+        from == Posix &&
+        value.contains_char('\\') {
+        Windows
+      } else {
+        from
       }
+      let converted = self.convert(
+        value,
+        from=entry_syntax,
+        to~,
+        absolute=absolute ||
+          (
+            recognize_windows &&
+            entry_syntax == Windows &&
+            value.has_prefix("\\") &&
+            !value.has_prefix("\\\\")
+          ),
+        unix_prefix~,
+      )
       output.push(converted)
     } catch {
       error => raise ListEntryError(index~, error)

@@ -38,7 +38,7 @@ test "source grammar is explicit and independent of output style" {
     mounts=[@lib.Mount::new("/", "C:\\root")],
     windows_cwd="D:\\work",
   )
-  assert_eq(context.convert("/a", from=Windows, to=Posix), "/cygdrive/d/a")
+  assert_eq(context.convert("/a", from=Windows, to=Posix), "/a")
   assert_eq(context.convert("/a", from=Posix, to=Windows), "C:\\root\\a")
   assert_eq(context.convert("C:/a\\b", from=Windows, to=Mixed), "C:/a/b")
   assert_eq(context.convert("a\\b", from=Posix, to=Posix), "a\\b")
@@ -325,19 +325,14 @@ test "lists preserve order and use only the declared source delimiter" {
     context.convert_list("C:\\a;D:\\b", from=Windows, to=Mixed),
     "C:/a;D:/b",
   )
-  assert_true(
-    conversion_error(() => {
-      context.convert_list("\"C:\\a\"", from=Windows, to=Posix)
-    })
-    is @lib.ListEntryError(
-      index=0,
-      @lib.UnrepresentablePath(component=_, reason=_)
-    ),
+  assert_eq(
+    context.convert_list("\"C:\\a\"", from=Windows, to=Posix),
+    "\"C:/a\"",
   )
 }
 
 ///|
-test "list errors retain the original index and reject lossy serialization" {
+test "list errors retain the original index and output delimiters follow cygpath" {
   let context = @lib.Context::new()
   assert_true(
     conversion_error(() => {
@@ -346,27 +341,14 @@ test "list errors retain the original index and reject lossy serialization" {
     is @lib.ListEntryError(index=3, @lib.UnsupportedNamespace(_)),
   )
   assert_eq(context.convert("a;b", from=Posix, to=Windows), "a;b")
-  assert_true(
-    conversion_error(() => {
-      context.convert_list("ok:a;b", from=Posix, to=Windows)
-    })
-    is @lib.ListEntryError(
-      index=1,
-      @lib.UnrepresentablePath(component="a;b", reason=_)
-    ),
-  )
+  assert_eq(context.convert_list("ok:a;b", from=Posix, to=Windows), "ok;a;b")
   let colon_mount = @lib.Context::new(mounts=[
     @lib.Mount::new("/a:b", "C:\\work"),
   ])
   assert_eq(colon_mount.convert("C:\\work", from=Windows, to=Posix), "/a:b")
-  assert_true(
-    conversion_error(() => {
-      colon_mount.convert_list(";C:\\work", from=Windows, to=Posix)
-    })
-    is @lib.ListEntryError(
-      index=1,
-      @lib.UnrepresentablePath(component="/a:b", reason=_)
-    ),
+  assert_eq(
+    colon_mount.convert_list(";C:\\work", from=Windows, to=Posix),
+    "/a:b",
   )
 }
 

@@ -1,0 +1,656 @@
+{
+  "schema_version": 1,
+  "validation_kind": "official-comparison",
+  "profiles": [
+    "cygwin",
+    "msys2"
+  ],
+  "source_url": "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/mount.cc",
+  "source_revision": "Independently authored custom mount/drive-prefix fixtures; actual official configuration and measurements retained by CI, no expected output imported.",
+  "cases": [
+    {
+      "case_id": "custom-drive-prefix-forward",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-u",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-drive-prefix-reverse",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "{drive_prefix}/c/work"
+      ],
+      "project_argv": [
+        "-w",
+        "{drive_prefix}/c/work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-drive-prefix-list",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-up",
+        "C:\\one;D:\\two"
+      ],
+      "project_argv": [
+        "-up",
+        "C:\\one;D:\\two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-proc-prefix-bypass",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-uU",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-uU",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-proc-reverse",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/proc/cygdrive/c/work"
+      ],
+      "project_argv": [
+        "-w",
+        "/proc/cygdrive/c/work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-mount-forward",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-mount/child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-mount/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-mount-reverse",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_base}/child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_base}/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-nested-forward",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-mount/nested/child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-mount/nested/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-nested-reverse",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_nested}/child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_nested}/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-mount-component-boundary",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-mounting/child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-mounting/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-mount-case",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/P3-MOUNT/child"
+      ],
+      "project_argv": [
+        "-w",
+        "/P3-MOUNT/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-mount-parent-traversal",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-mount/nested/../child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-mount/nested/../child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-nested-root-local",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wr",
+        "/p3-mount/nested/child"
+      ],
+      "project_argv": [
+        "-wr",
+        "/p3-mount/nested/child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-root-and-mount-list",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wp",
+        "/:/p3-mount:/p3-mount/nested"
+      ],
+      "project_argv": [
+        "-wp",
+        "/:/p3-mount:/p3-mount/nested"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-drive-prefix-component-boundary",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-drives/cat/file"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-drives/cat/file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-alias-first-forward",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-alias-first/Child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-alias-first/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-alias-second-forward",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3-alias-second/Child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3-alias-second/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-alias-reverse-order",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_shared}/Child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_shared}/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-alias-longer-target",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_shared}/deep/Child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_shared}/deep/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-alias-target-boundary",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_shared}-other/Child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_shared}-other/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-alias-list",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wp",
+        "/p3-alias-first/one:/p3-alias-second/two"
+      ],
+      "project_argv": [
+        "-wp",
+        "/p3-alias-first/one:/p3-alias-second/two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-lower-posix",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3fold/Child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3fold/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-upper-posix",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/P3FOLD/Child"
+      ],
+      "project_argv": [
+        "-w",
+        "/P3FOLD/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-exact-reverse",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_fold}/Child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_fold}/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-ascii-reverse",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_fold_case}/Child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_fold_case}/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-posix-boundary",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3folding/Child"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3folding/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-windows-boundary",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{custom_fold_case}ing/Child"
+      ],
+      "project_argv": [
+        "-u",
+        "{custom_fold_case}ing/Child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "custom-fold-unicode-tail",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/p3fold/路径"
+      ],
+      "project_argv": [
+        "-w",
+        "/p3fold/路径"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    }
+  ]
+}

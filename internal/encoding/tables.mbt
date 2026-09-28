@@ -18,6 +18,6 @@ fn codepage_table(codepage : Int) -> (Bytes, Int)? {
     1257 => Some((cp_1257, 63))
     1258 => Some((cp_1258, 63))
     1361 => Some((cp_1361, 63))
-    _ => None
+    _ => microsoft_codepage_table(codepage)
   }
 }

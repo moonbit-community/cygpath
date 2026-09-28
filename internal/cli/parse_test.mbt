@@ -83,7 +83,7 @@ test "all value options diagnose a missing operand" {
   assert_true(
     parse_failure(["--drive-cwd", "C"]) is MissingValue("--drive-cwd"),
   )
-  assert_true(parse_failure(["--unix=yes"]) is InvalidOptions(_))
+  assert_true(parse_failure(["--unix=yes"]) is OptionError(_))
 }
 
 ///|
@@ -93,7 +93,7 @@ test "identical output formats repeat and conflicting formats fail" {
     "/cygdrive/c/x",
   )
   for args in [["-uw", "x"], ["-t", "invalid", "x"]] {
-    assert_true(parse_failure(args) is InvalidOptions(_))
+    assert_true(parse_failure(args) is Usage)
   }
   assert_true(parse_failure(["--profile=other", "x"]) is InvalidOptions(_))
   for
@@ -141,12 +141,12 @@ test "every unavailable option is recognized" {
 ///|
 test "namespace and filename mode conflicts precede unsupported errors" {
   for flags in ["-rs", "-rl", "-sl", "-dl", "-dr"] {
-    assert_true(parse_failure([flags, "x"]) is InvalidOptions(_))
+    assert_true(parse_failure([flags, "x"]) is Usage)
   }
   assert_eq(request(["-wU", "a/b"]).prepare().convert("a/b"), "a\\b")
   assert_eq(request(["-mU", "a/b"]).prepare().convert("a/b"), "a/b")
-  assert_true(parse_failure(["-ur", "x"]) is InvalidOptions(_))
-  assert_true(parse_failure(["-mr", "x"]) is InvalidOptions(_))
+  assert_true(parse_failure(["-ur", "x"]) is Usage)
+  assert_true(parse_failure(["-mr", "x"]) is Usage)
 }
 
 ///|
@@ -181,10 +181,10 @@ test "pure code page selection affects Windows output only" {
 ///|
 test "file and NAME are mutually exclusive and ignore suppresses empty operands" {
   assert_true(parse_failure([]) is MissingInput)
-  let empty = request(["-i"])
-  assert_true(empty.ignore_missing())
-  assert_true(empty.input() is Names([]))
-  assert_true(parse_failure(["-f", "-", "name"]) is InvalidOptions(_))
+  assert_true(@cli.parse_args(["-i"]) is ExitSuccess)
+  assert_true(@cli.parse_args(["-iuw", "x"]) is ExitSuccess)
+  assert_true(@cli.parse_args(["-i", "-tinvalid", "x"]) is ExitSuccess)
+  assert_true(parse_failure(["-f", "-", "name"]) is Usage)
   assert_true(parse_failure(["-i", "--unknown"]) is UnknownOption(_))
   assert_true(request(["-i", ""]).prepare().convert_operand("") is Skip)
   try request([""]).prepare().convert("") catch {

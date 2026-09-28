@@ -83,4 +83,47 @@ test "filename private-use encoding is reversible without changing Unicode names
     context.convert("C:/" + plain, from=Windows, to=Mixed),
     "C:/" + encoded,
   )
+  assert_eq(
+    context.convert("C:/parent/\uF02E\uF02E/file", from=Windows, to=Posix),
+    "/cygdrive/c/file",
+  )
+}
+
+///|
+test "POSIX spelling in Windows to POSIX input bypasses drive and mount resolution" {
+  let context = @lib.Context::new(windows_cwd="D:/cwd")
+  for input in ["/", "/dev/null", "/a/../b", "/a//b/", "/proc/self"] {
+    assert_eq(context.convert(input, from=Windows, to=Posix), input)
+    assert_eq(
+      context.convert(input, from=Windows, to=Posix, absolute=true),
+      input,
+    )
+  }
+  assert_eq(context.convert("/a\\b", from=Windows, to=Posix), "/a/b")
+  assert_eq(context.convert("\\a", from=Windows, to=Posix), "/cygdrive/d/a")
+}
+
+///|
+test "ordinary long paths gain extended prefixes at the UTF-16 boundary" {
+  let context = @lib.Context::new(posix_cwd="/cygdrive/c/base")
+  for length in [259, 260, 261] {
+    let path = "C:/folder/" + "a".repeat(120) + "/" + "b".repeat(length - 131)
+    assert_eq(path.length(), length)
+    let mixed = if length < 260 { path } else { "//?/" + path }
+    assert_eq(context.convert(path, from=Windows, to=Mixed), mixed)
+    assert_eq(
+      context.convert(path, from=Windows, to=Windows),
+      mixed.replace_all(old="/", new="\\"),
+    )
+  }
+  let relative = "a".repeat(130) + "/" + "b".repeat(130)
+  assert_eq(
+    context.convert(relative, from=Posix, to=Mixed),
+    "//?/C:/base/" + relative,
+  )
+  let unc = "//server/share/" + "a".repeat(120) + "/" + "b".repeat(130)
+  assert_eq(
+    context.convert(unc, from=Windows, to=Mixed),
+    "//?/UNC/" + unc[2:].to_owned(),
+  )
 }

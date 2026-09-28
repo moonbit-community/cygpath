@@ -16,9 +16,12 @@ pub fn version_text() -> String
 pub(all) suberror CliError {
   UnknownOption(String)
   MissingValue(String)
+  OptionError(String)
   InvalidOptions(String)
   UnsupportedCapability(String)
   MissingInput
+  Usage
+  IgnoredUsage
   InvalidRecord
   Conversion(@lib.ConversionError)
 }
@@ -29,6 +32,7 @@ pub fn CliError::exit_code(Self) -> Int
 pub(all) enum Command {
   Help
   Version
+  ExitSuccess
   Convert(Request)
 }
 

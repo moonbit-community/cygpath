@@ -3300,6 +3300,5690 @@
         "native"
       ],
       "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-posix-absolute-dots",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-au",
+        "/a/../b"
+      ],
+      "project_argv": [
+        "-au",
+        "/a/../b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-posix-absolute-repeat",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-au",
+        "/a//b"
+      ],
+      "project_argv": [
+        "-au",
+        "/a//b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-posix-virtual-spelling",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "/dev/null"
+      ],
+      "project_argv": [
+        "-u",
+        "/dev/null"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-posix-virtual-absolute",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-au",
+        "/dev/null"
+      ],
+      "project_argv": [
+        "-au",
+        "/dev/null"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-invalid-after-nul-ignored",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c6f6e6500ff0a443a5c74776f0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-drive-w-259",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-drive-m-259",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-unc-w-259",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-unc-m-259",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-drive-w-260",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-drive-m-260",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-unc-w-260",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-unc-m-260",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-drive-w-261",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-drive-m-261",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-unc-w-261",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-unc-m-261",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "\\\\server\\share\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-relative-w",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-w",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-relative-m",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-m",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-437-text",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C437",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C437",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-437-fallback",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C437",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C437",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-850-text",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C850",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C850",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-850-fallback",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C850",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C850",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-866-text",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C866",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C866",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-866-fallback",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C866",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C866",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20127-text",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20127",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20127",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20127-fallback",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20127",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20127",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28591-text",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28591",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28591",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28591-fallback",
+      "category": "p3-second-wave",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28591",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28591",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-stdin-u",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c433a5c776f726b5c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-stdin-w",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-f-"
+      ],
+      "project_argv": [
+        "-w",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c433a5c776f726b5c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-stdin-m",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "-f-"
+      ],
+      "project_argv": [
+        "-m",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c433a5c776f726b5c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-stdin-wr",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wr",
+        "-f-"
+      ],
+      "project_argv": [
+        "-wr",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c433a5c776f726b5c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-stdin-u",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c554e435c7365727665725c73686172655c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-stdin-w",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-f-"
+      ],
+      "project_argv": [
+        "-w",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c554e435c7365727665725c73686172655c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-stdin-m",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "-f-"
+      ],
+      "project_argv": [
+        "-m",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c554e435c7365727665725c73686172655c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-stdin-wr",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wr",
+        "-f-"
+      ],
+      "project_argv": [
+        "-wr",
+        "-f-"
+      ],
+      "stdin_hex": "5c5c3f5c554e435c7365727665725c73686172655c66696c650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-708-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C708",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C708",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-708-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C708",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C708",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-720-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C720",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C720",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-720-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C720",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C720",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-737-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C737",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C737",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-737-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C737",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C737",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-775-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C775",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C775",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-775-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C775",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C775",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-852-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C852",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C852",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-852-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C852",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C852",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-855-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C855",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C855",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-855-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C855",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C855",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-857-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C857",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C857",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-857-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C857",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C857",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-858-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C858",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C858",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-858-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C858",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C858",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-860-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C860",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C860",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-860-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C860",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C860",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-861-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C861",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C861",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-861-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C861",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C861",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-862-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C862",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C862",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-862-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C862",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C862",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-863-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C863",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C863",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-863-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C863",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C863",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-864-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C864",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C864",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-864-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C864",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C864",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-865-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C865",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C865",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-865-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C865",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C865",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-869-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C869",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C869",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-869-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C869",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C869",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20866-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20866",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20866",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20866-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20866",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20866",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-21866-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C21866",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C21866",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-21866-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C21866",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C21866",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28592-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28592",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28592",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28592-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28592",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28592",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28593-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28593",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28593",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28593-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28593",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28593",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28594-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28594",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28594",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28594-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28594",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28594",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28595-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28595",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28595",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28595-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28595",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28595",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28596-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28596",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28596",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28596-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28596",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28596",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28597-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28597",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28597",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28597-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28597",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28597",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28598-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28598",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28598",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28598-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28598",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28598",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28599-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28599",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28599",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28599-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28599",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28599",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28603-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28603",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28603",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28603-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28603",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28603",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28605-text",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28605",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28605",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-28605-fallback",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C28605",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C28605",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "long-option-unambiguous-prefix",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "--uni",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "--uni",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "long-option-ambiguous-prefix",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "--win",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "--win",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "all-users-modifier-noop",
+      "category": "p3-frozen-final-probes",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-Au",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-Au",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-37-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C37",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C37",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-37-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C37",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C37",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-500-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C500",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C500",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-500-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C500",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C500",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-870-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C870",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C870",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-870-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C870",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C870",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-875-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C875",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C875",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-875-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C875",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C875",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1026-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1026",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1026",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1026-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1026",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1026",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1047-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1047",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1047",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1047-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1047",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1047",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1140-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1140",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1140",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1140-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1140",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1140",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1141-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1141",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1141",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1141-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1141",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1141",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1142-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1142",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1142",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1142-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1142",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1142",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1143-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1143",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1143",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1143-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1143",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1143",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1144-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1144",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1144",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1144-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1144",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1144",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1145-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1145",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1145",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1145-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1145",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1145",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1146-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1146",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1146",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1146-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1146",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1146",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1147-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1147",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1147",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1147-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1147",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1147",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1148-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1148",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1148",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1148-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1148",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1148",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1149-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1149",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1149",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1149-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C1149",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C1149",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10000-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10000",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10000",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10000-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10000",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10000",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10001-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10001",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10001",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10001-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10001",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10001",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10002-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10002",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10002",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10002-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10002",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10002",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10003-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10003",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10003",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10003-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10003",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10003",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10004-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10004",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10004",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10004-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10004",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10004",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10005-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10005",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10005",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10005-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10005",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10005",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10006-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10006",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10006",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10006-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10006",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10006",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10007-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10007",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10007",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10007-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10007",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10007",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10008-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10008",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10008",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10008-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10008",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10008",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10010-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10010",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10010",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10010-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10010",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10010",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10017-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10017",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10017",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10017-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10017",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10017",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10021-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10021",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10021",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10021-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10021",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10021",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10029-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10029",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10029",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10029-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10029",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10029",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10079-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10079",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10079",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10079-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10079",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10079",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10081-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10081",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10081",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10081-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10081",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10081",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10082-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10082",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10082",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10082-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C10082",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10082",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20000-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20000",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20000",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20000-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20000",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20000",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20001-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20001",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20001",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20001-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20001",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20001",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20002-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20002",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20002",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20002-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20002",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20002",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20003-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20003",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20003",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20003-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20003",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20003",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20004-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20004",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20004",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20004-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20004",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20004",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20005-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20005",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20005",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20005-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20005",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20005",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20105-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20105",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20105",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20105-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20105",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20105",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20106-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20106",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20106",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20106-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20106",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20106",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20107-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20107",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20107",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20107-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20107",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20107",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20108-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20108",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20108",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20108-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20108",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20108",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20261-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20261",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20261",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20261-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20261",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20261",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20269-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20269",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20269",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20269-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20269",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20269",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20273-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20273",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20273",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20273-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20273",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20273",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20277-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20277",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20277",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20277-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20277",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20277",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20278-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20278",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20278",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20278-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20278",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20278",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20280-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20280",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20280",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20280-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20280",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20280",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20284-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20284",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20284",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20284-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20284",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20284",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20285-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20285",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20285",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20285-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20285",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20285",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20290-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20290",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20290",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20290-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20290",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20290",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20297-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20297",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20297",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20297-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20297",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20297",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20420-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20420",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20420",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20420-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20420",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20420",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20423-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20423",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20423",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20423-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20423",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20423",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20424-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20424",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20424",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20424-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20424",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20424",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20833-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20833",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20833",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20833-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20833",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20833",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20838-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20838",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20838",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20838-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20838",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20838",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20871-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20871",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20871",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20871-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20871",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20871",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20880-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20880",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20880",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20880-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20880",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20880",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20905-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20905",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20905",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20905-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20905",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20905",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20924-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20924",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20924",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20924-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C20924",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20924",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-21025-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C21025",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C21025",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-21025-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C21025",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C21025",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-21027-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C21027",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C21027",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-21027-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C21027",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C21027",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-29001-text",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C29001",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C29001",
+        "/usr/éĀ中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-29001-fallback",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-C29001",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C29001",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "first-error-invalid-type-before-unknown",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-tinvalid",
+        "--unknown"
+      ],
+      "project_argv": [
+        "-tinvalid",
+        "--unknown"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "first-error-ignore-invalid-type-before-unknown",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-i",
+        "-tinvalid",
+        "--unknown"
+      ],
+      "project_argv": [
+        "-i",
+        "-tinvalid",
+        "--unknown"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "first-error-unknown-before-invalid-type",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "--unknown",
+        "-tinvalid"
+      ],
+      "project_argv": [
+        "--unknown",
+        "-tinvalid"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "first-error-ignore-unknown",
+      "category": "frozen-pure-capability-scope",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-i",
+        "--unknown"
+      ],
+      "project_argv": [
+        "-i",
+        "--unknown"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10005-conflicting-table-entries",
+      "category": "codepage-table-conflict-evidence",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C10005",
+        "/usr/ָ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10005",
+        "/usr/ָ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-10008-conflicting-table-entries",
+      "category": "codepage-table-conflict-evidence",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C10008",
+        "/usr/∥"
+      ],
+      "project_argv": [
+        "-w",
+        "-C10008",
+        "/usr/∥"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20269-conflicting-table-entries",
+      "category": "codepage-table-conflict-evidence",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C20269",
+        "/usr/#^`~¤"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20269",
+        "/usr/#^`~¤"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-20924-conflicting-table-entries",
+      "category": "codepage-table-conflict-evidence",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C20924",
+        "/usr/Ÿ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C20924",
+        "/usr/Ÿ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
     }
   ]
 }

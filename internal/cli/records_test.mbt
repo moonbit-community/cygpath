@@ -47,6 +47,7 @@ test "file option operands are one string and empty handling follows per-line fl
     converter.convert_file_record("-uC932 C:/a") is Output("/cygdrive/c/a"),
   )
   assert_eq(converter.codepage(), 65001)
+  assert_true(converter.convert_file_record("-i") is Stop(""))
   for record in ["-w", "-f file", "-o path", "-t windows /path"] {
     try converter.convert_file_record(record) catch {
       _ => ()
@@ -54,4 +55,83 @@ test "file option operands are one string and empty handling follows per-line fl
       _ => fail("accepted an invalid option record: " + record)
     }
   }
+}
+
+///|
+test "native source recognition distinguishes DOS-relative output from absolute requests" {
+  let context_args = [
+    "--root=C:/root", "--posix-cwd=/cygdrive/c/cwd", "--windows-cwd=C:/cwd",
+  ]
+  assert_eq(
+    request(context_args + ["-w", "C:child"]).prepare().convert("C:child"),
+    "C:child",
+  )
+  assert_eq(
+    request(context_args + ["-aw", "C:child"]).prepare().convert("C:child"),
+    "C:\\cwd\\C\uF03Achild",
+  )
+  assert_eq(
+    request(context_args + ["-w", "C:"]).prepare().convert("C:"),
+    "C:\\cwd\\C\uF03A",
+  )
+  assert_eq(
+    request(context_args + ["-wp", "C:\\one;;D:\\two;"])
+    .prepare()
+    .convert("C:\\one;;D:\\two;"),
+    "C;C:\\one;;D;C:\\two;",
+  )
+}
+
+///|
+test "official option failures keep exact diagnostic protocol" {
+  assert_eq(
+    parse_failure(["-f"]).diagnostic(),
+    "cygpath: option requires an argument -- f\nTry `cygpath --help' for more information.",
+  )
+  assert_eq(
+    parse_failure(["-w", "--root-local", "a"]).diagnostic(),
+    "Try `cygpath --help' for more information.",
+  )
+  let usage = parse_failure(["-uw", "a"]).diagnostic()
+  assert_true(usage.has_prefix("Usage: cygpath (-d|-m|-u|-w|-t TYPE)"))
+  assert_true(usage.has_suffix("Try `cygpath --help' for more information."))
+  assert_eq(usage, parse_failure(["-u"]).diagnostic())
+  assert_true(parse_failure(["-tinvalid", "--unknown"]) is Usage)
+  assert_true(@cli.parse_args(["-i", "-tinvalid", "--unknown"]) is ExitSuccess)
+  assert_true(parse_failure(["--unknown", "-tinvalid"]) is UnknownOption(_))
+  assert_eq(
+    request(["--uni", "C:/a"]).prepare().convert("C:/a"),
+    "/cygdrive/c/a",
+  )
+  assert_eq(
+    parse_failure(["--win", "a"]).diagnostic(),
+    "cygpath: ambiguous option -- win\nTry `cygpath --help' for more information.",
+  )
+  assert_true(parse_failure(["--roo", "a"]) is UnknownOption("--root-local"))
+}
+
+///|
+test "mount comparison policy is explicit order-independent and ASCII-only" {
+  let converter = request([
+    "--mount-case", "/Tools/", "ascii-insensitive", "--mount", "/Tools", "C:/Mixed",
+    "-u", "c:/MIXED/File",
+  ]).prepare()
+  assert_eq(converter.convert("c:/MIXED/File"), "/Tools/File")
+  assert_eq(
+    request([
+      "-w", "--mount", "/Tools", "C:/Mixed", "--mount-case", "/Tools", "ascii-insensitive",
+      "/tools/File",
+    ])
+    .prepare()
+    .convert("/tools/File"),
+    "C:\\Mixed\\File",
+  )
+  assert_true(
+    parse_failure(["--mount-case", "/missing", "sensitive", "a"])
+    is InvalidOptions(_),
+  )
+  assert_true(
+    parse_failure(["--mount-case", "/Tools", "unicode-insensitive", "a"])
+    is InvalidOptions(_),
+  )
 }

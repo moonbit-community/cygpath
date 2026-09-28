@@ -21,8 +21,17 @@ fn ParsedPath::render(
       root + sep + body
     }
   }
-  if self.trailing && !result.has_suffix(sep) {
+  let result = if self.trailing && !result.has_suffix(sep) {
     result + sep
+  } else {
+    result
+  }
+  if format != Posix && result.length() >= 260 {
+    match self.root {
+      DriveAbsolute(_) => sep + sep + "?" + sep + result
+      Unc(_, _) => sep + sep + "?" + sep + "UNC" + result[1:].to_owned()
+      _ => result
+    }
   } else {
     result
   }
