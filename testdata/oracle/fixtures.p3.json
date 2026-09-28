@@ -1,0 +1,3305 @@
+{
+  "schema_version": 1,
+  "validation_kind": "official-comparison",
+  "profiles": [
+    "cygwin",
+    "msys2"
+  ],
+  "source_url": "https://cygwin.com/cygwin-ug-net/cygpath.html",
+  "source_revision": "independent supported-domain discovery cases; official outputs are collected, never guessed",
+  "cases": [
+    {
+      "case_id": "drive-lowercase",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "c:\\MiXeD\\路径😀"
+      ],
+      "project_argv": [
+        "-u",
+        "c:\\MiXeD\\路径😀"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "drive-root-unix",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:\\"
+      ],
+      "project_argv": [
+        "-u",
+        "C:\\"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "drive-root-windows",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "/proc/cygdrive/c"
+      ],
+      "project_argv": [
+        "-w",
+        "/proc/cygdrive/c"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "drive-root-mixed",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-m",
+        "/proc/cygdrive/c/"
+      ],
+      "project_argv": [
+        "-m",
+        "/proc/cygdrive/c/"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "drive-relative-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:child"
+      ],
+      "project_argv": [
+        "-w",
+        "C:child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "drive-relative-windows-absolute",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-aw",
+        "C:child"
+      ],
+      "project_argv": [
+        "-aw",
+        "C:child"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "bare-drive-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:"
+      ],
+      "project_argv": [
+        "-w",
+        "C:"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "bare-drive-windows-absolute",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-aw",
+        "C:"
+      ],
+      "project_argv": [
+        "-aw",
+        "C:"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "current-drive-root-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\work"
+      ],
+      "project_argv": [
+        "-w",
+        "\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "relative-repeat-unix",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "a\\\\b\\.\\c"
+      ],
+      "project_argv": [
+        "-u",
+        "a\\\\b\\.\\c"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-inner-parent",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\server\\share\\a\\..\\b"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\server\\share\\a\\..\\b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-inner-parent-absolute",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-au",
+        "\\\\server\\share\\a\\..\\b"
+      ],
+      "project_argv": [
+        "-au",
+        "\\\\server\\share\\a\\..\\b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-inner-dot",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\server\\share\\.\\b"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\server\\share\\.\\b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-inner-repeat",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\server\\share\\a\\\\b"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\server\\share\\a\\\\b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-share-root",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\server\\share"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\server\\share"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-share-trailing",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\server\\share\\"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\server\\share\\"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-posix-windows",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "//server/share/a"
+      ],
+      "project_argv": [
+        "-w",
+        "//server/share/a"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-posix",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-u",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "-u",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-posix-relative",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-u",
+        "a/../b"
+      ],
+      "project_argv": [
+        "-u",
+        "a/../b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\work\\file"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\work\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-windows-dots",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\work\\..\\file"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\work\\..\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "idempotent-mixed",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:/work/file"
+      ],
+      "project_argv": [
+        "-m",
+        "C:/work/file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "mount-root-reverse",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "{installation_root}"
+      ],
+      "project_argv": [
+        "-u",
+        "{installation_root}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "mount-case-sensitive",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "/USR/BIN/tool"
+      ],
+      "project_argv": [
+        "-w",
+        "/USR/BIN/tool"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "mount-unmapped-prefix",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "/usr/binning/tool"
+      ],
+      "project_argv": [
+        "-w",
+        "/usr/binning/tool"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "root-local-short",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-wr",
+        "/usr/bin/tool"
+      ],
+      "project_argv": [
+        "-wr",
+        "/usr/bin/tool"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "root-local-drive",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-wr",
+        "/proc/cygdrive/c/work"
+      ],
+      "project_argv": [
+        "-wr",
+        "/proc/cygdrive/c/work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "root-local-unc",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-wr",
+        "//server/share/file"
+      ],
+      "project_argv": [
+        "-wr",
+        "//server/share/file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "root-local-list",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-wrp",
+        "/usr/bin:/proc/cygdrive/c/work"
+      ],
+      "project_argv": [
+        "-wrp",
+        "/usr/bin:/proc/cygdrive/c/work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-unix",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "project_argv": [
+        "-w",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-mixed",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "project_argv": [
+        "-m",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-root-local",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wr",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "project_argv": [
+        "-wr",
+        "\\\\?\\C:\\work\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-unix",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "project_argv": [
+        "-w",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-mixed",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "project_argv": [
+        "-m",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-unc-root-local",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wr",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "project_argv": [
+        "-wr",
+        "\\\\?\\UNC\\server\\share\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "permute-option-after-name",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "C:\\work",
+        "-m"
+      ],
+      "project_argv": [
+        "C:\\work",
+        "-m"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "permute-two-names",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "C:\\one",
+        "-m",
+        "D:\\two"
+      ],
+      "project_argv": [
+        "C:\\one",
+        "-m",
+        "D:\\two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-mixed-combination",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wm",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-wm",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "mixed-windows-combination",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-mw",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-mw",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "repeated-output-flag",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-u",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-u",
+        "-u",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "type-case-insensitive",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "--type=WINDOWS",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "--type=WINDOWS",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "type-attached-equals",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-t=windows",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "-t=windows",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "type-attached-mixedcase",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-tMiXeD",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-tMiXeD",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-utf8-alias",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-Cutf-8",
+        "/usr/路径😀"
+      ],
+      "project_argv": [
+        "-w",
+        "-Cutf-8",
+        "/usr/路径😀"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unix-codepage-ignored",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-uCUTF8",
+        "C:\\路径"
+      ],
+      "project_argv": [
+        "-uCUTF8",
+        "C:\\路径"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-proc-ignored",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-wU",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "-wU",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "dash-operand",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "--",
+        "-name"
+      ],
+      "project_argv": [
+        "-w",
+        "--",
+        "-name"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "multiple-windows-operands",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:\\one",
+        "D:\\two"
+      ],
+      "project_argv": [
+        "-u",
+        "C:\\one",
+        "D:\\two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-idempotent-posix",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-up",
+        "/usr/bin::/usr/lib"
+      ],
+      "project_argv": [
+        "-up",
+        "/usr/bin::/usr/lib"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-idempotent-windows",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-wp",
+        "C:\\one;;D:\\two;"
+      ],
+      "project_argv": [
+        "-wp",
+        "C:\\one;;D:\\two;"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-mixed-output",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-mp",
+        "/usr/bin:/proc/cygdrive/d/work"
+      ],
+      "project_argv": [
+        "-mp",
+        "/usr/bin:/proc/cygdrive/d/work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-absolute-empty-members",
+      "category": "path-options-and-context",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-awp",
+        ":/usr/bin:"
+      ],
+      "project_argv": [
+        "-awp",
+        ":/usr/bin:"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-unicode-spaces",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-up",
+        "C:\\路径 a;D:\\😀"
+      ],
+      "project_argv": [
+        "-up",
+        "C:\\路径 a;D:\\😀"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-proc-prefix",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-uUp",
+        "C:\\one;D:\\two"
+      ],
+      "project_argv": [
+        "-uUp",
+        "C:\\one;D:\\two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "ignore-empty-operand",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-iu",
+        ""
+      ],
+      "project_argv": [
+        "-iu",
+        ""
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "ignore-empty-between-paths",
+      "category": "path-options-and-context",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-iu",
+        "C:\\one",
+        "",
+        "D:\\two"
+      ],
+      "project_argv": [
+        "-iu",
+        "C:\\one",
+        "",
+        "D:\\two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-bom-only",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "efbbbf",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-bom-second-record",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c6f6e650aefbbbf433a5c74776f0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-final-cr",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c6f6e650d",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-nul-middle",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c6f6e650068696464656e0a443a5c74776f0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-nul-first",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "0068696464656e0a443a5c74776f0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-path-spaces",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c2070617468200a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-ignore-empty-record",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-iu",
+        "-f-"
+      ],
+      "project_argv": [
+        "-iu",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c6f6e650a0a443a5c74776f0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-switch",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d7520433a5c6f6e650a2d6d20433a5c74776f0a433a5c74687265650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-path-spaces",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d77202f7573722f6120620a2f7573722f6320640a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-attached-type",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d7477696e646f7773202f7573722f62696e0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-ignore-blank",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d690a433a5c6f6e650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-change-list",
+      "category": "stdin-and-line-options",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d757020433a5c6f6e653b443a5c74776f0a2d7520433a5c74687265650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "file-lf-crlf-final",
+      "category": "immutable-file-input",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "immutable-input-file",
+      "file_hex": "433a5c6f6e650a443a5c74776f0d0a433a5c66696e616c"
+    },
+    {
+      "case_id": "file-initial-bom",
+      "category": "immutable-file-input",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "immutable-input-file",
+      "file_hex": "efbbbf433a5c66696c650a"
+    },
+    {
+      "case_id": "file-empty",
+      "category": "immutable-file-input",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "immutable-input-file",
+      "file_hex": ""
+    },
+    {
+      "case_id": "file-empty-record",
+      "category": "immutable-file-input",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "immutable-input-file",
+      "file_hex": "0a"
+    },
+    {
+      "case_id": "file-partial-failure",
+      "category": "immutable-file-input",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "{input_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "immutable-input-file",
+      "file_hex": "433a5c6f6e650a0a433a5c6c617465720a"
+    },
+    {
+      "case_id": "file-line-options",
+      "category": "immutable-file-input",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f",
+        "{input_file}"
+      ],
+      "project_argv": [
+        "-o",
+        "-f",
+        "{input_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "immutable-input-file",
+      "file_hex": "2d7520433a5c6f6e650a2d6d20433a5c74776f0a"
+    },
+    {
+      "case_id": "codepage-874-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "874",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "874",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-874-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "874",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "874",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-932-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "932",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "932",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-932-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "932",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "932",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-936-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "936",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "936",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-936-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "936",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "936",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-949-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "949",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "949",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-949-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "949",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "949",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-950-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "950",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "950",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-950-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "950",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "950",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1250-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1250",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1250",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1250-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1250",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1250",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1251-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1251",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1251",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1251-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1251",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1251",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1252-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1252",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1252",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1252-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1252",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1252",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1253-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1253",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1253",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1253-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1253",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1253",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1254-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1254",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1254",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1254-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1254",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1254",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1255-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1255",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1255",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1255-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1255",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1255",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1256-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1256",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1256",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1256-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1256",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1256",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1257-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1257",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1257",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1257-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1257",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1257",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1258-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1258",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1258",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1258-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1258",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1258",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1361-text",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1361",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1361",
+        "/usr/é中文日本한글ไทยالعربيةעברית€"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-1361-fallback",
+      "category": "explicit-codepages",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1361",
+        "/usr/😀Ａ"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1361",
+        "/usr/😀Ａ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "utf8-invalid-first",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "ff0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-invalid-after-short",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c610aff0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "{drive_c}/a\n",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 2\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-invalid-prefix",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "ff433a5c6f6e650a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-invalid-suffix",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c6f6e65ff0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-truncated-two",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "c2",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-truncated-three",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "e4b8",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-truncated-four",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "f09f98",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "utf8-invalid-windows-output",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "-f-"
+      ],
+      "project_argv": [
+        "-w",
+        "-f-"
+      ],
+      "stdin_hex": "ff0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "stdin-buffer-boundary",
+      "category": "stdin-buffer-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161610a443a5c656e640a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "utf8-invalid-after-long",
+      "category": "malformed-utf8-boundary",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_hex": "433a5c61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161610aff0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "{drive_c}/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 2\n",
+      "boundary_exit": 1
+    },
+    {
+      "case_id": "root-local-long",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "--root-local",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "-w",
+        "--root-local",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "invalid-root-local-mixed",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-mr",
+        "/usr/bin"
+      ],
+      "project_argv": [
+        "-mr",
+        "/usr/bin"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "invalid-root-local-unix",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-ur",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-ur",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "invalid-output-combination",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-uw",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-uw",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "invalid-type",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-t",
+        "invalid",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-t",
+        "invalid",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unknown-option",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "--unknown"
+      ],
+      "project_argv": [
+        "--unknown"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "missing-file-option-argument",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-f"
+      ],
+      "project_argv": [
+        "-f"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "missing-operand",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u"
+      ],
+      "project_argv": [
+        "-u"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-missing-path",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d770a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "line-options-separated-type",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-o",
+        "-f-"
+      ],
+      "project_argv": [
+        "-o",
+        "-f-"
+      ],
+      "stdin_hex": "2d742077696e646f7773202f7573722f62696e0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "file-missing",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "{missing_file}"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "{missing_file}"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-relative-backslash",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "a\\b"
+      ],
+      "project_argv": [
+        "-w",
+        "a\\b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-reserved-con",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "CON"
+      ],
+      "project_argv": [
+        "-w",
+        "CON"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-trailing-dot",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "trail."
+      ],
+      "project_argv": [
+        "-w",
+        "trail."
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-trailing-space",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "a b "
+      ],
+      "project_argv": [
+        "-w",
+        "a b "
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-drive-like-colon",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "a:b"
+      ],
+      "project_argv": [
+        "-w",
+        "a:b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-filename-colon",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "/x/a:b"
+      ],
+      "project_argv": [
+        "-w",
+        "/x/a:b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unix-private-use-colon",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:/ab"
+      ],
+      "project_argv": [
+        "-u",
+        "C:/ab"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "extended-drive-filename-colon",
+      "category": "defined-option-and-filename-discovery",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "\\\\?\\C:\\a:b"
+      ],
+      "project_argv": [
+        "-w",
+        "\\\\?\\C:\\a:b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    }
+  ]
+}

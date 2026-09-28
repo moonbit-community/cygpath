@@ -1,0 +1,1958 @@
+{
+  "schema_version": 1,
+  "validation_kind": "p3-scope",
+  "rows": [
+    {
+      "id": "A-drive-unicode",
+      "requirement": "Absolute drive paths, drive case, Unicode and spaces retain their intended syntax.",
+      "cases": [
+        {
+          "suite": "profile",
+          "case_id": "drive-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "profile",
+          "case_id": "drive-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "profile",
+          "case_id": "unicode-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "profile",
+          "case_id": "posix-drive",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-relative-and-unc-baseline",
+      "requirement": "Baseline relative and network path forms convert without filesystem traversal.",
+      "cases": [
+        {
+          "suite": "profile",
+          "case_id": "unc-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "profile",
+          "case_id": "relative-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-drive-roots-and-cwd",
+      "requirement": "Drive-relative, bare drive, current drive roots, absolute resolution and per-drive cwd are observed explicitly.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "drive-relative-cwd",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "bare-drive-cwd",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "current-drive-rooted",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "relative-windows-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "relative-posix-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-normalization-and-delimiters",
+      "requirement": "Dot traversal, root boundaries, trailing delimiters and repeated/mixed separators cover all path classes.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "drive-root-traversal",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "unc-root-traversal",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "posix-root-traversal",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "mount-traversal",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "trailing-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "trailing-posix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "mixed-input-separators",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "repeated-separators",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "relative-dots-preserved",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-drive-rendering",
+      "requirement": "Ordinary drive roots and Windows drive-relative rendering are checked with and without absolute conversion.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "drive-lowercase",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "drive-root-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "drive-root-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "drive-root-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "drive-relative-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "drive-relative-windows-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "bare-drive-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "bare-drive-windows-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "current-drive-root-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-unc-fallback-syntax",
+      "requirement": "UNC fallback preserves source syntax where official runtime does; share roots, traversal, repeated separators and POSIX UNC are represented.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "relative-repeat-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-inner-parent",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-inner-parent-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-inner-dot",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-inner-repeat",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-share-root",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-share-trailing",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unc-posix-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-idempotent-inputs",
+      "requirement": "Already requested syntax is accepted for POSIX, Windows and mixed input, including relative dots.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "idempotent-posix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-posix-relative",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-windows-dots",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "idempotent-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "A-win32-filename-rendering",
+      "requirement": "Filename escaping, reserved spelling, trailing dot/space and drive-like colon forms are separately exercised.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "windows-relative-backslash",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-reserved-con",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-trailing-dot",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-trailing-space",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-drive-like-colon",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-filename-colon",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unix-private-use-colon",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-filename-colon",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "B-native-mount-context",
+      "requirement": "Measured root, nested mount, component boundaries and proc mapping precedence control conversion.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "root-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "nested-mount",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "mount-component-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "proc-prefix-mount-priority",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "B-mount-case-and-reverse",
+      "requirement": "Root reverse mapping and case-sensitive mount boundaries are checked.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "mount-root-reverse",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "mount-case-sensitive",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "mount-unmapped-prefix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "B-proc-drive-prefix",
+      "requirement": "Stable proc drive prefix remains available independently of native prefix.",
+      "cases": [
+        {
+          "suite": "profile",
+          "case_id": "proc-prefix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "C-output-type-selectors",
+      "requirement": "All output type names and explicit UTF-8 selectors are represented.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "type-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "type-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "type-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "codepage-utf8",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "codepage-65001",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "C-root-local",
+      "requirement": "Short root-local applies to ordinary absolute drive/UNC output; list and long option behaviors are observed separately.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "root-local-short",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "root-local-drive",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "root-local-unc",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "root-local-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "root-local-long",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "C-extended-ordinary-namespace",
+      "requirement": "Ordinary extended drive and UNC namespaces are checked for each output type and root-local combination.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-drive-root-local",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "extended-unc-root-local",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "C-getopt-state",
+      "requirement": "GNU permutation, combined/repeated flags, attached arguments, case aliases, ignored modifiers and dash operands are independently represented.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "permute-option-after-name",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "permute-two-names",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-mixed-combination",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "mixed-windows-combination",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "repeated-output-flag",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "type-case-insensitive",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "type-attached-equals",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "type-attached-mixedcase",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-utf8-alias",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unix-codepage-ignored",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "windows-proc-ignored",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "dash-operand",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "multiple-windows-operands",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-list-baseline",
+      "requirement": "Windows list delimiter and empty list policy are observed.",
+      "cases": [
+        {
+          "suite": "profile",
+          "case_id": "windows-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "profile",
+          "case_id": "empty-windows-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-list-empty-members",
+      "requirement": "Interior and boundary empty list members cover both source syntaxes.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "posix-list-empty-members",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "windows-list-empty-members",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "windows-list-boundary-empties",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "posix-list-boundary-empties",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-list-combinations",
+      "requirement": "List idempotence, mixed/absolute/proc output and non-ASCII spaces are covered.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "list-idempotent-posix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "list-idempotent-windows",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "list-mixed-output",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "list-absolute-empty-members",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "list-unicode-spaces",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "list-proc-prefix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "E-input-record-baseline",
+      "requirement": "The ordinary stdin record protocol matches argv conversion.",
+      "cases": [
+        {
+          "suite": "profile",
+          "case_id": "stdin-records",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "E-input-empty-bom-crlf-final",
+      "requirement": "Empty streams/records, BOM position, final record, CRLF and spaces are explicit.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "stdin-empty",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-empty-ignore",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-empty-line",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-initial-bom",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-interior-bom",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-final-record",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-crlf",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "stdin-spaces",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "E-input-byte-boundaries",
+      "requirement": "BOM-only, terminal CR, NUL, spaces, empty record ignore and fgets-size boundaries retain native input semantics.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "stdin-bom-only",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-bom-second-record",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-final-cr",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-nul-middle",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-nul-first",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-path-spaces",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-ignore-empty-record",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "stdin-buffer-boundary",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "E-file-input",
+      "requirement": "Immutable byte files exercise LF/CRLF/final record, BOM, empty input/record, partial failure and per-record options.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "file-lf-crlf-final",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "file-initial-bom",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "file-empty",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "file-empty-record",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "file-partial-failure",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "file-line-options",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "file-missing",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "E-per-record-option-state",
+      "requirement": "Option lines reset getopt state, preserve path spaces and subsequent ordinary-record state.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "line-options-switch",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "line-options-path-spaces",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "line-options-attached-type",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "line-options-ignore-blank",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "line-options-change-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "F-conversion-failure-and-ignore",
+      "requirement": "A later invalid operand preserves earlier output; ignore behavior and literal record delimiters are tested.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "stdin-partial-conversion",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "argv-partial-conversion",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "ignore-no-operands",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "matrix",
+          "case_id": "line-protocol-rejection",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "F-empty-operand-ignore",
+      "requirement": "Ignored empty operands do not terminate conversion of valid later operands.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "ignore-empty-operand",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "ignore-empty-between-paths",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "F-invalid-options",
+      "requirement": "Invalid combinations, type, unknown option, missing option argument/operand and per-line parse failures are retained exact comparisons.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "invalid-root-local-mixed",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "invalid-root-local-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "invalid-output-combination",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "invalid-type",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "unknown-option",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "missing-file-option-argument",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "missing-operand",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "line-options-missing-path",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "line-options-separated-type",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "F-malformed-utf8-original",
+      "requirement": "Historical invalid UTF-8 bytes remain raw observations; only strict project rejection is a defined contract.",
+      "cases": [
+        {
+          "suite": "matrix",
+          "case_id": "stdin-invalid-utf8",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        }
+      ]
+    },
+    {
+      "id": "F-malformed-utf8-boundaries",
+      "requirement": "Malformed first/second records, prefixes/suffixes, truncated sequences, long preceding allocation and Windows output are rejected deterministically by the project.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "utf8-invalid-first",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-invalid-after-short",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-invalid-prefix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-invalid-suffix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-truncated-two",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-truncated-three",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-truncated-four",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-invalid-windows-output",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        },
+        {
+          "suite": "p3",
+          "case_id": "utf8-invalid-after-long",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "malformed-utf8"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-874",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-874-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-874-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-932",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-932-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-932-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-936",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-936-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-936-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-949",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-949-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-949-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-950",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-950-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-950-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1250",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1250-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1250-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1251",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1251-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1251-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1252",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1252-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1252-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1253",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1253-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1253-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1254",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1254-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1254-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1255",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1255-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1255-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1256",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1256-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1256-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1257",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1257-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1257-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1258",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1258-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1258-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
+      "id": "D-numeric-codepage-1361",
+      "requirement": "Numeric Windows codepage conversion covers mapped scripts, unrepresentable supplementary Unicode and fullwidth best-fit characters.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "codepage-1361-text",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-1361-fallback",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    }
+  ],
+  "supported_domain": "All supported-domain observations require exact raw stdout, stderr and exit equality; no reviewed difference approvals are consulted.",
+  "input_domain_boundaries": [
+    {
+      "id": "malformed-utf8",
+      "reason": "Pinned upstream wide_path helper adds one to failed mbstowcs length and subsequently reads uninitialized allocation; malformed UTF-8 has no stable upstream result. Original bytes and actual observations are preserved while strict project rejection is separately verified on both backends and replay.",
+      "source_urls": [
+        "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/wide_path.h#L19",
+        "https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/utils/wide_path.h#L19"
+      ],
+      "source_helper_sha256": "4b9e9c9de0b9525d4758312f94338125ee9ecd07ade479d9ceab29d0dc5dce99",
+      "installed_binary_source_commit_attested": false
+    }
+  ],
+  "fault_drills": [
+    "real-timeout-cancel-wait-partial-bytes",
+    "real-spawn-failure",
+    "tampered-stdout",
+    "tampered-fixtures",
+    "tampered-manifest"
+  ],
+  "pending_discovery": [
+    "explicit custom cygdrive prefix and nested mount variants"
+  ],
+  "excluded_host_capabilities": [
+    "8.3 short/long filename lookup",
+    "Windows system directories",
+    "host ANSI/OEM codepage discovery",
+    "device/symlink/junction canonicalization"
+  ]
+}

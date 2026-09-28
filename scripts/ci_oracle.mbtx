@@ -32,35 +32,13 @@ struct Probe {
 } derive(ToJson)
 
 ///|
-struct ReviewedDifference {
-  profile : String
-  case_id : String
-  fixture_sha256 : String
-  upstream_executable_sha256 : String
-  upstream_runtime_sha256 : String
-  policy_id : String
-  reason : String
-  oracle_stdout_sha256 : String
-  oracle_stderr_sha256 : String
-  oracle_exit_code : Int
-  project_stdout_sha256 : String
-  project_stderr_sha256 : String
-  project_exit_code : Int
-} derive(@json.FromJson, ToJson)
-
-///|
-struct ReviewFile {
-  schema_version : Int
-  differences : Array[ReviewedDifference]
-} derive(@json.FromJson, ToJson)
-
-///|
 struct GateCase {
   profile : String
   suite : String
   mode : String
   backend : String
   case_id : String
+  validation_domain : String
   raw_status : String
   gate_status : String
   reason : String?
@@ -425,43 +403,6 @@ async fn verify_blob(directory : String, blob : Json) -> Bytes {
 }
 
 ///|
-fn approved_difference(
-  profile : String,
-  case_id : String,
-  fixture_sha256 : String,
-  upstream_executable_sha256 : String,
-  upstream_runtime_sha256 : String,
-  policy_id : String?,
-  oracle : Json,
-  project : Json,
-  reviews : Array[ReviewedDifference],
-) -> String? raise {
-  for review in reviews {
-    if review.profile == profile &&
-      review.case_id == case_id &&
-      review.fixture_sha256 == fixture_sha256 &&
-      review.upstream_executable_sha256 == upstream_executable_sha256 &&
-      review.upstream_runtime_sha256 == upstream_runtime_sha256 &&
-      review.policy_id != "" &&
-      (policy_id is None || policy_id == Some(review.policy_id)) &&
-      review.oracle_stdout_sha256 ==
-      text_field(field(oracle, "stdout"), "sha256") &&
-      review.oracle_stderr_sha256 ==
-      text_field(field(oracle, "stderr"), "sha256") &&
-      review.oracle_exit_code == int_field(oracle, "exit_code") &&
-      review.project_stdout_sha256 ==
-      text_field(field(project, "stdout"), "sha256") &&
-      review.project_stderr_sha256 ==
-      text_field(field(project, "stderr"), "sha256") &&
-      review.project_exit_code == int_field(project, "exit_code") &&
-      review.reason != "" {
-      return Some(review.reason)
-    }
-  }
-  None
-}
-
-///|
 async fn validate_run(
   directory : String,
   profile : String,
@@ -470,7 +411,6 @@ async fn validate_run(
   backend : String,
   fixture_path : String,
   collector_exit : Int?,
-  reviews : Array[ReviewedDifference],
   signatures : Map[String, String],
   results : Array[GateCase],
 ) -> Bool {
@@ -487,17 +427,13 @@ async fn validate_run(
     digest(fixture_bytes) == digest(@fs.read_file(fixture_path).binary()),
     "oracle run fixture differs from requested immutable input",
   )
-  let fixture_sha256 = digest(fixture_bytes)
   let fixture = @json.parse(@utf8.decode(fixture_bytes))
   let expected_cases : Array[Json] = @json.from_json(field(fixture, "cases"))
-  let expected_ids : Map[String, String?] = Map([])
+  let expected_ids : Map[String, Json] = Map([])
   for fixture_case in expected_cases {
     let id = text_field(fixture_case, "case_id")
     require(!expected_ids.contains(id), "duplicate fixture case_id")
-    let policy_id : String? = optional_field(
-      fixture_case, "known_difference_id",
-    ).map(value => @json.from_json(value))
-    expected_ids[id] = policy_id
+    expected_ids[id] = fixture_case
   }
   let manifest = @json.parse(
     @utf8.decode(verify_blob(directory, field(run, "manifest"))),
@@ -506,9 +442,6 @@ async fn validate_run(
     text_field(field(manifest, "project"), "backend") == backend,
     "wrong backend in oracle manifest",
   )
-  let upstream = field(manifest, "upstream")
-  let executable_sha256 = text_field(field(upstream, "executable"), "sha256")
-  let runtime_sha256 = text_field(field(upstream, "runtime_library"), "sha256")
   require(
     bool_field(run, "complete") && bool_field(run, "integrity_verified"),
     "oracle run is incomplete or unverified: " + directory,
@@ -534,6 +467,10 @@ async fn validate_run(
       "unexpected or duplicate oracle result case_id",
     )
     seen[case_id] = true
+    let fixture_case = expected_ids.get(case_id).unwrap()
+    let domain : String = optional_field(fixture_case, "validation_domain")
+      .map(value => @json.from_json(value))
+      .unwrap_or("supported")
     let raw_status = text_field(result, "status")
     let oracle = optional_field(result, "oracle")
     let project = optional_field(result, "project")
@@ -562,6 +499,9 @@ async fn validate_run(
           ("oracle", oracle_signature),
           ("project", project_signature),
         ] {
+        if domain == "malformed-utf8" && role == "oracle" {
+          continue
+        }
         let key = suite + "/" + case_id + "/" + role
         match signatures.get(key) {
           Some(prior) if prior != signature => {
@@ -573,27 +513,35 @@ async fn validate_run(
           _ => ()
         }
       }
-      if raw_status == "fail" && gate_status != "inconsistent" {
-        match
-          approved_difference(
-            profile,
-            case_id,
-            fixture_sha256,
-            executable_sha256,
-            runtime_sha256,
-            expected_ids.get(case_id).unwrap(),
-            oracle,
-            project,
-            reviews,
-          ) {
-          Some(why) => {
-            gate_status = "reviewed-difference"
-            reason = Some(why)
-          }
-          None => {
-            gate_status = "unexplained-difference"
-            accepted = false
-          }
+      if raw_status == "fail" &&
+        gate_status != "inconsistent" &&
+        domain != "malformed-utf8" {
+        reason = Some(
+          "exact official equality is required; no difference exemptions are applied",
+        )
+        accepted = false
+      }
+      if domain == "malformed-utf8" && gate_status != "inconsistent" {
+        let prefix = text_field(field(manifest, "context"), "drive_prefix")
+        let drive_c = prefix.trim_end(chars="/").to_owned() + "/c"
+        let expected_stdout = text_field(fixture_case, "boundary_stdout").replace_all(
+          old="{drive_c}",
+          new=drive_c,
+        )
+        let expected_stderr = text_field(fixture_case, "boundary_stderr")
+        if text_field(field(project, "stdout"), "sha256") ==
+          digest(@utf8.encode(expected_stdout)) &&
+          text_field(field(project, "stderr"), "sha256") ==
+          digest(@utf8.encode(expected_stderr)) &&
+          int_field(project, "exit_code") ==
+          int_field(fixture_case, "boundary_exit") {
+          gate_status = "input-domain-boundary"
+          reason = Some(
+            "malformed UTF-8 is outside upstream defined conversion; raw oracle observation retained and strict project rejection verified independently",
+          )
+        } else {
+          gate_status = "boundary-contract-fail"
+          reason = Some("strict malformed-input rejection contract failed")
         }
       }
     } else {
@@ -602,7 +550,7 @@ async fn validate_run(
         "both actual processes must complete before a comparison can be accepted",
       )
     }
-    if gate_status != "pass" && gate_status != "reviewed-difference" {
+    if gate_status != "pass" && gate_status != "input-domain-boundary" {
       accepted = false
     }
     results.push({
@@ -611,6 +559,7 @@ async fn validate_run(
       mode,
       backend,
       case_id,
+      validation_domain: domain,
       raw_status,
       gate_status,
       reason,
@@ -654,6 +603,92 @@ fn parse_options(args : ArrayView[String]) -> Map[String, String] raise {
     require(options.contains(name), "required option absent: " + name)
   }
   options
+}
+
+///|
+async fn audit_scope(
+  repository : String,
+  output : String,
+  profile : String,
+  results : Array[GateCase],
+) -> Bool {
+  let bytes = @fs.read_file(repository + "/testdata/oracle/p3-scope.json").binary()
+  @fs.write_file(output + "/scope.json", bytes, create_mode=CreateNew)
+  let scope = @json.parse(@utf8.decode(bytes))
+  require(
+    int_field(scope, "schema_version") == 1 &&
+    text_field(scope, "validation_kind") == "p3-scope",
+    "unexpected P3 scope schema",
+  )
+  let rows : Array[Json] = @json.from_json(field(scope, "rows"))
+  let audit : Array[Json] = []
+  let covered : Map[String, Bool] = Map([])
+  let row_ids : Map[String, Bool] = Map([])
+  let mut complete = true
+  for row in rows {
+    let id = text_field(row, "id")
+    require(!row_ids.contains(id), "duplicate scope row")
+    row_ids[id] = true
+    let cases : Array[Json] = @json.from_json(field(row, "cases"))
+    require(!cases.is_empty(), "empty scope capability row")
+    let evidence : Array[Json] = []
+    for item in cases {
+      let profiles : Array[String] = @json.from_json(field(item, "profiles"))
+      if !profiles.contains(profile) {
+        continue
+      }
+      let suite = text_field(item, "suite")
+      let case_id = text_field(item, "case_id")
+      let domain = text_field(item, "validation_domain")
+      let matching = results.filter(result => {
+        result.suite == suite && result.case_id == case_id
+      })
+      let identities : Map[String, Bool] = Map([])
+      let verified = matching.length() == 4 &&
+        matching.all(result => {
+          let key = result.mode + "/" + result.backend
+          let unique = !identities.contains(key)
+          identities[key] = true
+          unique &&
+          ["collect", "replay"].contains(result.mode) &&
+          ["wasm", "native"].contains(result.backend) &&
+          result.validation_domain == domain &&
+          (if domain == "supported" {
+            result.gate_status == "pass"
+          } else {
+            domain == "malformed-utf8" &&
+            result.gate_status == "input-domain-boundary"
+          })
+        })
+      if !verified {
+        complete = false
+      }
+      covered[suite + "/" + case_id] = true
+      evidence.push({
+        "suite": suite,
+        "case_id": case_id,
+        "validation_domain": domain,
+        "verified": verified,
+        "observations": @json.to_json(matching),
+      })
+    }
+    audit.push({ "id": id, "evidence": @json.to_json(evidence) })
+  }
+  let unmapped = results.filter(result => {
+    !covered.contains(result.suite + "/" + result.case_id)
+  })
+  if !unmapped.is_empty() {
+    complete = false
+  }
+  save_json(output + "/coverage-audit.json", {
+    "schema_version": 1,
+    "profile": profile,
+    "scope_sha256": digest(bytes),
+    "complete": complete,
+    "rows": @json.to_json(audit),
+    "unmapped_observations": @json.to_json(unmapped),
+  })
+  complete
 }
 
 ///|
@@ -967,27 +1002,15 @@ async fn run(options : Map[String, String]) -> Unit {
     save_json(path, Json::object(fields))
     manifests[backend] = path
   }
-  let review_path = repository + "/testdata/oracle/reviewed-differences.json"
-  let reviews : Array[ReviewedDifference] = if @fs.exists(review_path) {
-    let file : ReviewFile = @json.from_json(
-      @json.parse(@fs.read_file(review_path).text()),
-    )
-    require(file.schema_version == 1, "unknown reviewed-difference schema")
-    file.differences
-  } else {
-    []
-  }
-  save_json(output + "/reviewed-differences.json", {
-    "schema_version": 1,
-    "differences": @json.to_json(reviews),
-  })
   let signatures : Map[String, String] = Map([])
   let results : Array[GateCase] = []
+  let infrastructure : Array[Json] = []
   let mut accepted = true
   for
     (suite, fixtures) in [
       ("profile", repository + "/testdata/oracle/fixtures." + profile + ".json"),
       ("matrix", repository + "/testdata/oracle/fixtures.readonly-matrix.json"),
+      ("p3", repository + "/testdata/oracle/fixtures.p3.json"),
     ] {
     for backend in ["wasm", "native"] {
       let manifest = manifests.get(backend).unwrap()
@@ -1018,23 +1041,33 @@ async fn run(options : Map[String, String]) -> Unit {
         )
         // oracle.mbtx exits 1 for raw comparison failures. The independently
         // checked run file distinguishes those from infrastructure failures.
-        require(
-          execution.status == "completed",
-          "collector process did not complete: " + name,
-        )
-        if !validate_run(
-            directory,
-            profile,
-            suite,
-            mode,
-            backend,
-            fixtures,
-            execution.exit_code,
-            reviews,
-            signatures,
-            results,
-          ) {
-          accepted = false
+        try {
+          require(
+            execution.status == "completed",
+            "collector process did not complete: " + name,
+          )
+          if !validate_run(
+              directory,
+              profile,
+              suite,
+              mode,
+              backend,
+              fixtures,
+              execution.exit_code,
+              signatures,
+              results,
+            ) {
+            accepted = false
+          }
+        } catch {
+          error => {
+            accepted = false
+            infrastructure.push({
+              "run": name,
+              "diagnostic": error.to_string(),
+              "execution": @json.to_json(execution),
+            })
+          }
         }
         save_json(output + "/summary.json", {
           "schema_version": 1,
@@ -1042,18 +1075,88 @@ async fn run(options : Map[String, String]) -> Unit {
           "complete": false,
           "accepted": false,
           "raw_results_preserved": true,
+          "infrastructure_errors": @json.to_json(infrastructure),
           "cases": @json.to_json(results),
         })
       }
     }
   }
+  let mut coverage_verified = false
+  try {
+    coverage_verified = audit_scope(repository, output, profile, results)
+  } catch {
+    error =>
+      infrastructure.push({
+        "run": "coverage-audit",
+        "diagnostic": error.to_string(),
+      })
+  }
+  let fault = probe(
+    output,
+    "fault-drills",
+    moon,
+    [
+      "run",
+      "--deny-warn",
+      repository + "/scripts/oracle.mbtx",
+      "fault-drill",
+      manifests.get("wasm").unwrap(),
+      output + "/profile-wasm-collect",
+      output + "/fault-drills",
+      powershell,
+    ],
+    repository,
+    environment,
+    deadline=120000,
+  )
+  let mut fault_verified = false
+  try {
+    require(
+      fault.status == "completed" && fault.exit_code == Some(0),
+      "real Windows fault drills did not complete successfully",
+    )
+    let fault_summary = @json.parse(
+      @fs.read_file(output + "/fault-drills/summary.json").text(),
+    )
+    require(
+      text_field(fault_summary, "validation_kind") ==
+      "real-windows-fault-drills" &&
+      bool_field(fault_summary, "complete") &&
+      int_field(fault_summary, "passed") == 5 &&
+      int_field(fault_summary, "failed") == 0,
+      "incomplete fault drill result",
+    )
+    fault_verified = true
+  } catch {
+    error =>
+      infrastructure.push({
+        "run": "fault-drills",
+        "diagnostic": error.to_string(),
+        "execution": @json.to_json(fault),
+      })
+  }
+  accepted = accepted &&
+    coverage_verified &&
+    fault_verified &&
+    infrastructure.is_empty()
   save_json(output + "/summary.json", {
     "schema_version": 1,
     "profile": profile,
-    "complete": true,
+    "complete": infrastructure.is_empty(),
     "accepted": accepted,
     "raw_results_preserved": true,
     "comparisons": results.length(),
+    "supported_exact_comparisons": results
+    .filter(result => {
+      result.validation_domain == "supported" && result.gate_status == "pass"
+    })
+    .length(),
+    "input_domain_boundary_observations": results
+    .filter(result => result.gate_status == "input-domain-boundary")
+    .length(),
+    "coverage_verified": coverage_verified,
+    "fault_drills_verified": fault_verified,
+    "infrastructure_errors": @json.to_json(infrastructure),
     "cases": @json.to_json(results),
   })
   println("official oracle CI evidence: " + output)
@@ -1061,7 +1164,7 @@ async fn run(options : Map[String, String]) -> Unit {
     "profile=\{profile} comparisons=\{results.length()} accepted=\{accepted}",
   )
   require(
-    accepted, "official comparisons contain unreviewed differences or infrastructure/backend failures",
+    accepted, "official comparisons require exact equality with zero infrastructure/backend failures",
   )
 }
 
@@ -1094,50 +1197,10 @@ fn self_test() -> Unit raise {
     "stderr": { "sha256": digest(b""), "length": 0 },
     "exit_code": 2,
   }
-  let review : ReviewedDifference = {
-    profile: "cygwin",
-    case_id: "case",
-    fixture_sha256: digest(b"fixture"),
-    upstream_executable_sha256: digest(b"exe"),
-    upstream_runtime_sha256: digest(b"runtime"),
-    policy_id: "portable-policy",
-    reason: "reviewed exact synthetic fixture",
-    oracle_stdout_sha256: digest(b"official"),
-    oracle_stderr_sha256: digest(b""),
-    oracle_exit_code: 0,
-    project_stdout_sha256: digest(b"portable"),
-    project_stderr_sha256: digest(b""),
-    project_exit_code: 2,
-  }
-  let check = fn(candidate : ReviewedDifference) -> String? raise {
-    approved_difference(
-      "cygwin",
-      "case",
-      digest(b"fixture"),
-      digest(b"exe"),
-      digest(b"runtime"),
-      Some("portable-policy"),
-      oracle,
-      project,
-      [candidate],
-    )
-  }
-  assert_eq(check(review), Some("reviewed exact synthetic fixture"))
-  for
-    candidate in [
-      { ..review, profile: "msys2", },
-      { ..review, case_id: "different-case", },
-      { ..review, fixture_sha256: digest(b"changed-fixture"), },
-      { ..review, upstream_executable_sha256: digest(b"changed-exe"), },
-      { ..review, upstream_runtime_sha256: digest(b"changed-runtime"), },
-      { ..review, oracle_stdout_sha256: digest(b"changed-official-output"), },
-      { ..review, project_stderr_sha256: digest(b"changed-diagnostic"), },
-      { ..review, project_exit_code: 0, },
-      { ..review, policy_id: "different-policy", },
-      { ..review, reason: "", },
-    ] {
-    assert_eq(check(candidate), None)
-  }
+  require(
+    observation_signature(oracle) != observation_signature(project),
+    "different output/exit observations must remain unequal",
+  )
   println("CI oracle parser self-test passed; no Windows compatibility tested")
 }
 

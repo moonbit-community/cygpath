@@ -10,9 +10,11 @@ Output and input:
   -p, --path                 Convert each NAME as a path list
   -a, --absolute             Resolve relative paths using supplied cwd
   -U, --proc-cygdrive        Use /proc/cygdrive for drive fallback
+  -r, --root-local          Prefix single Windows paths with \\\\?\\
   -f, --file FILE            Read UTF-8 lines; - reads standard input
-  -i, --ignore               Succeed only when input is entirely absent
-  -C, --codepage CP          UTF8 or 65001; Windows/Mixed output only
+  -o, --option              Read options from leading - records in FILE
+  -i, --ignore               Skip empty path operands
+  -C, --codepage CP          UTF8, UTF-8, or a supported numeric code page
   -h, --help                 Show this help
   -V, --version              Show implementation version and profiles
 
@@ -26,15 +28,18 @@ Explicit context (project extensions):
       --windows-cwd WINDOWS Supply an absolute Windows cwd
       --drive-cwd DRIVE WIN Supply a per-drive cwd (repeatable)
 
-Options precede the first NAME. -- ends option parsing. Short options may
+Options may follow NAME arguments. -- ends parsing. Short options may
 be combined; option values may be attached. No cwd or root is guessed.
-Without --from, -u reads Windows syntax and -w/-m read POSIX syntax;
+Without --from, -u recognizes POSIX absolute and Windows paths;
+-w/-m read POSIX syntax and recognize ordinary Windows prefixes.
 single paths with a drive or backslash prefix are recognized as Windows.
-All output is UTF-8 with LF records. -f cannot be combined with NAME.
+Output uses LF records. -C affects Windows output; POSIX stays UTF-8.
+Numeric pages: 874, 932, 936, 949, 950, 1250-1258, 1361, 65001.
+-f cannot be combined with NAME. No shell quoting is applied to records.
 
 Recognized but unsupported:
-  -d/--dos, -s/--short-name, -l/--long-name, -r/--root-local,
-  -M/--mode, -o/--option, -c/--close HANDLE, non-UTF-8 code pages,
+  -d/--dos, -s/--short-name, -l/--long-name,
+  -M/--mode, -c/--close HANDLE, ANSI/OEM host code-page selection,
   -D/--desktop, -H/--homeroot, -O/--mydocs, -P/--smprograms,
   -S/--sysdir, -W/--windir, -F/--folder ID, -A/--allusers.
 

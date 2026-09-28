@@ -1,65 +1,692 @@
 {
   "schema_version": 1,
   "validation_kind": "portable-contract",
-  "source": ["docs/03-path-semantics.md", "docs/04-api-and-cli.md", "docs/05-validation-and-roadmap.md"],
+  "source": [
+    "docs/03-path-semantics.md",
+    "docs/04-api-and-cli.md",
+    "docs/05-validation-and-roadmap.md"
+  ],
   "profile": "cygwin unless --profile explicitly selects msys2",
   "cases": [
-    {"case_id":"help","category":"control","argv":["-h"],"stdout_file":"testdata/contracts/help.txt","stderr_text":"","exit_code":0},
-    {"case_id":"version","category":"control","argv":["--version"],"stdout_text":"cygpath (MoonBit) 0.1.0\nProfiles: cygwin, msys2\n","stderr_text":"","exit_code":0},
-    {"case_id":"help-avoids-file","category":"control","argv":["--help","-f","{missing}"],"stdout_file":"testdata/contracts/help.txt","stderr_text":"","exit_code":0},
-    {"case_id":"unix-default","category":"conversion","argv":["C:\\work\\demo.txt"],"stdout_text":"/cygdrive/c/work/demo.txt\n","stderr_text":"","exit_code":0},
-    {"case_id":"windows","category":"conversion","argv":["-w","/cygdrive/c/work/demo.txt"],"stdout_text":"C:\\work\\demo.txt\n","stderr_text":"","exit_code":0},
-    {"case_id":"mixed","category":"conversion","argv":["-m","/cygdrive/d/work"],"stdout_text":"D:/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"type-attached","category":"options","argv":["-twindows","/cygdrive/c/work"],"stdout_text":"C:\\work\n","stderr_text":"","exit_code":0},
-    {"case_id":"long-type-equals","category":"options","argv":["--type=mixed","/cygdrive/c/work"],"stdout_text":"C:/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"repeated-format","category":"options","argv":["-w","--type","windows","/cygdrive/c/work"],"stdout_text":"C:\\work\n","stderr_text":"","exit_code":0},
-    {"case_id":"same-format-windows","category":"direction","argv":["-m","C:\\work"],"stdout_text":"C:/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"same-format-posix","category":"direction","argv":["-u","--from","posix","/usr/bin"],"stdout_text":"/usr/bin\n","stderr_text":"","exit_code":0},
-    {"case_id":"unc","category":"conversion","argv":["-u","\\\\server\\share\\work"],"stdout_text":"//server/share/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"msys2","category":"context","argv":["-u","--profile","msys2","C:\\work"],"stdout_text":"/c/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"custom-prefix","category":"context","argv":["-u","--drive-prefix","/drives","D:\\work"],"stdout_text":"/drives/d/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"root-and-nested-mount","category":"context","argv":["-w","--root","C:\\cygwin64","--mount","/usr/bin","C:\\cygwin64\\bin","/usr/bin/tool"],"stdout_text":"C:\\cygwin64\\bin\\tool\n","stderr_text":"","exit_code":0},
-    {"case_id":"mapped-root","category":"context","argv":["-w","--root","C:\\root","/"],"stdout_text":"C:\\root\n","stderr_text":"","exit_code":0},
-    {"case_id":"proc-prefix-keeps-mount","category":"context","argv":["-uU","--root","C:\\cygwin64","C:\\cygwin64\\bin","D:\\work"],"stdout_text":"/bin\n/proc/cygdrive/d/work\n","stderr_text":"","exit_code":0},
-    {"case_id":"absolute-posix","category":"context","argv":["-aw","--root","C:\\cygwin64","--posix-cwd","/home/user","../work"],"stdout_text":"C:\\cygwin64\\home\\work\n","stderr_text":"","exit_code":0},
-    {"case_id":"drive-cwd","category":"context","argv":["-u","--drive-cwd","C","C:\\work","C:demo"],"stdout_text":"/cygdrive/c/work/demo\n","stderr_text":"","exit_code":0},
-    {"case_id":"windows-cwd","category":"context","argv":["-au","--windows-cwd","D:\\work","demo"],"stdout_text":"/cygdrive/d/work/demo\n","stderr_text":"","exit_code":0},
-    {"case_id":"list-windows","category":"lists","argv":["-pu",";C:\\one;;D:\\two;"],"stdout_text":"/cygdrive/c/one:/cygdrive/d/two\n","stderr_text":"","exit_code":0},
-    {"case_id":"list-posix","category":"lists","argv":["-pw",":/cygdrive/c/one:"],"stdout_text":".;C:\\one;.\n","stderr_text":"","exit_code":0},
-    {"case_id":"empty-list","category":"lists","argv":["-pu",""],"stdout_text":"\n","stderr_text":"","exit_code":0},
-    {"case_id":"unicode-codepage","category":"encoding","argv":["-mCUTF8","/cygdrive/c/文档/😀"],"stdout_text":"C:/文档/😀\n","stderr_text":"","exit_code":0},
-    {"case_id":"codepage-number","category":"encoding","argv":["-w","-C","65001","/cygdrive/c/work"],"stdout_text":"C:\\work\n","stderr_text":"","exit_code":0},
-    {"case_id":"end-of-options","category":"options","argv":["-u","--","-h"],"stdout_text":"-h\n","stderr_text":"","exit_code":0},
-    {"case_id":"no-option-permutation","category":"options","argv":["-u","C:\\one","-w"],"stdout_text":"/cygdrive/c/one\n-w\n","stderr_text":"","exit_code":0},
-    {"case_id":"file-bom-crlf-final","category":"file","argv":["-u","-f","{input}"],"file_text":"﻿C:\\one\r\nD:\\two","stdout_text":"/cygdrive/c/one\n/cygdrive/d/two\n","stderr_text":"","exit_code":0},
-    {"case_id":"stdin-bom-crlf-final","category":"stdin","argv":["-u","-f-"],"stdin_text":"﻿C:\\one\r\nD:\\two","stdout_text":"/cygdrive/c/one\n/cygdrive/d/two\n","stderr_text":"","exit_code":0},
-    {"case_id":"file-no-trimming","category":"file","argv":["-u","--from","posix","-f","{input}"],"file_text":" path \n﻿second\n","stdout_text":" path \n﻿second\n","stderr_text":"","exit_code":0},
-    {"case_id":"ignore-no-input","category":"empty","argv":["-i"],"stdout_text":"","stderr_text":"","exit_code":0},
-    {"case_id":"ignore-empty-file","category":"empty","argv":["-i","-f","{input}"],"file_text":"","stdout_text":"","stderr_text":"","exit_code":0},
-    {"case_id":"ignore-bom-only","category":"empty","argv":["-i","-f","{input}"],"file_hex":"efbbbf","stdout_text":"","stderr_text":"","exit_code":0},
-    {"case_id":"missing-input","category":"empty","argv":[],"stdout_text":"","stderr_text":"cygpath: missing-input: supply a NAME or --file\n","exit_code":1},
-    {"case_id":"empty-file","category":"empty","argv":["-f","{input}"],"file_text":"","stdout_text":"","stderr_text":"cygpath: missing-input: supply a NAME or --file\n","exit_code":1},
-    {"case_id":"empty-line-not-ignored","category":"empty","argv":["-i","-f","{input}"],"file_text":"\n","stdout_text":"","stderr_text":"cygpath: empty-path: path is empty\n","exit_code":2},
-    {"case_id":"empty-name-not-ignored","category":"empty","argv":["-i",""],"stdout_text":"","stderr_text":"cygpath: empty-path: path is empty\n","exit_code":2},
-    {"case_id":"early-name-output","category":"failure-order","argv":["-u","C:\\one","","D:\\never"],"stdout_text":"/cygdrive/c/one\n","stderr_text":"cygpath: empty-path: path is empty\n","exit_code":2},
-    {"case_id":"early-file-output","category":"failure-order","argv":["-u","-f","{input}"],"file_text":"C:\\one\n\nD:\\never\n","stdout_text":"/cygdrive/c/one\n","stderr_text":"cygpath: empty-path: path is empty\n","exit_code":2},
-    {"case_id":"list-atomic-failure","category":"lists","argv":["-pu","C:\\one;D:relative"],"stdout_text":"","stderr_text":"cygpath: list-entry: index 1: missing-context: \"drive_cwds[D]\"\n","exit_code":1},
-    {"case_id":"unknown-option","category":"options","argv":["--bogus"],"stdout_text":"","stderr_text":"cygpath: unknown-option: \"--bogus\"\n","exit_code":1},
-    {"case_id":"missing-option-value","category":"options","argv":["-f"],"stdout_text":"","stderr_text":"cygpath: missing-value: \"--file\"\n","exit_code":1},
-    {"case_id":"conflicting-output","category":"options","argv":["-uw","C:\\work"],"stdout_text":"","stderr_text":"cygpath: invalid-options: \"conflicting values for output format\"\n","exit_code":1},
-    {"case_id":"proc-output-conflict","category":"options","argv":["-Uw","/cygdrive/c/work"],"stdout_text":"","stderr_text":"cygpath: invalid-options: \"--proc-cygdrive requires POSIX output\"\n","exit_code":1},
-    {"case_id":"dos-unsupported","category":"unsupported","argv":["-tdos","/cygdrive/c/work"],"stdout_text":"","stderr_text":"cygpath: unsupported-capability: \"short names require Windows filesystem queries\"\n","exit_code":1},
-    {"case_id":"name-mode-conflict","category":"unsupported","argv":["-sr","C:\\work"],"stdout_text":"","stderr_text":"cygpath: invalid-options: \"--short-name, --long-name and --root-local conflict\"\n","exit_code":1},
-    {"case_id":"unsupported-codepage","category":"unsupported","argv":["-wC0","/cygdrive/c/work"],"stdout_text":"","stderr_text":"cygpath: unsupported-capability: \"code page 0; only UTF8 and 65001 are supported\"\n","exit_code":1},
-    {"case_id":"missing-root-context","category":"context","argv":["-w","/usr/bin"],"stdout_text":"","stderr_text":"cygpath: missing-context: \"root or mount\"\n","exit_code":1},
-    {"case_id":"device-unsupported","category":"unsupported","argv":["-u","\\\\?\\C:\\work"],"stdout_text":"","stderr_text":"cygpath: unsupported-namespace: \"extended\"\n","exit_code":2},
-    {"case_id":"embedded-line-break","category":"records","argv":["--from","posix","line\nbreak"],"stdout_text":"","stderr_text":"cygpath: invalid-record: embedded CR or LF is not allowed\n","exit_code":2},
-    {"case_id":"trailing-cr-not-terminator","category":"records","argv":["--from","posix","-f-"],"stdin_text":"name\r","stdout_text":"","stderr_text":"cygpath: invalid-record: embedded CR or LF is not allowed\n","exit_code":2},
-    {"case_id":"file-name-conflict","category":"options","argv":["-f","{missing}","C:\\work"],"stdout_text":"","stderr_text":"cygpath: invalid-options: \"--file cannot be combined with NAME arguments\"\n","exit_code":1},
-    {"case_id":"file-read-error","category":"io","argv":["-i","-f","{missing}"],"stdout_text":"","stderr_text":"cygpath: input-read-error: cannot read {missing_quoted}\n","exit_code":1},
-    {"case_id":"invalid-utf8-stdin","category":"encoding","argv":["-i","-f-"],"stdin_hex":"ff0a","stdout_text":"","stderr_text":"cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n","exit_code":1},
-    {"case_id":"invalid-utf8-file-after-output","category":"encoding","argv":["-u","-f","{input}"],"file_hex":"433a5c6f6e650aff0a443a5c6e657665720a","stdout_text":"/cygdrive/c/one\n","stderr_text":"cygpath: invalid-encoding: invalid UTF-8 in {input_quoted} at line 2\n","exit_code":1},
-    {"case_id":"nul-content","category":"encoding","argv":["--from","posix","-f-"],"stdin_hex":"6100620a","stdout_text":"","stderr_text":"cygpath: invalid-path: UTF-16 offset 1: \"NUL in path\"\n","exit_code":2},
-    {"case_id":"stdout-write-error","category":"io","argv":["-u","C:\\one",""],"stdout_closed":true,"stdout_text":"","stderr_text":"cygpath: output-write-error: cannot write \"stdout\"\n","exit_code":1}
+    {
+      "case_id": "help",
+      "category": "control",
+      "argv": [
+        "-h"
+      ],
+      "stdout_file": "testdata/contracts/help.txt",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "version",
+      "category": "control",
+      "argv": [
+        "--version"
+      ],
+      "stdout_text": "cygpath (MoonBit) 0.1.0\nProfiles: cygwin, msys2\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "help-avoids-file",
+      "category": "control",
+      "argv": [
+        "--help",
+        "-f",
+        "{missing}"
+      ],
+      "stdout_file": "testdata/contracts/help.txt",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "unix-default",
+      "category": "conversion",
+      "argv": [
+        "C:\\work\\demo.txt"
+      ],
+      "stdout_text": "/cygdrive/c/work/demo.txt\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "windows",
+      "category": "conversion",
+      "argv": [
+        "-w",
+        "/cygdrive/c/work/demo.txt"
+      ],
+      "stdout_text": "C:\\work\\demo.txt\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "mixed",
+      "category": "conversion",
+      "argv": [
+        "-m",
+        "/cygdrive/d/work"
+      ],
+      "stdout_text": "D:/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "type-attached",
+      "category": "options",
+      "argv": [
+        "-twindows",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "C:\\work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "long-type-equals",
+      "category": "options",
+      "argv": [
+        "--type=mixed",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "C:/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "repeated-format",
+      "category": "options",
+      "argv": [
+        "-w",
+        "--type",
+        "windows",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "C:\\work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "same-format-windows",
+      "category": "direction",
+      "argv": [
+        "-m",
+        "C:\\work"
+      ],
+      "stdout_text": "C:/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "same-format-posix",
+      "category": "direction",
+      "argv": [
+        "-u",
+        "--from",
+        "posix",
+        "/usr/bin"
+      ],
+      "stdout_text": "/usr/bin\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "unc",
+      "category": "conversion",
+      "argv": [
+        "-u",
+        "\\\\server\\share\\work"
+      ],
+      "stdout_text": "//server/share/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "msys2",
+      "category": "context",
+      "argv": [
+        "-u",
+        "--profile",
+        "msys2",
+        "C:\\work"
+      ],
+      "stdout_text": "/c/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "custom-prefix",
+      "category": "context",
+      "argv": [
+        "-u",
+        "--drive-prefix",
+        "/drives",
+        "D:\\work"
+      ],
+      "stdout_text": "/drives/d/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "root-and-nested-mount",
+      "category": "context",
+      "argv": [
+        "-w",
+        "--root",
+        "C:\\cygwin64",
+        "--mount",
+        "/usr/bin",
+        "C:\\cygwin64\\bin",
+        "/usr/bin/tool"
+      ],
+      "stdout_text": "C:\\cygwin64\\bin\\tool\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "mapped-root",
+      "category": "context",
+      "argv": [
+        "-w",
+        "--root",
+        "C:\\root",
+        "/"
+      ],
+      "stdout_text": "C:\\root\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "proc-prefix-keeps-mount",
+      "category": "context",
+      "argv": [
+        "-uU",
+        "--root",
+        "C:\\cygwin64",
+        "C:\\cygwin64\\bin",
+        "D:\\work"
+      ],
+      "stdout_text": "/bin\n/proc/cygdrive/d/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "absolute-posix",
+      "category": "context",
+      "argv": [
+        "-aw",
+        "--root",
+        "C:\\cygwin64",
+        "--posix-cwd",
+        "/home/user",
+        "../work"
+      ],
+      "stdout_text": "C:\\cygwin64\\home\\work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "drive-cwd",
+      "category": "context",
+      "argv": [
+        "-u",
+        "--drive-cwd",
+        "C",
+        "C:\\work",
+        "C:demo"
+      ],
+      "stdout_text": "/cygdrive/c/demo\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "windows-cwd",
+      "category": "context",
+      "argv": [
+        "-au",
+        "--windows-cwd",
+        "D:\\work",
+        "demo"
+      ],
+      "stdout_text": "/cygdrive/d/work/demo\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "list-windows",
+      "category": "lists",
+      "argv": [
+        "-pu",
+        ";C:\\one;;D:\\two;"
+      ],
+      "stdout_text": "/cygdrive/c/one:/cygdrive/d/two\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "list-posix",
+      "category": "lists",
+      "argv": [
+        "-pw",
+        ":/cygdrive/c/one:"
+      ],
+      "stdout_text": ".;C:\\one;.\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "empty-list",
+      "category": "lists",
+      "argv": [
+        "-pu",
+        ""
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: can't convert empty path\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "unicode-codepage",
+      "category": "encoding",
+      "argv": [
+        "-mCUTF8",
+        "/cygdrive/c/文档/😀"
+      ],
+      "stdout_text": "C:/文档/😀\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "codepage-number",
+      "category": "encoding",
+      "argv": [
+        "-w",
+        "-C",
+        "65001",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "C:\\work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "end-of-options",
+      "category": "options",
+      "argv": [
+        "-u",
+        "--",
+        "-h"
+      ],
+      "stdout_text": "-h\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "permuted-format-conflict",
+      "category": "options",
+      "argv": [
+        "-u",
+        "C:\\one",
+        "-w"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: invalid-options: \"conflicting output formats\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "file-bom-crlf-final",
+      "category": "file",
+      "argv": [
+        "-u",
+        "-f",
+        "{input}"
+      ],
+      "file_text": "﻿C:\\one\r\nD:\\two",
+      "stdout_text": "﻿C:/one\n/cygdrive/d/two\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "stdin-bom-crlf-final",
+      "category": "stdin",
+      "argv": [
+        "-u",
+        "-f-"
+      ],
+      "stdin_text": "﻿C:\\one\r\nD:\\two",
+      "stdout_text": "﻿C:/one\n/cygdrive/d/two\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "file-no-trimming",
+      "category": "file",
+      "argv": [
+        "-u",
+        "--from",
+        "posix",
+        "-f",
+        "{input}"
+      ],
+      "file_text": " path \n﻿second\n",
+      "stdout_text": " path \n﻿second\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "ignore-no-input",
+      "category": "empty",
+      "argv": [
+        "-i"
+      ],
+      "stdout_text": "",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "ignore-empty-file",
+      "category": "empty",
+      "argv": [
+        "-i",
+        "-f",
+        "{input}"
+      ],
+      "file_text": "",
+      "stdout_text": "",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "ignore-bom-only",
+      "category": "empty",
+      "argv": [
+        "-i",
+        "-f",
+        "{input}"
+      ],
+      "file_hex": "efbbbf",
+      "stdout_text": "﻿\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "missing-input",
+      "category": "empty",
+      "argv": [],
+      "stdout_text": "",
+      "stderr_text": "cygpath: missing-input: supply a NAME or --file\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "empty-file",
+      "category": "empty",
+      "argv": [
+        "-f",
+        "{input}"
+      ],
+      "file_text": "",
+      "stdout_text": "",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "ignore-empty-line",
+      "category": "empty",
+      "argv": [
+        "-i",
+        "-f",
+        "{input}"
+      ],
+      "file_text": "\n",
+      "stdout_text": "",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "ignore-empty-name",
+      "category": "empty",
+      "argv": [
+        "-i",
+        ""
+      ],
+      "stdout_text": "",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "early-name-output",
+      "category": "failure-order",
+      "argv": [
+        "-u",
+        "C:\\one",
+        "",
+        "D:\\never"
+      ],
+      "stdout_text": "/cygdrive/c/one\n",
+      "stderr_text": "cygpath: can't convert empty path\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "early-file-output",
+      "category": "failure-order",
+      "argv": [
+        "-u",
+        "-f",
+        "{input}"
+      ],
+      "file_text": "C:\\one\n\nD:\\never\n",
+      "stdout_text": "/cygdrive/c/one\n",
+      "stderr_text": "cygpath: can't convert empty path\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "list-drive-relative",
+      "category": "lists",
+      "argv": [
+        "-pu",
+        "C:\\one;D:relative"
+      ],
+      "stdout_text": "/cygdrive/c/one:/cygdrive/d/relative\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "unknown-option",
+      "category": "options",
+      "argv": [
+        "--bogus"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: unknown-option: \"--bogus\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "missing-option-value",
+      "category": "options",
+      "argv": [
+        "-f"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: missing-value: \"--file\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "conflicting-output",
+      "category": "options",
+      "argv": [
+        "-uw",
+        "C:\\work"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: invalid-options: \"conflicting output formats\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "proc-windows-ignored",
+      "category": "options",
+      "argv": [
+        "-Uw",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "C:\\work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "dos-unsupported",
+      "category": "unsupported",
+      "argv": [
+        "-tdos",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: unsupported-capability: \"short names require Windows filesystem queries\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "name-mode-conflict",
+      "category": "unsupported",
+      "argv": [
+        "-sr",
+        "C:\\work"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: invalid-options: \"--short-name, --long-name and --root-local conflict\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "unsupported-codepage",
+      "category": "unsupported",
+      "argv": [
+        "-wC0",
+        "/cygdrive/c/work"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: unsupported-capability: \"code page 0 is not supported by the pure encoder\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "missing-root-context",
+      "category": "context",
+      "argv": [
+        "-w",
+        "/usr/bin"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: missing-context: \"root or mount\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "extended-drive-prefix",
+      "category": "unsupported",
+      "argv": [
+        "-u",
+        "\\\\?\\C:\\work"
+      ],
+      "stdout_text": "/cygdrive/c/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "embedded-line-break",
+      "category": "records",
+      "argv": [
+        "--from",
+        "posix",
+        "line\nbreak"
+      ],
+      "stdout_text": "line\nbreak\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "trailing-cr-not-terminator",
+      "category": "records",
+      "argv": [
+        "--from",
+        "posix",
+        "-f-"
+      ],
+      "stdin_text": "name\r",
+      "stdout_text": "name\r\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "file-name-conflict",
+      "category": "options",
+      "argv": [
+        "-f",
+        "{missing}",
+        "C:\\work"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: invalid-options: \"--file cannot be combined with NAME arguments\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "file-read-error",
+      "category": "io",
+      "argv": [
+        "-i",
+        "-f",
+        "{missing}"
+      ],
+      "stdout_text": "",
+      "stderr_text": "cygpath: No such file or directory\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "invalid-utf8-stdin",
+      "category": "encoding",
+      "argv": [
+        "-i",
+        "-f-"
+      ],
+      "stdin_hex": "ff0a",
+      "stdout_text": "",
+      "stderr_text": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "invalid-utf8-file-after-output",
+      "category": "encoding",
+      "argv": [
+        "-u",
+        "-f",
+        "{input}"
+      ],
+      "file_hex": "433a5c6f6e650aff0a443a5c6e657665720a",
+      "stdout_text": "/cygdrive/c/one\n",
+      "stderr_text": "cygpath: invalid-encoding: invalid UTF-8 in {input_quoted} at line 2\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "nul-content",
+      "category": "encoding",
+      "argv": [
+        "--from",
+        "posix",
+        "-f-"
+      ],
+      "stdin_hex": "6100620a",
+      "stdout_text": "a\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "stdout-write-error",
+      "category": "io",
+      "argv": [
+        "-u",
+        "C:\\one",
+        ""
+      ],
+      "stdout_closed": true,
+      "stdout_text": "",
+      "stderr_text": "cygpath: output-write-error: cannot write \"stdout\"\n",
+      "exit_code": 1
+    }
   ]
 }

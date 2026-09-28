@@ -880,7 +880,11 @@
         "native"
       ],
       "directory_preparation": "none-read-only",
-      "known_difference_id": "portable-strict-utf8-policy"
+      "known_difference_id": "portable-strict-utf8-policy",
+      "validation_domain": "malformed-utf8",
+      "boundary_stdout": "{drive_c}/one\n",
+      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 2\n",
+      "boundary_exit": 1
     },
     {
       "case_id": "stdin-partial-conversion",

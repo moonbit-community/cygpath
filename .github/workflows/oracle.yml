@@ -44,7 +44,7 @@ jobs:
           release: true
           update: false
           cache: false
-      - name: Collect and replay official comparisons
+      - name: Collect, replay, audit exact comparisons and run Windows fault drills
         env:
           ORACLE_ROOT: ${{ matrix.profile == 'cygwin' && 'C:/cygpath-cygwin' || steps.msys2.outputs.msys2-location }}
           ORACLE_SETUP_EXE: ${{ steps.cygwin.outputs.setup }}

@@ -8,6 +8,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/encoding/hex",
   "moonbitlang/core/json",
+  "moonbitlang/core/string",
   "moonbitlang/x@0.5.5/crypto",
   "moonbitlang/x@0.5.5/sys",
 }
@@ -112,6 +113,11 @@ struct Fixture {
   required_capabilities : Array[String]
   allowed_backends : Array[String]
   directory_preparation : String
+  file_hex : String?
+  validation_domain : String?
+  boundary_stdout : String?
+  boundary_stderr : String?
+  boundary_exit : Int?
   known_difference_id : String?
 } derive(@json.FromJson, ToJson)
 
@@ -432,11 +438,50 @@ fn case_available(fixture : Fixture, manifest : Manifest) -> Bool {
 }
 
 ///|
-fn expand_arg(arg : String, manifest : Manifest) -> String {
-  arg.replace_all(
-    old="{installation_root}",
-    new=manifest.host.installation_root,
+fn expand_arg(
+  arg : String,
+  manifest : Manifest,
+  case_id? : String = "validation",
+) -> String {
+  arg
+  .replace_all(old="{installation_root}", new=manifest.host.installation_root)
+  .replace_all(
+    old="{input_file}",
+    new=manifest.cwd + "/.cygpath-oracle-fixtures/" + case_id + ".bin",
   )
+  .replace_all(
+    old="{missing_file}",
+    new=manifest.cwd + "/.cygpath-oracle-fixtures/missing-" + case_id + ".bin",
+  )
+  .replace_all(old="{drive_prefix}", new=manifest.context.drive_prefix)
+  .replace_all(old="{cwd_windows}", new=manifest.cwd)
+}
+
+///|
+async fn prepare_fixture_file(fixture : Fixture, manifest : Manifest) -> Unit {
+  if fixture.file_hex is Some(hex) {
+    let bytes = @hex.decode(hex)
+    let path = expand_arg("{input_file}", manifest, case_id=fixture.case_id)
+    @fs.mkdir(manifest.cwd + "/.cygpath-oracle-fixtures", allow_exist=true)
+    if @fs.exists(path) {
+      require(
+        @fs.read_file(path).binary() == bytes,
+        "prepared input file changed: " + path,
+      )
+    } else {
+      @fs.write_file(path, bytes, create_mode=CreateNew)
+    }
+  }
+  if (fixture.upstream_argv + fixture.project_argv).any(arg => {
+      arg.contains("{missing_file}")
+    }) {
+    require(
+      !@fs.exists(
+        expand_arg("{missing_file}", manifest, case_id=fixture.case_id),
+      ),
+      "missing-file fixture unexpectedly exists",
+    )
+  }
 }
 
 ///|
@@ -474,7 +519,14 @@ fn validate_suite(suite : Suite, manifest : Manifest) -> Unit raise {
       "unknown source_type",
     )
     require(
-      fixture.directory_preparation == "none-read-only",
+      (
+        fixture.directory_preparation == "none-read-only" &&
+        fixture.file_hex is None
+      ) ||
+      (
+        fixture.directory_preparation == "immutable-input-file" &&
+        fixture.file_hex is Some(_)
+      ),
       "fixture preparation is not implemented",
     )
     require(
@@ -493,10 +545,31 @@ fn validate_suite(suite : Suite, manifest : Manifest) -> Unit raise {
       "required fixture capability unavailable: " + fixture.case_id,
     )
     ignore(@hex.decode(fixture.stdin_hex))
+    if fixture.file_hex is Some(hex) {
+      ignore(@hex.decode(hex))
+    }
+    require(
+      fixture.validation_domain is None ||
+      fixture.validation_domain == Some("malformed-utf8"),
+      "unknown input-domain boundary",
+    )
+    if fixture.validation_domain == Some("malformed-utf8") {
+      require(
+        fixture.boundary_stdout is Some(_) &&
+        fixture.boundary_stderr is Some(_) &&
+        fixture.boundary_exit == Some(1),
+        "malformed UTF-8 requires explicit strict-project contract",
+      )
+      expect_failure(() => ignore(@utf8.decode(@hex.decode(fixture.stdin_hex))))
+    }
     for args in [fixture.upstream_argv, fixture.project_argv] {
       for arg in args {
         require(!arg.contains("\u0000"), "argv contains NUL")
-        let expanded = expand_arg(arg, manifest)
+        let expanded = expand_arg(arg, manifest, case_id=fixture.case_id)
+        require(
+          !arg.contains("{input_file}") || fixture.file_hex is Some(_),
+          "input_file token requires immutable file bytes",
+        )
         require(
           !expanded.contains("{") && !expanded.contains("}"),
           "unknown fixture template token",
@@ -784,7 +857,9 @@ async fn project_observation(
     prefix +
     context_args(manifest.context) +
     ["--from", fixture.source_type] +
-    fixture.project_argv.map(arg => expand_arg(arg, manifest)),
+    fixture.project_argv.map(arg => {
+      expand_arg(arg, manifest, case_id=fixture.case_id)
+    }),
     manifest,
     input,
   )
@@ -851,6 +926,7 @@ async fn collect(
         project: None,
       })
     } else {
+      prepare_fixture_file(fixture, manifest)
       @fs.mkdir(output + "/" + fixture.case_id)
       let input = write_blob(
         output,
@@ -861,7 +937,9 @@ async fn collect(
         output,
         fixture.case_id + "/oracle",
         manifest.upstream.executable.path,
-        fixture.upstream_argv.map(arg => expand_arg(arg, manifest)),
+        fixture.upstream_argv.map(arg => {
+          expand_arg(arg, manifest, case_id=fixture.case_id)
+        }),
         manifest,
         input,
       )
@@ -885,6 +963,7 @@ async fn collect(
         oracle: Some(oracle),
         project,
       })
+      prepare_fixture_file(fixture, manifest)
     }
     write_run(
       output,
@@ -1002,7 +1081,9 @@ async fn replay(
       require(
         oracle.program == original.upstream.executable.path &&
         oracle.argv ==
-        fixture.upstream_argv.map(arg => expand_arg(arg, original)) &&
+        fixture.upstream_argv.map(arg => {
+          expand_arg(arg, original, case_id=fixture.case_id)
+        }) &&
         oracle.cwd == original.cwd &&
         !oracle.inherit_env &&
         @json.to_json(oracle.environment) == @json.to_json(original.environment) &&
@@ -1033,6 +1114,7 @@ async fn replay(
   for fixture in suite.cases {
     match observations.get(fixture.case_id) {
       Some(oracle) if case_available(fixture, manifest) => {
+        prepare_fixture_file(fixture, manifest)
         @fs.mkdir(output + "/" + fixture.case_id)
         // Copy verified oracle bytes into a separate, immutable replay subtree;
         // every Blob remains relative to this new evidence directory.
@@ -1067,6 +1149,7 @@ async fn replay(
           oracle: Some(oracle),
           project: Some(project),
         })
+        prepare_fixture_file(fixture, manifest)
       }
       _ =>
         results.push({
@@ -1108,6 +1191,201 @@ async fn replay(
     run.counts.get("pass") == Some(run.planned),
     "replay contains non-pass outcomes; inspect run.json",
   )
+}
+
+///|
+async fn copy_evidence(source : String, destination : String) -> Unit {
+  @fs.mkdir(destination)
+  for name in @fs.readdir(source, include_hidden=true) {
+    let from = source + "/" + name
+    let to = destination + "/" + name
+    match @fs.kind(from, follow_symlink=false) {
+      Directory => copy_evidence(from, to)
+      Regular => @fs.write_file(to, @fs.read_file(from), create_mode=CreateNew)
+      _ => fail("unexpected nonregular evidence entry: " + from)
+    }
+  }
+}
+
+///|
+async fn fault_drill(
+  manifest_path : String,
+  source : String,
+  output : String,
+  powershell : String,
+) -> Unit {
+  let manifest : Manifest = @json.from_json(
+    @json.parse(@fs.read_file(manifest_path).text()),
+  )
+  validate_manifest(manifest)
+  verify_host(manifest)
+  require(
+    windows_absolute(powershell) && @fs.exists(powershell),
+    "fault drill requires explicit native PowerShell path",
+  )
+  @fs.mkdir(output)
+  let output = @fs.realpath(output)
+  let empty = write_blob(output, "empty.bin", b"")
+  let results : Array[Json] = []
+  let timeout_manifest = { ..manifest, deadline_ms: 2000, }
+  let partial = execute(
+    output,
+    "timeout",
+    powershell,
+    [
+      "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "[Console]::Write('partial:' + $PID + [char]10); [Console]::Error.Write('partial-error' + [char]10); Start-Sleep -Seconds 60",
+    ],
+    timeout_manifest,
+    empty,
+  )
+  @fs.write_file(
+    output + "/timeout.json",
+    @json.to_json(partial).stringify(indent=2),
+    create_mode=CreateNew,
+  )
+  require(
+    partial.execution_status == "timeout" &&
+    partial.termination == Some("hard-cancel-requested") &&
+    partial.exit_code is Some(_),
+    "real timeout must cancel and wait for the child",
+  )
+  let stdout = @utf8.decode(read_blob(output, partial.stdout))
+  require(
+    stdout.has_prefix("partial:") && stdout.has_suffix("\n"),
+    "timeout did not retain child's partial stdout",
+  )
+  require(
+    read_blob(output, partial.stderr) == b"partial-error\n",
+    "timeout did not retain child's partial stderr",
+  )
+  let pid = @string.parse_int(stdout[8:stdout.length() - 1].to_owned())
+  require(pid > 0, "timeout child PID missing")
+  let reaped = execute(
+    output,
+    "reaped",
+    powershell,
+    [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "try { $p = [Diagnostics.Process]::GetProcessById(" +
+      pid.to_string() +
+      "); [Console]::Error.Write('child-still-live'); exit 7 } catch [ArgumentException] { [Console]::Write('child-absent'); exit 0 }",
+    ],
+    manifest,
+    empty,
+  )
+  @fs.write_file(
+    output + "/reaped.json",
+    @json.to_json(reaped).stringify(indent=2),
+    create_mode=CreateNew,
+  )
+  require(
+    reaped.execution_status == "completed" &&
+    reaped.exit_code == Some(0) &&
+    read_blob(output, reaped.stdout) == b"child-absent",
+    "cancelled child still exists after collector wait",
+  )
+  results.push({
+    "id": "real-timeout-cancel-wait-partial-bytes",
+    "status": "pass",
+    "observation": "timeout.json",
+    "reap_check": "reaped.json",
+  })
+  let failed = execute(
+    output,
+    "spawn-error",
+    manifest.cwd + "/deliberately-absent-cygpath-fault.exe",
+    [],
+    manifest,
+    empty,
+  )
+  @fs.write_file(
+    output + "/spawn-error.json",
+    @json.to_json(failed).stringify(indent=2),
+    create_mode=CreateNew,
+  )
+  require(
+    failed.execution_status == "error" && failed.exit_code is None,
+    "missing executable must remain infrastructure error",
+  )
+  results.push({
+    "id": "real-spawn-failure",
+    "status": "pass",
+    "observation": "spawn-error.json",
+  })
+  let original_run_bytes = @fs.read_file(source + "/run.json").binary()
+  let original : Run = @json.from_json(
+    @json.parse(@utf8.decode(original_run_bytes)),
+  )
+  require(
+    original.mode == "collect" &&
+    original.complete &&
+    original.integrity_verified,
+    "tamper drill requires completed immutable source capture",
+  )
+  guard original.cases[0].oracle is Some(first_oracle) else {
+    fail("source lacks first oracle observation")
+  }
+  for
+    (id, blob) in [
+      ("tampered-stdout", first_oracle.stdout),
+      ("tampered-fixtures", original.fixtures),
+      ("tampered-manifest", original.manifest),
+    ] {
+    let copy = output + "/" + id
+    copy_evidence(source, copy)
+    let original_bytes = read_blob(source, blob)
+    @fs.write_file(copy + "/" + blob.path, original_bytes + b"\x00")
+    let rejected_output = output + "/" + id + "-replay"
+    let diagnostic = try {
+      replay(manifest_path, copy, rejected_output)
+      "replay unexpectedly accepted tampered bytes"
+    } catch {
+      error => error.to_string()
+    }
+    require(
+      diagnostic.contains("evidence digest/length mismatch"),
+      "tampered replay did not fail for evidence integrity: " + diagnostic,
+    )
+    require(
+      !@fs.exists(rejected_output),
+      "tampered replay created output or executed before integrity rejection",
+    )
+    require(
+      read_blob(source, blob) == original_bytes,
+      "tamper drill changed original evidence",
+    )
+    results.push({
+      "id": id,
+      "status": "pass",
+      "source_blob": @json.to_json(blob),
+      "tampered_sha256": digest(original_bytes + b"\x00"),
+      "diagnostic": diagnostic,
+      "replay_output_created": false,
+    })
+  }
+  require(
+    @fs.read_file(source + "/run.json").binary() == original_run_bytes,
+    "fault drill changed original run",
+  )
+  let summary : Json = {
+    "schema_version": 1,
+    "validation_kind": "real-windows-fault-drills",
+    "complete": true,
+    "passed": results.length(),
+    "failed": 0,
+    "results": @json.to_json(results),
+    "source_run_sha256": digest(original_run_bytes),
+    "powershell": powershell,
+  }
+  @fs.write_file(
+    output + "/summary.json",
+    summary.stringify(indent=2),
+    create_mode=CreateNew,
+  )
+  println("real Windows timeout/reap/spawn/tamper drills passed: " + output)
 }
 
 ///|
@@ -1237,7 +1515,7 @@ async fn self_test() -> Unit {
   for
     path in [
       "testdata/oracle/fixtures.cygwin.json", "testdata/oracle/fixtures.msys2.json",
-      "testdata/oracle/fixtures.readonly-matrix.json",
+      "testdata/oracle/fixtures.readonly-matrix.json", "testdata/oracle/fixtures.p3.json",
     ] {
     let suite : Suite = @json.from_json(@json.parse(@fs.read_file(path).text()))
     check_json_roundtrip(suite)
@@ -1381,9 +1659,11 @@ async fn main {
       ["collect", manifest, fixtures, output] =>
         collect(manifest, fixtures, output)
       ["replay", manifest, oracle, output] => replay(manifest, oracle, output)
+      ["fault-drill", manifest, source, output, powershell] =>
+        fault_drill(manifest, source, output, powershell)
       _ =>
         fail(
-          "usage: oracle.mbtx self-test | collect MANIFEST FIXTURES NEW_OUT | replay MANIFEST ORACLE_DIR NEW_OUT",
+          "usage: oracle.mbtx self-test | collect MANIFEST FIXTURES NEW_OUT | replay MANIFEST ORACLE_DIR NEW_OUT | fault-drill MANIFEST SOURCE_COLLECTION NEW_OUT POWERSHELL",
         )
     }
   } catch {
