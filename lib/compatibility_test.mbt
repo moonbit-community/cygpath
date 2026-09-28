@@ -127,3 +127,15 @@ test "ordinary long paths gain extended prefixes at the UTF-16 boundary" {
     "//?/UNC/" + unc[2:].to_owned(),
   )
 }
+
+///|
+test "overlong filename components retain the official conversion error" {
+  let context = @lib.Context::new()
+  let path = "C:\\" + "a".repeat(256)
+  try context.convert(path, from=Windows, to=Mixed) catch {
+    @lib.PathTooLong(original) => assert_eq(original, path)
+    _ => fail("unexpected error for an overlong filename component")
+  } noraise {
+    _ => fail("overlong filename component was accepted")
+  }
+}

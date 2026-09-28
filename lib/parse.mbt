@@ -35,6 +35,18 @@ fn path_components(value : String) -> Array[String] {
 }
 
 ///|
+/// Windows and Cygwin reject a single pathname component longer than the
+/// portable 255 UTF-16-unit filename limit, even for lexical conversion.
+fn validate_component_lengths(path : String) -> Unit raise ConversionError {
+  let text = path.replace_all(old="\\", new="/")
+  for component in text.split("/") {
+    if component.length() > 255 {
+      raise PathTooLong(path)
+    }
+  }
+}
+
+///|
 fn is_separator(unit : UInt16, syntax : InputSyntax) -> Bool {
   unit == '/' || (syntax == Windows && unit == '\\')
 }
@@ -45,6 +57,7 @@ fn parse_path(
   syntax : InputSyntax,
 ) -> ParsedPath raise ConversionError {
   guard !path.is_empty() else { raise EmptyPath }
+  validate_component_lengths(path)
   validate_text(path)
   if syntax == Windows {
     let text = path.replace_all(old="\\", new="/")

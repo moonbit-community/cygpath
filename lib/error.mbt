@@ -3,6 +3,7 @@
 /// based. Error payloads contain data, not preformatted CLI diagnostics.
 pub(all) suberror ConversionError {
   EmptyPath
+  PathTooLong(String)
   InvalidPath(reason~ : String, offset~ : Int)
   InvalidContext(field~ : String, reason~ : String)
   MissingContext(field~ : String)
