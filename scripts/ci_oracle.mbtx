@@ -817,18 +817,16 @@ async fn run(options : Map[String, String]) -> Unit {
     output,
     probe(output, "posix-cwd", cygpath, ["-au", "."], cwd, environment),
   )
-  let comspec = path_text(
-    environment.get("COMSPEC").unwrap_or(system_root + "/System32/cmd.exe"),
-  )
-  require(@fs.exists(comspec), "native Windows command processor is absent")
   let drive_cwd = path_text(
     successful_text(
       output,
       probe(
         output,
         "drive-c-cwd",
-        comspec,
-        ["/d", "/c", "cd C:"],
+        powershell,
+        [
+          "-NoProfile", "-NonInteractive", "-Command", "[Console]::WriteLine([IO.Path]::GetFullPath('C:.'))",
+        ],
         cwd,
         environment,
       ),
@@ -941,7 +939,7 @@ async fn run(options : Map[String, String]) -> Unit {
       "windows_cwd": windows_cwd,
       "drive_cwds": { "C": drive_cwd },
     },
-    "context_mapping_evidence": "Sibling observations retain raw mount/locale/cygpath cwd and mapping probes with their exact argv, bytes, status, and hashes. Per-drive C cwd is measured by the native Windows command processor using cd C:; it is not inferred by converting the ambiguous C: operand with cygpath. Mounts are transcribed in observed order; auto cygdrive and virtual /dev,/proc entries are excluded. Root and /usr/bin mappings are independently queried; CLI sensitive matching is explicit. Host facts come from the retained PowerShell observation; source Git provenance is separately qualified.",
+    "context_mapping_evidence": "Sibling observations retain raw mount/locale/cygpath cwd and mapping probes with their exact argv, bytes, status, and hashes. Per-drive C cwd is measured by the native Windows .NET Path.GetFullPath API on C:.; it is not inferred by converting the ambiguous C: operand with cygpath. Mounts are transcribed in observed order; auto cygdrive and virtual /dev,/proc entries are excluded. Root and /usr/bin mappings are independently queried; CLI sensitive matching is explicit. Host facts come from the retained PowerShell observation; source Git provenance is separately qualified.",
     "capabilities": [
       "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
       "windows-cwd", "drive-cwd-c",
