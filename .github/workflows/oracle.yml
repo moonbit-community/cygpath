@@ -50,7 +50,7 @@ jobs:
           ORACLE_SETUP_EXE: ${{ steps.cygwin.outputs.setup }}
           ORACLE_PACKAGE_CACHE: ${{ steps.cygwin.outputs.package-cache }}
         run: >-
-          moon run --deny-warn scripts/ci_oracle.mbtx
+          moon run --deny-warn scripts/ci_oracle.mbtx --
           --profile ${{ matrix.profile }}
           --root "$env:ORACLE_ROOT"
           --wasm "${{ github.workspace }}/_build/wasm/release/build/cygpath.wasm"
