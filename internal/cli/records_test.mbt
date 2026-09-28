@@ -58,6 +58,37 @@ test "file option operands are one string and empty handling follows per-line fl
 }
 
 ///|
+test "option records reject context construction while retaining explicit source grammar" {
+  let converter = request(["-of-", "--root=C:/root"]).prepare()
+  for
+    (option, record) in [
+      ("--profile", "--profile=msys2 C:/name"),
+      ("--root", "--root=D:/alt /name"),
+      ("--mount", "--mount=/alt D:/alt"),
+      ("--mount-case", "--mount-case=/alt sensitive"),
+      ("--drive-prefix", "--drive-prefix=/drives C:/name"),
+      ("--posix-cwd", "--posix-cwd=/alt name"),
+      ("--windows-cwd", "--windows-cwd=D:/alt name"),
+      ("--drive-cwd", "--drive-cwd=D D:/alt"),
+    ] {
+    try converter.convert_file_record(record) catch {
+      @cli.InvalidOptions(reason) =>
+        assert_eq(
+          reason,
+          option + " cannot change the fixed context in option records",
+        )
+      _ => fail("expected an explicit fixed-context error for " + option)
+    } noraise {
+      _ => fail("silently accepted context option " + option)
+    }
+    assert_eq(converter.convert("/name"), "C:\\root\\name")
+  }
+  assert_true(
+    converter.convert_file_record("--from=posix /a/../b") is Output("/b"),
+  )
+}
+
+///|
 test "native source recognition distinguishes DOS-relative output from absolute requests" {
   let context_args = [
     "--root=C:/root", "--posix-cwd=/cygdrive/c/cwd", "--windows-cwd=C:/cwd",

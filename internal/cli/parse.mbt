@@ -319,6 +319,11 @@ fn parse_args_inner(
       Found(option, values) => (option, values)
       Failure(error) => raise error
     }
+    if from_file && is_project_option(option) && option != "--from" {
+      raise InvalidOptions(
+        option + " cannot change the fixed context in option records",
+      )
+    }
     match option {
       "--unix" => unix = true
       "--windows" => windows = true
