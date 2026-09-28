@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "validation_kind": "official-comparison",
+  "profiles": [
+    "cygwin"
+  ],
+  "source_url": "https://cygwin.com/cygwin-ug-net/cygpath.html",
+  "source_revision": "design reference: cygwin/cygwin b6e315143bf72c6d4e75a858716adbbe03c679f0; no observed outputs",
+  "cases": [
+    {
+      "case_id": "drive-unix",
+      "category": "drive-absolute",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-u",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "drive-mixed",
+      "category": "same-syntax-rendering",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unc-unix",
+      "category": "unc",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "\\\\server\\share\\file"
+      ],
+      "project_argv": [
+        "-u",
+        "\\\\server\\share\\file"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "unicode-unix",
+      "category": "utf8-and-spaces",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:\\路径\\a b"
+      ],
+      "project_argv": [
+        "-u",
+        "C:\\路径\\a b"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths",
+        "utf8"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "windows-list",
+      "category": "path-list",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-up",
+        "C:\\one;D:\\two"
+      ],
+      "project_argv": [
+        "-up",
+        "C:\\one;D:\\two"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "posix-drive",
+      "category": "cygdrive",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "/cygdrive/c/work"
+      ],
+      "project_argv": [
+        "-w",
+        "/cygdrive/c/work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "relative-windows",
+      "category": "relative",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "relative/path"
+      ],
+      "project_argv": [
+        "-w",
+        "relative/path"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "proc-prefix",
+      "category": "proc-cygdrive",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-uU",
+        "C:\\work"
+      ],
+      "project_argv": [
+        "-uU",
+        "C:\\work"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "empty-windows-list",
+      "category": "empty-list",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-up",
+        ""
+      ],
+      "project_argv": [
+        "-up",
+        ""
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "stdin-records",
+      "category": "input-records",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "-f",
+        "-"
+      ],
+      "project_argv": [
+        "-u",
+        "-f",
+        "-"
+      ],
+      "stdin_hex": "433a5c6f6e650a443a5c74776f0d0a",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths",
+        "stdin"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    }
+  ]
+}

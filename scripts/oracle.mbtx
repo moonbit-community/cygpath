@@ -1,0 +1,1397 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/async@0.22.4/stdio",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/encoding/hex",
+  "moonbitlang/core/json",
+  "moonbitlang/x@0.5.5/crypto",
+  "moonbitlang/x@0.5.5/sys",
+}
+
+///|
+struct Artifact {
+  path : String
+  sha256 : String
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Upstream {
+  executable : Artifact
+  runtime_library : Artifact
+  source_url : String
+  source_revision : String
+  distribution_version : String
+  runtime_version : String
+  version_stdout_sha256 : String
+  version_stderr_sha256 : String
+  version_exit_code : Int
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Project {
+  artifact : Artifact
+  launcher : Artifact
+  backend : String
+  git_sha : String
+  dirty : Bool
+  module_version : String
+  moon_version : String
+  build_mode : String
+} derive(@json.FromJson, ToJson)
+
+///|
+struct HostSnapshot {
+  os : String
+  os_version : String
+  architecture : String
+  filesystem : String
+  installation_root : String
+  launch_method : String
+  current_drive : String
+  drive_cwds : Map[String, String]
+  mount_table : String
+  cygdrive_prefix : String
+  existence_permissions : String
+  locale : String
+  input_code_page : String
+  output_code_page : String
+  io_mode : String
+  long_path_policy : String
+  short_name_policy : String
+  test_volume : String
+  actual_short_names : String
+  symlinks_junctions : String
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Mount {
+  posix : String
+  windows : String
+  case_policy : String
+} derive(@json.FromJson, ToJson)
+
+///|
+struct CoreContext {
+  profile : String
+  drive_prefix : String
+  mounts : Array[Mount]
+  posix_cwd : String?
+  windows_cwd : String?
+  drive_cwds : Map[String, String]
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Manifest {
+  schema_version : Int
+  profile : String
+  upstream : Upstream
+  project : Project
+  host : HostSnapshot
+  cwd : String
+  environment : Map[String, String]
+  cleared_environment : Array[String]
+  context : CoreContext
+  context_mapping_evidence : String
+  capabilities : Array[String]
+  deadline_ms : Int
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Fixture {
+  case_id : String
+  category : String
+  source_type : String
+  upstream_argv : Array[String]
+  project_argv : Array[String]
+  stdin_hex : String
+  required : Bool
+  required_capabilities : Array[String]
+  allowed_backends : Array[String]
+  directory_preparation : String
+  known_difference_id : String?
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Suite {
+  schema_version : Int
+  validation_kind : String
+  profiles : Array[String]
+  source_url : String
+  source_revision : String
+  cases : Array[Fixture]
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Blob {
+  path : String
+  length : Int
+  sha256 : String
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Observation {
+  execution_status : String
+  reason : String?
+  program : String
+  argv : Array[String]
+  cwd : String
+  environment : Map[String, String]
+  inherit_env : Bool
+  start_unix_ms : UInt64
+  elapsed_ms : Int64
+  deadline_ms : Int
+  exit_code : Int?
+  termination : String?
+  stdin : Blob
+  stdout : Blob
+  stderr : Blob
+} derive(@json.FromJson, ToJson)
+
+///|
+struct CaseResult {
+  case_id : String
+  status : String
+  reason : String?
+  known_difference_id : String?
+  oracle : Observation?
+  project : Observation?
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Run {
+  schema_version : Int
+  mode : String
+  validation_kind : String
+  profile : String
+  manifest : Blob
+  fixtures : Blob
+  source_run : Blob?
+  upstream_version : Observation?
+  planned : Int
+  executed : Int
+  counts : Map[String, Int]
+  unexecuted : Array[String]
+  complete : Bool
+  integrity_verified : Bool
+  cases : Array[CaseResult]
+} derive(@json.FromJson, ToJson)
+
+///|
+fn require(value : Bool, reason : String) -> Unit raise {
+  if !value {
+    fail(reason)
+  }
+}
+
+///|
+fn digest(data : Bytes) -> String {
+  @crypto.bytes_to_hex_string(@crypto.sha256(data))
+}
+
+///|
+fn valid_hex(value : String, length : Int) -> Bool {
+  value.length() == length &&
+  value.iter().all(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
+}
+
+///|
+fn complete_text(value : String) -> Bool {
+  !value.is_empty() && !value.contains("REPLACE_")
+}
+
+///|
+fn absolute_path(value : String) -> Bool {
+  value.has_prefix("/") ||
+  value.has_prefix("\\\\") ||
+  (
+    value.length() >= 3 &&
+    value[1] == ':' &&
+    (
+      (value[0] >= 'A' && value[0] <= 'Z') ||
+      (value[0] >= 'a' && value[0] <= 'z')
+    ) &&
+    (value[2] == '\\' || value[2] == '/')
+  )
+}
+
+///|
+fn windows_absolute(value : String) -> Bool {
+  let value = value.replace_all(old="\\", new="/")
+  if value.length() >= 3 &&
+    value[1] == ':' &&
+    value[2] == '/' &&
+    (
+      (value[0] >= 'A' && value[0] <= 'Z') ||
+      (value[0] >= 'a' && value[0] <= 'z')
+    ) {
+    return true
+  }
+  if value.has_prefix("//") {
+    let parts = value.split("/").to_array()
+    return parts.length() >= 4 &&
+      parts[2] != "" &&
+      parts[3] != "" &&
+      parts[2] != "." &&
+      parts[2] != ".." &&
+      parts[2] != "?" &&
+      parts[3] != "." &&
+      parts[3] != ".."
+  }
+  false
+}
+
+///|
+fn known_capability(capability : String) -> Bool {
+  [
+    "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
+    "windows-cwd", "drive-cwd-c",
+  ].contains(capability)
+}
+
+///|
+fn safe_relative(value : String) -> Bool {
+  !value.is_empty() &&
+  !absolute_path(value) &&
+  !value.contains("\\") &&
+  !value.contains(":") &&
+  value.split("/").all(part => part != "" && part != "." && part != "..")
+}
+
+///|
+fn validate_profile(profile : String) -> Unit raise {
+  require(
+    profile == "cygwin" || profile == "msys2",
+    "unknown profile: " + profile,
+  )
+}
+
+///|
+fn validate_artifact(artifact : Artifact) -> Unit raise {
+  require(
+    windows_absolute(artifact.path),
+    "artifact path must be drive-absolute or complete UNC",
+  )
+  require(
+    valid_hex(artifact.sha256, 64),
+    "artifact SHA-256 must be lowercase hexadecimal",
+  )
+}
+
+///|
+fn validate_manifest(manifest : Manifest) -> Unit raise {
+  require(manifest.schema_version == 1, "unsupported manifest schema_version")
+  validate_profile(manifest.profile)
+  require(
+    manifest.context.profile == manifest.profile,
+    "context profile differs from manifest",
+  )
+  require(
+    manifest.host.os == "windows",
+    "oracle runs require a Windows host manifest",
+  )
+  require(
+    manifest.host.launch_method == "direct-process-argv",
+    "shell launch is unsupported",
+  )
+  require(
+    manifest.host.io_mode == "redirected-binary",
+    "oracle collection requires redirected bytes",
+  )
+  require(
+    windows_absolute(manifest.cwd),
+    "cwd must be drive-absolute or complete UNC",
+  )
+  require(
+    windows_absolute(manifest.host.installation_root),
+    "installation_root must be drive-absolute or complete UNC",
+  )
+  require(
+    manifest.deadline_ms > 0 && manifest.deadline_ms <= 60000,
+    "deadline_ms must be 1..60000",
+  )
+  require(
+    manifest.project.backend == "wasm" || manifest.project.backend == "native",
+    "unknown backend",
+  )
+  require(
+    manifest.project.build_mode == "debug" ||
+    manifest.project.build_mode == "release",
+    "unknown build_mode",
+  )
+  require(
+    valid_hex(manifest.project.git_sha, 40),
+    "project git_sha must be a full commit SHA",
+  )
+  require(
+    manifest.context.drive_prefix == manifest.host.cygdrive_prefix,
+    "cygdrive mapping differs from host snapshot",
+  )
+  require(
+    manifest.context.drive_prefix.has_prefix("/"),
+    "drive_prefix must be POSIX absolute",
+  )
+  require(!manifest.capabilities.is_empty(), "capabilities must be explicit")
+  require(
+    manifest.capabilities.all(known_capability),
+    "unknown manifest capability",
+  )
+  for
+    text in [
+      manifest.upstream.source_url,
+      manifest.upstream.source_revision,
+      manifest.upstream.distribution_version,
+      manifest.upstream.runtime_version,
+      manifest.project.module_version,
+      manifest.project.moon_version,
+      manifest.host.os_version,
+      manifest.host.architecture,
+      manifest.host.filesystem,
+      manifest.host.installation_root,
+      manifest.host.current_drive,
+      manifest.host.mount_table,
+      manifest.host.existence_permissions,
+      manifest.host.locale,
+      manifest.host.input_code_page,
+      manifest.host.output_code_page,
+      manifest.host.long_path_policy,
+      manifest.host.short_name_policy,
+      manifest.host.test_volume,
+      manifest.host.actual_short_names,
+      manifest.host.symlinks_junctions,
+      manifest.context_mapping_evidence,
+    ] {
+    require(
+      complete_text(text),
+      "manifest contains missing or REPLACE_ metadata",
+    )
+  }
+  validate_artifact(manifest.upstream.executable)
+  validate_artifact(manifest.upstream.runtime_library)
+  validate_artifact(manifest.project.artifact)
+  validate_artifact(manifest.project.launcher)
+  if manifest.project.backend == "native" {
+    require(
+      manifest.project.launcher.path == manifest.project.artifact.path &&
+      manifest.project.launcher.sha256 == manifest.project.artifact.sha256,
+      "native launcher must be the project artifact itself",
+    )
+  }
+  require(
+    valid_hex(manifest.upstream.version_stdout_sha256, 64) &&
+    valid_hex(manifest.upstream.version_stderr_sha256, 64),
+    "version output hashes are required",
+  )
+  for key in manifest.cleared_environment {
+    require(
+      !manifest.environment.contains(key),
+      "environment both sets and clears " + key,
+    )
+  }
+  for key, value in manifest.environment {
+    require(
+      !key.is_empty() &&
+      !key.contains("=") &&
+      !key.contains("\u0000") &&
+      !value.contains("\u0000"),
+      "invalid environment entry",
+    )
+  }
+  for mount in manifest.context.mounts {
+    require(
+      mount.case_policy == "sensitive",
+      "CLI mapping supports sensitive mounts only",
+    )
+    require(
+      mount.posix.has_prefix("/") && windows_absolute(mount.windows),
+      "invalid mount mapping",
+    )
+  }
+}
+
+///|
+fn case_available(fixture : Fixture, manifest : Manifest) -> Bool {
+  fixture.allowed_backends.contains(manifest.project.backend) &&
+  fixture.required_capabilities.all(cap => {
+    manifest.capabilities.contains(cap) &&
+    (match cap {
+      "root-mount" => manifest.context.mounts.any(mount => mount.posix == "/")
+      "usr-bin-mount" =>
+        manifest.context.mounts.any(mount => mount.posix == "/usr/bin")
+      "posix-cwd" => manifest.context.posix_cwd is Some(_)
+      "windows-cwd" => manifest.context.windows_cwd is Some(_)
+      "drive-cwd-c" =>
+        manifest.context.drive_cwds.contains("C") ||
+        manifest.context.drive_cwds.contains("c")
+      _ => true
+    })
+  })
+}
+
+///|
+fn expand_arg(arg : String, manifest : Manifest) -> String {
+  arg.replace_all(
+    old="{installation_root}",
+    new=manifest.host.installation_root,
+  )
+}
+
+///|
+fn validate_suite(suite : Suite, manifest : Manifest) -> Unit raise {
+  require(
+    suite.schema_version == 1 && suite.validation_kind == "official-comparison",
+    "unsupported fixture schema or validation_kind",
+  )
+  require(
+    suite.profiles.contains(manifest.profile),
+    "fixtures do not support selected profile",
+  )
+  require(
+    complete_text(suite.source_url) && complete_text(suite.source_revision),
+    "fixture provenance is required",
+  )
+  require(!suite.cases.is_empty(), "fixture suite cannot be empty")
+  let ids : Map[String, Bool] = Map([])
+  for fixture in suite.cases {
+    require(
+      !fixture.case_id.is_empty() &&
+      fixture.case_id
+      .iter()
+      .all(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'),
+      "unsafe case_id",
+    )
+    require(
+      !ids.contains(fixture.case_id),
+      "duplicate case_id: " + fixture.case_id,
+    )
+    ids[fixture.case_id] = true
+    require(complete_text(fixture.category), "fixture category is required")
+    require(
+      fixture.source_type == "windows" || fixture.source_type == "posix",
+      "unknown source_type",
+    )
+    require(
+      fixture.directory_preparation == "none-read-only",
+      "fixture preparation is not implemented",
+    )
+    require(
+      fixture.required_capabilities.all(known_capability),
+      "unknown fixture capability",
+    )
+    require(
+      !fixture.allowed_backends.is_empty() &&
+      fixture.allowed_backends.all(backend => {
+        backend == "wasm" || backend == "native"
+      }),
+      "unknown fixture backend",
+    )
+    require(
+      !fixture.required || case_available(fixture, manifest),
+      "required fixture capability unavailable: " + fixture.case_id,
+    )
+    ignore(@hex.decode(fixture.stdin_hex))
+    for args in [fixture.upstream_argv, fixture.project_argv] {
+      for arg in args {
+        require(!arg.contains("\u0000"), "argv contains NUL")
+        let expanded = expand_arg(arg, manifest)
+        require(
+          !expanded.contains("{") && !expanded.contains("}"),
+          "unknown fixture template token",
+        )
+      }
+    }
+    // The manifest owns the source context. Fixtures cannot silently override it.
+    for arg in fixture.project_argv {
+      require(
+        ![
+          "--profile", "--root", "--mount", "--drive-prefix", "--posix-cwd", "--windows-cwd",
+          "--drive-cwd", "--from",
+        ].any(option => arg == option || arg.has_prefix(option + "=")),
+        "fixture overrides explicit context",
+      )
+    }
+  }
+}
+
+///|
+async fn verify_artifact(artifact : Artifact) -> Unit {
+  validate_artifact(artifact)
+  require(
+    digest(@fs.read_file(artifact.path).binary()) == artifact.sha256,
+    "artifact digest mismatch: " + artifact.path,
+  )
+}
+
+///|
+async fn verify_host(manifest : Manifest) -> Unit {
+  require(
+    @async.platform is Windows,
+    "official collection/replay must execute on actual Windows",
+  )
+  require(
+    @fs.kind(manifest.cwd) is Directory,
+    "manifest cwd is not a directory",
+  )
+  verify_artifact(manifest.upstream.executable)
+  verify_artifact(manifest.upstream.runtime_library)
+  verify_artifact(manifest.project.artifact)
+  verify_artifact(manifest.project.launcher)
+}
+
+///|
+fn context_args(context : CoreContext) -> Array[String] {
+  let args = [
+    "--profile",
+    context.profile,
+    "--drive-prefix",
+    context.drive_prefix,
+  ]
+  for mount in context.mounts {
+    args.push("--mount")
+    args.push(mount.posix)
+    args.push(mount.windows)
+  }
+  if context.posix_cwd is Some(cwd) {
+    args.push("--posix-cwd")
+    args.push(cwd)
+  }
+  if context.windows_cwd is Some(cwd) {
+    args.push("--windows-cwd")
+    args.push(cwd)
+  }
+  for drive, cwd in context.drive_cwds {
+    args.push("--drive-cwd")
+    args.push(drive)
+    args.push(cwd)
+  }
+  args
+}
+
+///|
+async fn write_blob(directory : String, path : String, bytes : Bytes) -> Blob {
+  require(safe_relative(path), "unsafe evidence-relative path")
+  @fs.write_file(directory + "/" + path, bytes, create_mode=CreateNew)
+  { path, length: bytes.length(), sha256: digest(bytes), }
+}
+
+///|
+async fn read_blob(directory : String, blob : Blob) -> Bytes {
+  require(safe_relative(blob.path), "unsafe evidence-relative path")
+  let bytes = @fs.read_file(directory + "/" + blob.path).binary()
+  require(
+    bytes.length() == blob.length && digest(bytes) == blob.sha256,
+    "evidence digest/length mismatch: " + blob.path,
+  )
+  bytes
+}
+
+///|
+async fn blob_from_file(directory : String, path : String) -> Blob {
+  let bytes = @fs.read_file(directory + "/" + path).binary()
+  { path, length: bytes.length(), sha256: digest(bytes), }
+}
+
+///|
+async fn execute(
+  directory : String,
+  base : String,
+  program : String,
+  argv : Array[String],
+  manifest : Manifest,
+  input : Blob,
+) -> Observation {
+  @fs.mkdir(directory + "/" + base)
+  let stdout_path = base + "/stdout.bin"
+  let stderr_path = base + "/stderr.bin"
+  let start_unix_ms = @env.now()
+  let start = @async.now()
+  let mut code : Int? = None
+  let mut status = "completed"
+  let mut reason : String? = None
+  let mut termination : String? = None
+  try
+    @async.with_task_group() <| group => {
+      let child = @process.spawn(
+        group,
+        program,
+        argv,
+        cwd=manifest.cwd,
+        extra_env=manifest.environment,
+        inherit_env=false,
+        stdin=@process.redirect_from_file(directory + "/" + input.path),
+        stdout=@process.redirect_to_file(
+          directory + "/" + stdout_path,
+          create_mode=CreateNew,
+        ),
+        stderr=@process.redirect_to_file(
+          directory + "/" + stderr_path,
+          create_mode=CreateNew,
+        ),
+        cancel_handler=@process.hard_cancel(),
+      )
+      match @async.with_timeout_opt(manifest.deadline_ms, () => child.wait()) {
+        Some(result) => code = Some(result)
+        None => {
+          status = "timeout"
+          reason = Some("process exceeded the fixed deadline")
+          termination = Some("hard-cancel-requested")
+          child.cancel()
+          code = Some(child.wait())
+        }
+      }
+    }
+  catch {
+    error => {
+      // The status remains timeout if cancellation itself reports a failure.
+      if status != "timeout" {
+        status = "error"
+      }
+      reason = Some(error.to_string())
+    }
+  }
+  // Preserve bytes even on timeout/spawn failure; do not use collect_output,
+  // which cannot return its in-memory partial data after cancellation.
+  for path in [stdout_path, stderr_path] {
+    if !@fs.exists(directory + "/" + path) {
+      ignore(write_blob(directory, path, b""))
+    }
+  }
+  {
+    execution_status: status,
+    reason,
+    program,
+    argv,
+    cwd: manifest.cwd,
+    environment: manifest.environment,
+    inherit_env: false,
+    start_unix_ms,
+    elapsed_ms: @async.now() - start,
+    deadline_ms: manifest.deadline_ms,
+    exit_code: code,
+    termination,
+    stdin: input,
+    stdout: blob_from_file(directory, stdout_path),
+    stderr: blob_from_file(directory, stderr_path),
+  }
+}
+
+///|
+fn comparison(
+  oracle : Observation?,
+  project : Observation?,
+) -> (String, String?) {
+  match (oracle, project) {
+    (Some(oracle), Some(project)) =>
+      if oracle.execution_status == "timeout" ||
+        project.execution_status == "timeout" {
+        ("timeout", Some("at least one process exceeded its deadline"))
+      } else if oracle.execution_status != "completed" ||
+        project.execution_status != "completed" {
+        ("error", Some("at least one process failed to execute"))
+      } else if oracle.exit_code is None || project.exit_code is None {
+        ("error", Some("completed process is missing an exit code"))
+      } else if oracle.exit_code == project.exit_code &&
+        oracle.stdout.length == project.stdout.length &&
+        oracle.stdout.sha256 == project.stdout.sha256 &&
+        oracle.stderr.length == project.stderr.length &&
+        oracle.stderr.sha256 == project.stderr.sha256 {
+        ("pass", None)
+      } else {
+        ("fail", Some("raw stdout, stderr, or integer exit status differs"))
+      }
+    _ => ("error", Some("an observation without a comparison is not a pass"))
+  }
+}
+
+///|
+async fn write_run(directory : String, run : Run) -> Unit {
+  // Only this summary is updated during the run. Input and stream blobs are
+  // CreateNew and never overwritten, including by replay.
+  @fs.write_file(
+    directory + "/run.json",
+    @json.to_json(run).stringify(indent=2),
+  )
+}
+
+///|
+fn summarize(
+  mode : String,
+  manifest : Manifest,
+  manifest_blob : Blob,
+  fixtures_blob : Blob,
+  suite : Suite,
+  results : Array[CaseResult],
+  version : Observation?,
+  source_run : Blob?,
+) -> Run {
+  let counts : Map[String, Int] = {
+    "pass": 0,
+    "fail": 0,
+    "skip": 0,
+    "error": 0,
+    "timeout": 0,
+  }
+  let seen : Map[String, Bool] = Map([])
+  let mut executed = 0
+  for result in results {
+    counts[result.status] = counts.get(result.status).unwrap_or(0) + 1
+    seen[result.case_id] = true
+    if result.oracle is Some(_) || result.project is Some(_) {
+      executed += 1
+    }
+  }
+  let unexecuted = suite.cases
+    .filter(fixture => !seen.contains(fixture.case_id))
+    .map(fixture => fixture.case_id)
+  {
+    schema_version: 1,
+    mode,
+    validation_kind: "official-comparison",
+    profile: manifest.profile,
+    manifest: manifest_blob,
+    fixtures: fixtures_blob,
+    source_run,
+    upstream_version: version,
+    planned: suite.cases.length(),
+    executed,
+    counts,
+    complete: unexecuted.is_empty(),
+    integrity_verified: false,
+    unexecuted,
+    cases: results.copy(),
+  }
+}
+
+///|
+async fn project_observation(
+  directory : String,
+  fixture : Fixture,
+  manifest : Manifest,
+  input : Blob,
+) -> Observation {
+  let prefix = if manifest.project.backend == "wasm" {
+    [manifest.project.artifact.path, "--"]
+  } else {
+    []
+  }
+  execute(
+    directory,
+    fixture.case_id + "/project",
+    manifest.project.launcher.path,
+    prefix +
+    context_args(manifest.context) +
+    ["--from", fixture.source_type] +
+    fixture.project_argv.map(arg => expand_arg(arg, manifest)),
+    manifest,
+    input,
+  )
+}
+
+///|
+async fn collect(
+  manifest_path : String,
+  fixtures_path : String,
+  output : String,
+) -> Unit {
+  let manifest_bytes = @fs.read_file(manifest_path).binary()
+  let manifest : Manifest = @json.from_json(
+    @json.parse(@utf8.decode(manifest_bytes)),
+  )
+  validate_manifest(manifest)
+  let fixture_bytes = @fs.read_file(fixtures_path).binary()
+  let suite : Suite = @json.from_json(@json.parse(@utf8.decode(fixture_bytes)))
+  validate_suite(suite, manifest)
+  verify_host(manifest)
+  // mkdir without allow_exist atomically refuses an existing evidence directory.
+  @fs.mkdir(output)
+  let output = @fs.realpath(output)
+  let manifest_blob = write_blob(output, "manifest.json", manifest_bytes)
+  let fixtures_blob = write_blob(output, "fixtures.json", fixture_bytes)
+  let empty = write_blob(output, "version-stdin.bin", b"")
+  let results : Array[CaseResult] = []
+  let version = execute(
+    output,
+    "upstream-version",
+    manifest.upstream.executable.path,
+    ["--version"],
+    manifest,
+    empty,
+  )
+  write_run(
+    output,
+    summarize(
+      "collect",
+      manifest,
+      manifest_blob,
+      fixtures_blob,
+      suite,
+      results,
+      Some(version),
+      None,
+    ),
+  )
+  require(
+    version.execution_status == "completed" &&
+    version.exit_code == Some(manifest.upstream.version_exit_code) &&
+    version.stdout.sha256 == manifest.upstream.version_stdout_sha256 &&
+    version.stderr.sha256 == manifest.upstream.version_stderr_sha256,
+    "upstream --version does not match the pinned bytes/status; no cases executed",
+  )
+  for fixture in suite.cases {
+    if !case_available(fixture, manifest) {
+      results.push({
+        case_id: fixture.case_id,
+        status: "skip",
+        reason: Some("optional fixture capabilities/backend unavailable"),
+        known_difference_id: fixture.known_difference_id,
+        oracle: None,
+        project: None,
+      })
+    } else {
+      @fs.mkdir(output + "/" + fixture.case_id)
+      let input = write_blob(
+        output,
+        fixture.case_id + "/stdin.bin",
+        @hex.decode(fixture.stdin_hex),
+      )
+      let oracle = execute(
+        output,
+        fixture.case_id + "/oracle",
+        manifest.upstream.executable.path,
+        fixture.upstream_argv.map(arg => expand_arg(arg, manifest)),
+        manifest,
+        input,
+      )
+      let project = if oracle.execution_status == "completed" {
+        Some(project_observation(output, fixture, manifest, input))
+      } else {
+        None
+      }
+      let (status, reason) = if oracle.execution_status == "timeout" {
+        ("timeout", oracle.reason)
+      } else if oracle.execution_status == "error" {
+        ("error", oracle.reason)
+      } else {
+        comparison(Some(oracle), project)
+      }
+      results.push({
+        case_id: fixture.case_id,
+        status,
+        reason,
+        known_difference_id: fixture.known_difference_id,
+        oracle: Some(oracle),
+        project,
+      })
+    }
+    write_run(
+      output,
+      summarize(
+        "collect",
+        manifest,
+        manifest_blob,
+        fixtures_blob,
+        suite,
+        results,
+        Some(version),
+        None,
+      ),
+    )
+  }
+  verify_host(manifest)
+  let run = summarize(
+    "collect",
+    manifest,
+    manifest_blob,
+    fixtures_blob,
+    suite,
+    results,
+    Some(version),
+    None,
+  )
+  write_run(output, { ..run, integrity_verified: true, })
+  require(
+    run.counts.get("pass") == Some(run.planned),
+    "collection contains non-pass outcomes; inspect run.json",
+  )
+}
+
+///|
+async fn verify_observation(
+  directory : String,
+  observation : Observation,
+) -> Unit {
+  ignore(read_blob(directory, observation.stdin))
+  ignore(read_blob(directory, observation.stdout))
+  ignore(read_blob(directory, observation.stderr))
+}
+
+///|
+async fn replay(
+  manifest_path : String,
+  oracle_directory : String,
+  output : String,
+) -> Unit {
+  let run_bytes = @fs.read_file(oracle_directory + "/run.json").binary()
+  let old : Run = @json.from_json(@json.parse(@utf8.decode(run_bytes)))
+  require(
+    old.schema_version == 1 &&
+    old.mode == "collect" &&
+    old.validation_kind == "official-comparison",
+    "replay requires an original collect run",
+  )
+  let original : Manifest = @json.from_json(
+    @json.parse(@utf8.decode(read_blob(oracle_directory, old.manifest))),
+  )
+  validate_manifest(original)
+  require(
+    old.profile == original.profile,
+    "source run profile differs from manifest",
+  )
+  require(
+    old.integrity_verified,
+    "source collection did not complete final integrity verification",
+  )
+  let fixture_bytes = read_blob(oracle_directory, old.fixtures)
+  let suite : Suite = @json.from_json(@json.parse(@utf8.decode(fixture_bytes)))
+  let manifest_bytes = @fs.read_file(manifest_path).binary()
+  let manifest : Manifest = @json.from_json(
+    @json.parse(@utf8.decode(manifest_bytes)),
+  )
+  validate_manifest(manifest)
+  validate_suite(suite, manifest)
+  require(
+    @json.to_json(original.host) == @json.to_json(manifest.host) &&
+    @json.to_json(original.upstream) == @json.to_json(manifest.upstream) &&
+    @json.to_json(original.context) == @json.to_json(manifest.context) &&
+    original.profile == manifest.profile &&
+    original.cwd == manifest.cwd &&
+    @json.to_json(original.environment) == @json.to_json(manifest.environment),
+    "replay changed the official environment/context; collect a new baseline",
+  )
+  verify_host(manifest)
+  guard old.upstream_version is Some(version) else {
+    fail("source collection lacks its version observation")
+  }
+  verify_observation(oracle_directory, version)
+  require(
+    version.execution_status == "completed" &&
+    version.exit_code == Some(original.upstream.version_exit_code) &&
+    version.stdout.sha256 == original.upstream.version_stdout_sha256 &&
+    version.stderr.sha256 == original.upstream.version_stderr_sha256,
+    "source version observation does not match the pinned upstream",
+  )
+  let observations : Map[String, Observation] = Map([])
+  let ids : Map[String, Bool] = Map([])
+  for result in old.cases {
+    require(!ids.contains(result.case_id), "duplicate oracle case result")
+    ids[result.case_id] = true
+    if result.oracle is Some(oracle) {
+      verify_observation(oracle_directory, oracle)
+      observations[result.case_id] = oracle
+    }
+  }
+  for fixture in suite.cases {
+    require(
+      !fixture.required || observations.contains(fixture.case_id),
+      "required oracle observation is absent",
+    )
+    if observations.get(fixture.case_id) is Some(oracle) {
+      require(
+        oracle.program == original.upstream.executable.path &&
+        oracle.argv ==
+        fixture.upstream_argv.map(arg => expand_arg(arg, original)) &&
+        oracle.cwd == original.cwd &&
+        !oracle.inherit_env &&
+        @json.to_json(oracle.environment) == @json.to_json(original.environment) &&
+        oracle.stdin.sha256 == digest(@hex.decode(fixture.stdin_hex)),
+        "stored oracle command/input differs from its fixture or manifest",
+      )
+    }
+  }
+  @fs.mkdir(output)
+  let output = @fs.realpath(output)
+  let manifest_blob = write_blob(output, "manifest.json", manifest_bytes)
+  let fixtures_blob = write_blob(output, "fixtures.json", fixture_bytes)
+  let source_run = write_blob(output, "source-run.json", run_bytes)
+  let results : Array[CaseResult] = []
+  write_run(
+    output,
+    summarize(
+      "replay",
+      manifest,
+      manifest_blob,
+      fixtures_blob,
+      suite,
+      results,
+      None,
+      Some(source_run),
+    ),
+  )
+  for fixture in suite.cases {
+    match observations.get(fixture.case_id) {
+      Some(oracle) if case_available(fixture, manifest) => {
+        @fs.mkdir(output + "/" + fixture.case_id)
+        // Copy verified oracle bytes into a separate, immutable replay subtree;
+        // every Blob remains relative to this new evidence directory.
+        @fs.mkdir(output + "/" + fixture.case_id + "/oracle")
+        let input = write_blob(
+          output,
+          fixture.case_id + "/stdin.bin",
+          read_blob(oracle_directory, oracle.stdin),
+        )
+        require(
+          input.sha256 == digest(@hex.decode(fixture.stdin_hex)),
+          "oracle input differs from immutable fixture",
+        )
+        let stdout = write_blob(
+          output,
+          fixture.case_id + "/oracle/stdout.bin",
+          read_blob(oracle_directory, oracle.stdout),
+        )
+        let stderr = write_blob(
+          output,
+          fixture.case_id + "/oracle/stderr.bin",
+          read_blob(oracle_directory, oracle.stderr),
+        )
+        let oracle = { ..oracle, stdin: input, stdout, stderr, }
+        let project = project_observation(output, fixture, manifest, input)
+        let (status, reason) = comparison(Some(oracle), Some(project))
+        results.push({
+          case_id: fixture.case_id,
+          status,
+          reason,
+          known_difference_id: fixture.known_difference_id,
+          oracle: Some(oracle),
+          project: Some(project),
+        })
+      }
+      _ =>
+        results.push({
+          case_id: fixture.case_id,
+          status: "skip",
+          reason: Some("optional fixture or captured oracle unavailable"),
+          known_difference_id: fixture.known_difference_id,
+          oracle: None,
+          project: None,
+        })
+    }
+    write_run(
+      output,
+      summarize(
+        "replay",
+        manifest,
+        manifest_blob,
+        fixtures_blob,
+        suite,
+        results,
+        None,
+        Some(source_run),
+      ),
+    )
+  }
+  verify_host(manifest)
+  let run = summarize(
+    "replay",
+    manifest,
+    manifest_blob,
+    fixtures_blob,
+    suite,
+    results,
+    None,
+    Some(source_run),
+  )
+  write_run(output, { ..run, integrity_verified: true, })
+  require(
+    run.counts.get("pass") == Some(run.planned),
+    "replay contains non-pass outcomes; inspect run.json",
+  )
+}
+
+///|
+fn expect_failure(action : () -> Unit raise) -> Unit raise {
+  try action() catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected preflight rejection")
+  }
+}
+
+///|
+fn[T : ToJson + @json.FromJson] check_json_roundtrip(value : T) -> Unit raise {
+  let encoded = @json.to_json(value)
+  let decoded : T = @json.from_json(@json.parse(encoded.stringify()))
+  require(
+    @json.to_json(decoded) == encoded,
+    "evidence JSON round-trip changed its contents",
+  )
+}
+
+///|
+async fn self_test() -> Unit {
+  // Synthetic mechanics tests are deliberately not official observations.
+  assert_eq(
+    digest(b"abc"),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+  )
+  expect_failure(() => validate_profile("other"))
+  expect_failure(() => validate_artifact({ path: "cygpath", sha256: "bad", }))
+  require(
+    windows_absolute("C:/tools/cygpath.exe") &&
+    windows_absolute("\\\\server\\share\\cygpath.exe"),
+    "full Windows path rejected",
+  )
+  require(
+    !windows_absolute("/tools/cygpath.exe") &&
+    !windows_absolute("C:cygpath.exe") &&
+    !windows_absolute("\\tools\\cygpath.exe") &&
+    !windows_absolute("\\\\server\\"),
+    "ambiguous Windows artifact path accepted",
+  )
+  expect_failure(() => {
+    let _ : Manifest = @json.from_json({ "schema_version": 1 })
+  })
+  require(
+    !safe_relative("../escape") &&
+    !safe_relative("C:/escape") &&
+    !safe_relative("/escape"),
+    "unsafe evidence path accepted",
+  )
+  require(
+    !safe_relative("a//b") && safe_relative("case/oracle/stdout.bin"),
+    "relative path validation",
+  )
+  // Parse every checked-in fixture through the actual schema and preflight.
+  // The synthetic manifest is never passed to process execution/verify_host.
+  let template_json = @json.parse(
+    @fs.read_file("testdata/oracle/environment.example.json").text(),
+  )
+  let placeholder_free = template_json.transform(
+    @json.Replacer((_, value) => {
+      match value {
+        String(text) =>
+          Some(Json::string(text.replace_all(old="REPLACE_", new="SYNTHETIC_")))
+        _ => Some(value)
+      }
+    }),
+  )
+  let template : Manifest = @json.from_json(placeholder_free)
+  let zero_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+  let project_artifact : Artifact = {
+    path: "C:/synthetic/cygpath.wasm",
+    sha256: zero_hash,
+  }
+  let synthetic : Manifest = {
+    ..template,
+    upstream: {
+      ..template.upstream,
+      executable: { path: "C:/synthetic/cygpath.exe", sha256: zero_hash, },
+      runtime_library: { path: "C:/synthetic/cygwin1.dll", sha256: zero_hash, },
+      version_stdout_sha256: digest(b""),
+      version_stderr_sha256: digest(b""),
+    },
+    project: {
+      ..template.project,
+      artifact: project_artifact,
+      launcher: { path: "C:/synthetic/moonrun.exe", sha256: zero_hash, },
+      git_sha: "0000000000000000000000000000000000000000",
+    },
+    capabilities: [
+      "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
+      "windows-cwd", "drive-cwd-c",
+    ],
+    context: {
+      ..template.context,
+      mounts: [
+        { posix: "/", windows: "C:/cygwin64", case_policy: "sensitive", },
+        {
+          posix: "/usr/bin",
+          windows: "C:/cygwin64/bin",
+          case_policy: "sensitive",
+        },
+      ],
+    },
+  }
+  validate_manifest(synthetic)
+  check_json_roundtrip(synthetic)
+  let absent_context : CoreContext = {
+    ..synthetic.context,
+    posix_cwd: None,
+    windows_cwd: None,
+  }
+  check_json_roundtrip(absent_context)
+  guard @json.to_json(absent_context) is Object(context_fields) else {
+    fail("Context must encode as a JSON object")
+  }
+  require(
+    !context_fields.contains("posix_cwd") &&
+    !context_fields.contains("windows_cwd"),
+    "absent Context cwd must be omitted, not null",
+  )
+  expect_failure(() => {
+    validate_manifest({ ..synthetic, capabilities: ["typo"], })
+  })
+  let mut planned_inputs = 0
+  for
+    path in [
+      "testdata/oracle/fixtures.cygwin.json", "testdata/oracle/fixtures.msys2.json",
+      "testdata/oracle/fixtures.readonly-matrix.json",
+    ] {
+    let suite : Suite = @json.from_json(@json.parse(@fs.read_file(path).text()))
+    check_json_roundtrip(suite)
+    for profile in suite.profiles {
+      let prefix = if profile == "cygwin" { "/cygdrive" } else { "/" }
+      let manifest : Manifest = {
+        ..synthetic,
+        profile,
+        host: { ..synthetic.host, cygdrive_prefix: prefix, },
+        context: { ..synthetic.context, profile, drive_prefix: prefix, },
+      }
+      validate_manifest(manifest)
+      validate_suite(suite, manifest)
+      let first = suite.cases[0]
+      expect_failure(() => {
+        validate_suite(
+          { ..suite, cases: [{ ..first, required_capabilities: ["typo"], }], },
+          manifest,
+        )
+      })
+      expect_failure(() => {
+        validate_suite(
+          {
+            ..suite,
+            cases: [{ ..first, project_argv: ["{misspelled_token}"], }],
+          },
+          manifest,
+        )
+      })
+      planned_inputs += suite.cases.length()
+    }
+  }
+  let empty : Blob = { path: "stdin.bin", length: 0, sha256: digest(b""), }
+  let observation : Observation = {
+    execution_status: "completed",
+    reason: None,
+    program: "/synthetic",
+    argv: [],
+    cwd: "/synthetic",
+    environment: Map([]),
+    inherit_env: false,
+    start_unix_ms: 0UL,
+    elapsed_ms: 0L,
+    deadline_ms: 100,
+    exit_code: Some(0),
+    termination: None,
+    stdin: empty,
+    stdout: empty,
+    stderr: empty,
+  }
+  check_json_roundtrip(observation)
+  check_json_roundtrip({ ..observation, exit_code: None, })
+  guard @json.to_json(observation) is Object(observation_fields) else {
+    fail("Observation must encode as a JSON object")
+  }
+  require(
+    !observation_fields.contains("reason") &&
+    !observation_fields.contains("termination"),
+    "absent observation fields must be omitted, not null",
+  )
+  let sample_suite : Suite = @json.from_json(
+    @json.parse(@fs.read_file("testdata/oracle/fixtures.cygwin.json").text()),
+  )
+  let sample_result : CaseResult = {
+    case_id: sample_suite.cases[0].case_id,
+    status: "pass",
+    reason: None,
+    known_difference_id: None,
+    oracle: Some(observation),
+    project: Some(observation),
+  }
+  check_json_roundtrip(
+    summarize(
+      "collect",
+      synthetic,
+      empty,
+      empty,
+      sample_suite,
+      [sample_result],
+      Some(observation),
+      None,
+    ),
+  )
+  assert_eq(comparison(Some(observation), Some(observation)).0, "pass")
+  assert_eq(comparison(Some(observation), None).0, "error")
+  assert_eq(
+    comparison(Some(observation), Some({ ..observation, exit_code: Some(2), })).0,
+    "fail",
+  )
+  assert_eq(
+    comparison(
+      Some(observation),
+      Some({ ..observation, execution_status: "timeout", }),
+    ).0,
+    "timeout",
+  )
+  assert_eq(
+    comparison(
+      Some(observation),
+      Some({ ..observation, execution_status: "error", }),
+    ).0,
+    "error",
+  )
+  assert_eq(
+    comparison(Some(observation), Some({ ..observation, exit_code: None, })).0,
+    "error",
+  )
+  assert_eq(
+    comparison(
+      Some(observation),
+      Some({ ..observation, stderr: { ..empty, length: 1, }, }),
+    ).0,
+    "fail",
+  )
+  let directory = @fs.tmpdir(prefix="cygpath-oracle-self-test-")
+  let blob = write_blob(directory, "proof.bin", b"\x00\xff\r\n")
+  assert_eq(read_blob(directory, blob), b"\x00\xff\r\n")
+  try read_blob(directory, { ..blob, sha256: digest(b"tampered"), }) catch {
+    _ => ()
+  } noraise {
+    _ => fail("modified evidence digest was accepted")
+  }
+  try write_blob(directory, "proof.bin", b"overwritten") catch {
+    _ => ()
+  } noraise {
+    _ => fail("immutable evidence was overwritten")
+  }
+  assert_eq(read_blob(directory, blob), b"\x00\xff\r\n")
+  println(
+    "oracle mechanics self-test passed; no Windows compatibility was tested",
+  )
+  println("typed fixture/profile inputs validated: \{planned_inputs}")
+  println("synthetic raw evidence: " + directory)
+}
+
+///|
+async fn main {
+  try {
+    match @env.args()[1:] {
+      ["self-test"] => self_test()
+      ["collect", manifest, fixtures, output] =>
+        collect(manifest, fixtures, output)
+      ["replay", manifest, oracle, output] => replay(manifest, oracle, output)
+      _ =>
+        fail(
+          "usage: oracle.mbtx self-test | collect MANIFEST FIXTURES NEW_OUT | replay MANIFEST ORACLE_DIR NEW_OUT",
+        )
+    }
+  } catch {
+    error => {
+      @stdio.stderr.write("oracle: " + error.to_string() + "\n") catch {
+        _ => ()
+      }
+      @sys.exit(1)
+    }
+  }
+}

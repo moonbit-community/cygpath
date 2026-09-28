@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ZSeanYves/cygpath/internal/host"
+
+// Values
+pub fn args() -> Array[String]
+
+pub fn exit(Int) -> Unit
+
+pub async fn stream_file(String, async (String) -> Unit) -> Int
+
+pub async fn write_stderr(String) -> Unit
+
+pub async fn write_stdout(String) -> Unit
+
+// Errors
+pub(all) suberror HostError {
+  ReadError(source~ : String)
+  WriteError(stream~ : String)
+  InvalidEncoding(source~ : String, line~ : Int)
+}
+pub fn HostError::diagnostic(Self) -> String
+pub fn HostError::exit_code(Self) -> Int
+
+// Types and methods
+
+// Type aliases
+
+// Traits

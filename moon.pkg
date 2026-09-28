@@ -1,0 +1,9 @@
+import {
+  "ZSeanYves/cygpath/internal/cli",
+  "ZSeanYves/cygpath/internal/host",
+  "moonbitlang/async",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "+wasm+native"

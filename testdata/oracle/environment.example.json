@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "profile": "cygwin",
+  "upstream": {
+    "executable": {"path": "C:/cygwin64/bin/cygpath.exe", "sha256": "REPLACE_SHA256"},
+    "runtime_library": {"path": "C:/cygwin64/bin/cygwin1.dll", "sha256": "REPLACE_SHA256"},
+    "source_url": "https://github.com/cygwin/cygwin",
+    "source_revision": "REPLACE_EXACT_DISTRIBUTION_SOURCE_REVISION",
+    "distribution_version": "REPLACE_INSTALLED_DISTRIBUTION_VERSION",
+    "runtime_version": "REPLACE_RUNTIME_VERSION",
+    "version_stdout_sha256": "REPLACE_RAW_VERSION_STDOUT_SHA256",
+    "version_stderr_sha256": "REPLACE_RAW_VERSION_STDERR_SHA256",
+    "version_exit_code": 0
+  },
+  "project": {
+    "artifact": {"path": "C:/cygpath/_build/wasm/release/build/cygpath.wasm", "sha256": "REPLACE_SHA256"},
+    "launcher": {"path": "C:/Users/REPLACE_USER/.moon/bin/moonrun.exe", "sha256": "REPLACE_SHA256"},
+    "backend": "wasm",
+    "git_sha": "REPLACE_FULL_PROJECT_COMMIT_SHA",
+    "dirty": false,
+    "module_version": "REPLACE_MODULE_VERSION",
+    "moon_version": "REPLACE_COMPLETE_MOON_VERSION",
+    "build_mode": "release"
+  },
+  "host": {
+    "os": "windows",
+    "os_version": "REPLACE_WINDOWS_VERSION_AND_BUILD",
+    "architecture": "REPLACE_ARCHITECTURE",
+    "filesystem": "REPLACE_FILESYSTEM_TYPE",
+    "installation_root": "C:/cygwin64",
+    "launch_method": "direct-process-argv",
+    "current_drive": "C",
+    "drive_cwds": {"C": "C:/cygpath-fixtures"},
+    "mount_table": "REPLACE_FULL_MOUNT_TABLE_OBSERVATION",
+    "cygdrive_prefix": "/cygdrive",
+    "existence_permissions": "REPLACE_DIRECTORY_LISTING_AND_PERMISSIONS_EVIDENCE",
+    "locale": "REPLACE_EFFECTIVE_LOCALE",
+    "input_code_page": "REPLACE_INPUT_CODE_PAGE",
+    "output_code_page": "REPLACE_OUTPUT_CODE_PAGE",
+    "io_mode": "redirected-binary",
+    "long_path_policy": "REPLACE_LONG_PATH_POLICY",
+    "short_name_policy": "REPLACE_8DOT3_POLICY",
+    "test_volume": "REPLACE_TEST_VOLUME",
+    "actual_short_names": "not exercised by the starter corpus",
+    "symlinks_junctions": "REPLACE_SYMLINK_AND_JUNCTION_CONDITIONS"
+  },
+  "cwd": "C:/cygpath-fixtures",
+  "environment": {
+    "SystemRoot": "C:/Windows",
+    "PATH": "C:/cygwin64/bin;C:/Windows/System32",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "MSYS2_ARG_CONV_EXCL": "*",
+    "MSYS2_ENV_CONV_EXCL": "*"
+  },
+  "cleared_environment": ["MSYSTEM", "CYGWIN"],
+  "context": {
+    "profile": "cygwin",
+    "drive_prefix": "/cygdrive",
+    "mounts": [
+      {"posix": "/", "windows": "C:/cygwin64", "case_policy": "sensitive"}
+    ],
+    "posix_cwd": "/cygdrive/c/cygpath-fixtures",
+    "windows_cwd": "C:/cygpath-fixtures",
+    "drive_cwds": {"C": "C:/cygpath-fixtures"}
+  },
+  "context_mapping_evidence": "REPLACE_EXPLANATION_LINKING_OBSERVED_HOST_MOUNTS_CWD_AND_DRIVE_STATE_TO_CONTEXT",
+  "capabilities": ["portable-paths", "utf8", "stdin"],
+  "deadline_ms": 10000
+}

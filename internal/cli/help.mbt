@@ -1,0 +1,52 @@
+///|
+pub fn version_text() -> String {
+  "cygpath (MoonBit) 0.1.0\nProfiles: cygwin, msys2\n"
+}
+
+///|
+pub fn help_text() -> String {
+  let text =
+    #|Usage: cygpath [OPTION]... NAME...
+    #|       cygpath [OPTION]... -f FILE
+    #|Convert Windows and POSIX paths using explicit, portable context.
+    #|
+    #|Output and input:
+    #|  -u, --unix                 POSIX output (default)
+    #|  -w, --windows              Windows output with backslashes
+    #|  -m, --mixed                Windows output with forward slashes
+    #|  -t, --type TYPE            unix, windows, or mixed
+    #|  -p, --path                 Convert each NAME as a path list
+    #|  -a, --absolute             Resolve relative paths using supplied cwd
+    #|  -U, --proc-cygdrive        Use /proc/cygdrive for drive fallback
+    #|  -f, --file FILE            Read UTF-8 lines; - reads standard input
+    #|  -i, --ignore               Succeed only when input is entirely absent
+    #|  -C, --codepage CP          UTF8 or 65001; Windows/Mixed output only
+    #|  -h, --help                 Show this help
+    #|  -V, --version              Show implementation version and profiles
+    #|
+    #|Explicit context (project extensions):
+    #|      --from windows|posix   Select input syntax; recommended for lists
+    #|      --profile cygwin|msys2 Select drive-prefix profile
+    #|      --root WINDOWS        Mount / at an absolute Windows path
+    #|      --mount POSIX WINDOWS Add an explicit mount (repeatable)
+    #|      --drive-prefix POSIX  Override the drive-prefix profile
+    #|      --posix-cwd POSIX      Supply an absolute POSIX cwd
+    #|      --windows-cwd WINDOWS Supply an absolute Windows cwd
+    #|      --drive-cwd DRIVE WIN Supply a per-drive cwd (repeatable)
+    #|
+    #|Options precede the first NAME. -- ends option parsing. Short options may
+    #|be combined; option values may be attached. No cwd or root is guessed.
+    #|Without --from, -u reads Windows syntax and -w/-m read POSIX syntax;
+    #|single paths with a drive or backslash prefix are recognized as Windows.
+    #|All output is UTF-8 with LF records. -f cannot be combined with NAME.
+    #|
+    #|Recognized but unsupported:
+    #|  -d/--dos, -s/--short-name, -l/--long-name, -r/--root-local,
+    #|  -M/--mode, -o/--option, -c/--close HANDLE, non-UTF-8 code pages,
+    #|  -D/--desktop, -H/--homeroot, -O/--mydocs, -P/--smprograms,
+    #|  -S/--sysdir, -W/--windir, -F/--folder ID, -A/--allusers.
+    #|
+    #|Exit codes: 0 success, 1 options/context/I/O, 2 path conversion failure.
+    #|
+  text
+}

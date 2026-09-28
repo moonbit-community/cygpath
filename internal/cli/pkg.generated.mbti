@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ZSeanYves/cygpath/internal/cli"
+
+import {
+  "ZSeanYves/cygpath/lib",
+}
+
+// Values
+pub fn help_text() -> String
+
+pub fn parse_args(Array[String]) -> Command raise CliError
+
+pub fn version_text() -> String
+
+// Errors
+pub(all) suberror CliError {
+  UnknownOption(String)
+  MissingValue(String)
+  InvalidOptions(String)
+  UnsupportedCapability(String)
+  MissingInput
+  InvalidRecord
+  Conversion(@lib.ConversionError)
+}
+pub fn CliError::diagnostic(Self) -> String
+pub fn CliError::exit_code(Self) -> Int
+
+// Types and methods
+pub(all) enum Command {
+  Help
+  Version
+  Convert(Request)
+}
+
+pub struct Converter {
+  // private fields
+}
+pub fn Converter::convert(Self, String) -> String raise CliError
+
+pub(all) enum InputSource {
+  Names(Array[String])
+  File(String)
+}
+
+pub struct Request {
+  // private fields
+}
+pub fn Request::ignore_missing(Self) -> Bool
+pub fn Request::input(Self) -> InputSource
+pub fn Request::prepare(Self) -> Converter raise CliError
+
+// Type aliases
+
+// Traits

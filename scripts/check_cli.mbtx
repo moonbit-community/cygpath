@@ -1,0 +1,631 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/encoding/hex",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "moonbitlang/x@0.5.5/crypto",
+}
+
+///|
+struct Fixture {
+  case_id : String
+  category : String
+  argv : Array[String]
+  stdin_text : String?
+  stdin_hex : String?
+  file_text : String?
+  file_hex : String?
+  stdout_text : String?
+  stdout_file : String?
+  stdout_closed : Bool?
+  stderr_text : String
+  exit_code : Int
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Suite {
+  schema_version : Int
+  validation_kind : String
+  source : Array[String]
+  profile : String
+  cases : Array[Fixture]
+} derive(@json.FromJson, ToJson)
+
+///|
+struct Observation {
+  case_id : String
+  backend : String
+  status : String
+  reason : String?
+  command : Array[String]
+  cwd : String
+  extra_env : Map[String, String]
+  start_unix_ms : UInt64
+  elapsed_ms : Int64
+  deadline_ms : Int
+  exit_code : Int?
+  termination : String?
+  stdin_path : String
+  stdin_length : Int
+  stdin_sha256 : String
+  input_path : String
+  input_length : Int
+  input_sha256 : String
+  stdout_path : String
+  stdout_length : Int
+  stdout_sha256 : String
+  stderr_path : String
+  stderr_length : Int
+  stderr_sha256 : String
+} derive(ToJson)
+
+///|
+fn digest(data : Bytes) -> String {
+  @crypto.bytes_to_hex_string(@crypto.sha256(data))
+}
+
+///|
+fn payload(text : String?, hex : String?) -> Bytes raise {
+  match (text, hex) {
+    (Some(_), Some(_)) => fail("fixture cannot supply both text and hex")
+    (Some(value), None) => @utf8.encode(value)
+    (None, Some(value)) => @hex.decode(value)
+    (None, None) => b""
+  }
+}
+
+///|
+fn replace(value : String, input : String, missing : String) -> String {
+  value
+  .replace_all(old="{input_quoted}", new=input.escape())
+  .replace_all(old="{missing_quoted}", new=missing.escape())
+  .replace_all(old="{input}", new=input)
+  .replace_all(old="{missing}", new=missing)
+}
+
+///|
+test "diagnostic tokens quote Windows separators and control characters" {
+  let input = "C:\\input\\line\n\"quoted\""
+  let missing = "D:\\missing\\tab\tfile"
+  assert_eq(
+    replace("invalid UTF-8 in {input_quoted}", input, missing),
+    "invalid UTF-8 in \"C:\\\\input\\\\line\\n\\\"quoted\\\"\"",
+  )
+  assert_eq(
+    replace("cannot read {missing_quoted}", input, missing),
+    "cannot read \"D:\\\\missing\\\\tab\\tfile\"",
+  )
+  assert_eq(replace("{input}", input, missing), input)
+  assert_eq(replace("{missing}", input, missing), missing)
+}
+
+///|
+/// Keep provenance command output as bytes, including unsuccessful Git probes
+/// in an unborn repository. These observations are not product test results.
+async fn capture_metadata(
+  output : String,
+  id : String,
+  program : String,
+  args : Array[String],
+  deadline : Int,
+) -> (Json, Int?, Bytes) {
+  let stdout_path = "metadata/" + id + ".stdout.bin"
+  let stderr_path = "metadata/" + id + ".stderr.bin"
+  let start_unix_ms = @env.now()
+  let start = @async.now()
+  let mut code : Int? = None
+  let mut reason : String? = None
+  try {
+    code = @async.with_timeout_opt(deadline, () => {
+      @process.run(
+        program,
+        args,
+        stdin=@process.redirect_from_file(output + "/metadata/empty.stdin.bin"),
+        stdout=@process.redirect_to_file(
+          output + "/" + stdout_path,
+          create_mode=CreateNew,
+        ),
+        stderr=@process.redirect_to_file(
+          output + "/" + stderr_path,
+          create_mode=CreateNew,
+        ),
+        cancel_handler=@process.hard_cancel(),
+      )
+    })
+    if code is None {
+      reason = Some("metadata command timed out; hard cancellation requested")
+    }
+  } catch {
+    error => reason = Some(error.to_string())
+  }
+  for path in [stdout_path, stderr_path] {
+    if !@fs.exists(output + "/" + path) {
+      @fs.write_file(output + "/" + path, b"", create_mode=CreateNew)
+    }
+  }
+  let stdout = @fs.read_file(output + "/" + stdout_path).binary()
+  let stderr = @fs.read_file(output + "/" + stderr_path).binary()
+  let evidence : Json = {
+    "command": [program, ..args].to_json(),
+    "cwd": @env.current_dir().to_json(),
+    "start_unix_ms": start_unix_ms.to_json(),
+    "elapsed_ms": (@async.now() - start).to_json(),
+    "deadline_ms": deadline.to_json(),
+    "exit_code": code.to_json(),
+    "reason": reason.to_json(),
+    "stdout": {
+      "path": stdout_path,
+      "length": stdout.length().to_json(),
+      "sha256": digest(stdout),
+    },
+    "stderr": {
+      "path": stderr_path,
+      "length": stderr.length().to_json(),
+      "sha256": digest(stderr),
+    },
+  }
+  (evidence, code, stdout)
+}
+
+///|
+async fn record(
+  fixture : Fixture,
+  backend : String,
+  program : String,
+  leading : Array[String],
+  output : String,
+  deadline : Int,
+  expected_stdout : Bytes,
+) -> Observation {
+  let base = fixture.case_id + "/" + backend
+  let directory = output + "/" + base
+  @fs.mkdir(directory)
+  let input = output + "/" + fixture.case_id + "/input.bin"
+  let missing = output + "/" + fixture.case_id + "/missing.bin"
+  let args = leading + fixture.argv.map(arg => replace(arg, input, missing))
+  let stdout_path = base + "/stdout.bin"
+  let stderr_path = base + "/stderr.bin"
+  let stdin_path = fixture.case_id + "/stdin.bin"
+  let stdin_bytes = @fs.read_file(output + "/" + stdin_path).binary()
+  let input_bytes = @fs.read_file(input).binary()
+  let extra_env = {
+    "HOME": directory + "/unrelated-home",
+    "MSYSTEM": if backend == "wasm" {
+      "CLANG64"
+    } else {
+      "MINGW64"
+    },
+    "LC_ALL": "C",
+  }
+  let start_unix_ms = @env.now()
+  let start = @async.now()
+  let mut code : Int? = None
+  let mut status = "pass"
+  let mut reason : String? = None
+  let mut termination : String? = None
+  try {
+    code = @async.with_timeout_opt(deadline, () => {
+      let stdout = if fixture.stdout_closed.unwrap_or(false) {
+        // A closed read end makes the first actual write fail deterministically.
+        // No stdout bytes can be observed through this intentionally closed pipe.
+        @fs.write_file(output + "/" + stdout_path, b"", create_mode=CreateNew)
+        let (reader, writer) = @process.read_from_process()
+        reader.close()
+        writer
+      } else {
+        @process.redirect_to_file(
+          output + "/" + stdout_path,
+          create_mode=CreateNew,
+        )
+      }
+      @process.run(
+        program,
+        args,
+        cwd=directory,
+        extra_env~,
+        stdin=@process.redirect_from_file(output + "/" + stdin_path),
+        stdout~,
+        stderr=@process.redirect_to_file(
+          output + "/" + stderr_path,
+          create_mode=CreateNew,
+        ),
+        cancel_handler=@process.hard_cancel(),
+      )
+    })
+    if code is None {
+      status = "timeout"
+      reason = Some("process exceeded configured deadline")
+      termination = Some("hard cancellation requested; no normal exit status")
+    }
+  } catch {
+    error => {
+      status = "error"
+      reason = Some(error.to_string())
+    }
+  }
+  let elapsed_ms = @async.now() - start
+  // Creation can fail before spawn. Empty files preserve the evidence shape;
+  // status remains error, so they are never mistaken for successful output.
+  for path in [stdout_path, stderr_path] {
+    if !@fs.exists(output + "/" + path) {
+      @fs.write_file(output + "/" + path, b"", create_mode=CreateNew)
+    }
+  }
+  let stdout = @fs.read_file(output + "/" + stdout_path).binary()
+  let stderr = @fs.read_file(output + "/" + stderr_path).binary()
+  let expected_stderr = @utf8.encode(
+    replace(fixture.stderr_text, input, missing),
+  )
+  @fs.write_file(
+    directory + "/expected.stdout.bin",
+    expected_stdout,
+    create_mode=CreateNew,
+  )
+  @fs.write_file(
+    directory + "/expected.stderr.bin",
+    expected_stderr,
+    create_mode=CreateNew,
+  )
+  if status == "pass" &&
+    (
+      code != Some(fixture.exit_code) ||
+      stdout != expected_stdout ||
+      stderr != expected_stderr
+    ) {
+    status = "fail"
+    reason = Some(
+      "stdout, stderr, or integer exit status differs from the contract",
+    )
+  }
+  let observation = {
+    case_id: fixture.case_id,
+    backend,
+    status,
+    reason,
+    command: [program, ..args],
+    cwd: directory,
+    extra_env,
+    start_unix_ms,
+    elapsed_ms,
+    deadline_ms: deadline,
+    exit_code: code,
+    termination,
+    stdin_path,
+    stdin_length: stdin_bytes.length(),
+    stdin_sha256: digest(stdin_bytes),
+    input_path: fixture.case_id + "/input.bin",
+    input_length: input_bytes.length(),
+    input_sha256: digest(input_bytes),
+    stdout_path,
+    stdout_length: stdout.length(),
+    stdout_sha256: digest(stdout),
+    stderr_path,
+    stderr_length: stderr.length(),
+    stderr_sha256: digest(stderr),
+  }
+  @fs.write_file(
+    directory + "/result.json",
+    @json.to_json(observation).stringify(indent=2),
+    create_mode=CreateNew,
+  )
+  observation
+}
+
+///|
+async fn save_summary(
+  output : String,
+  suite : Suite,
+  observations : Array[Observation],
+  comparisons : Array[Json],
+  counts : Map[String, Int],
+  backend_nonpass : Int,
+  complete : Bool,
+) -> Unit {
+  let seen : Map[String, Bool] = Map([])
+  for observation in observations {
+    seen[observation.case_id + "/" + observation.backend] = true
+  }
+  let unexecuted : Array[String] = []
+  for fixture in suite.cases {
+    for backend in ["wasm", "native"] {
+      let id = fixture.case_id + "/" + backend
+      if !seen.contains(id) {
+        unexecuted.push(id)
+      }
+    }
+  }
+  let summary : Json = {
+    "schema_version": 1,
+    "complete": complete.to_json(),
+    "planned": (suite.cases.length() * 2).to_json(),
+    "executed": observations.length().to_json(),
+    "counts": counts.to_json(),
+    "unexecuted": unexecuted.to_json(),
+    "official_comparison": "not performed",
+    "observations": observations.to_json(),
+    "backend_comparisons": comparisons.to_json(),
+    "backend_nonpass": backend_nonpass.to_json(),
+    "manifest_sha256": digest(@fs.read_file(output + "/manifest.json").binary()),
+  }
+  // This is a progress checkpoint owned by this new run, never an oracle.
+  @fs.write_file(output + "/summary.json", summary.stringify(indent=2))
+}
+
+///|
+async fn main {
+  let argv = @env.args()
+  let options : Map[String, String] = Map([])
+  for i = 1; i < argv.length(); {
+    let key = argv[i]
+    guard [
+      "--wasm", "--native", "--out", "--moonrun", "--fixtures", "--deadline-ms",
+    ].contains(key) else {
+      fail("unknown collector option: " + key)
+    }
+    guard i + 1 < argv.length() else { fail("missing value for " + key) }
+    guard !options.contains(key) else {
+      fail("duplicate collector option: " + key)
+    }
+    options[key] = argv[i + 1]
+    continue i + 2
+  }
+  let wasm = options.get("--wasm").unwrap_or("")
+  let native = options.get("--native").unwrap_or("")
+  let output = options.get("--out").unwrap_or("")
+  guard wasm != "" && native != "" && output != "" else {
+    fail(
+      "usage: moon run scripts/check_cli.mbtx --wasm <absolute artifact> --native <absolute artifact> --out <new absolute directory> [--moonrun <program>] [--fixtures <JSON>] [--deadline-ms 10000]",
+    )
+  }
+  let deadline = @string.parse_int(
+    options.get("--deadline-ms").unwrap_or("10000"),
+  )
+  guard deadline > 0 else { fail("deadline must be positive") }
+  let fixture_path = options
+    .get("--fixtures")
+    .unwrap_or("testdata/contracts/cli.json")
+  let fixture_data = @fs.read_file(fixture_path).binary()
+  let suite : Suite = @json.from_json(@json.parse(@utf8.decode(fixture_data)))
+  guard suite.schema_version == 1 &&
+    suite.validation_kind == "portable-contract" else {
+    fail("unsupported fixture schema or validation kind")
+  }
+  guard suite.cases.length() > 0 else { fail("empty fixture suite") }
+  let ids : Map[String, Bool] = Map([])
+  let expected_outputs : Map[String, Bytes] = Map([])
+  for fixture in suite.cases {
+    guard fixture.case_id != "" &&
+      fixture.case_id
+      .iter()
+      .all(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-') else {
+      fail("unsafe fixture identifier: " + fixture.case_id)
+    }
+    guard !ids.contains(fixture.case_id) else {
+      fail("duplicate fixture identifier")
+    }
+    ids[fixture.case_id] = true
+    let _ = payload(fixture.stdin_text, fixture.stdin_hex)
+    let _ = payload(fixture.file_text, fixture.file_hex)
+    guard (fixture.stdout_text is Some(_)) != (fixture.stdout_file is Some(_)) else {
+      fail("fixture requires exactly one stdout oracle")
+    }
+    expected_outputs[fixture.case_id] = match fixture.stdout_text {
+      Some(text) => @utf8.encode(text)
+      None => @fs.read_file(fixture.stdout_file.unwrap()).binary()
+    }
+  }
+  // Realpath requires existing artifacts and avoids cwd-dependent execution.
+  let wasm = @fs.realpath(wasm)
+  let native = @fs.realpath(native)
+  guard !@fs.exists(output) else { fail("output directory already exists") }
+  @fs.mkdir(output)
+  let output = @fs.realpath(output)
+  @fs.write_file(output + "/fixtures.json", fixture_data, create_mode=CreateNew)
+  @fs.mkdir(output + "/metadata")
+  @fs.write_file(
+    output + "/metadata/empty.stdin.bin",
+    b"",
+    create_mode=CreateNew,
+  )
+  let moonrun = options.get("--moonrun").unwrap_or("moonrun")
+  let (moon_metadata, moon_code, _) = capture_metadata(
+    output,
+    "moon-version",
+    "moon",
+    ["version", "--all"],
+    deadline,
+  )
+  let (moonrun_metadata, moonrun_code, _) = capture_metadata(
+    output,
+    "moonrun-version",
+    moonrun,
+    ["--version"],
+    deadline,
+  )
+  let (head_metadata, head_code, head_output) = capture_metadata(
+    output,
+    "git-head",
+    "git",
+    ["rev-parse", "--verify", "HEAD"],
+    deadline,
+  )
+  let (status_metadata, status_code, status_output) = capture_metadata(
+    output,
+    "git-status",
+    "git",
+    ["status", "--porcelain=v1", "--untracked-files=normal"],
+    deadline,
+  )
+  let git_probes : Array[Json] = [head_metadata, status_metadata]
+  let head_sha = if head_code == Some(0) {
+    Some(@utf8.decode(head_output).trim().to_owned())
+  } else {
+    None
+  }
+  let mut head_state = if head_sha is Some(_) { "commit" } else { "unresolved" }
+  if head_state == "unresolved" && status_code == Some(0) {
+    let (symbolic_metadata, symbolic_code, symbolic_output) = capture_metadata(
+      output,
+      "git-symbolic-head",
+      "git",
+      ["symbolic-ref", "--quiet", "HEAD"],
+      deadline,
+    )
+    git_probes.push(symbolic_metadata)
+    if symbolic_code == Some(0) {
+      let branch = @utf8.decode(symbolic_output).trim().to_owned()
+      let (reference_metadata, reference_code, _) = capture_metadata(
+        output,
+        "git-head-reference",
+        "git",
+        ["show-ref", "--verify", "--quiet", branch],
+        deadline,
+      )
+      git_probes.push(reference_metadata)
+      if reference_code == Some(1) {
+        head_state = "unborn"
+      }
+    }
+  }
+  let metadata_complete = moon_code == Some(0) &&
+    moonrun_code == Some(0) &&
+    status_code == Some(0) &&
+    head_state != "unresolved"
+  let manifest : Json = {
+    "schema_version": 1,
+    "validation_kind": "portable-contract",
+    "platform": match @async.platform {
+      Linux => "linux"
+      MacOS => "macos"
+      Windows => "windows"
+    },
+    "start_unix_ms": @env.now().to_json(),
+    "fixture_sha256": digest(fixture_data),
+    "wasm": { "path": wasm, "sha256": digest(@fs.read_file(wasm).binary()) },
+    "native": {
+      "path": native,
+      "sha256": digest(@fs.read_file(native).binary()),
+    },
+    "deadline_ms": deadline.to_json(),
+    "metadata_complete": metadata_complete.to_json(),
+    "toolchain": { "moon": moon_metadata, "moonrun": moonrun_metadata },
+    "source": {
+      "head_sha": head_sha.to_json(),
+      "head_state": head_state,
+      "working_tree": if status_code != Some(0) {
+        "unknown"
+      } else if status_output.is_empty() {
+        "clean"
+      } else {
+        "dirty"
+      },
+      "git_probes": git_probes.to_json(),
+    },
+    "environment_policy": "inherit environment; override HOME, MSYSTEM, LC_ALL as recorded per process; distinct cwd per backend",
+    "comparison": "exact bytes and integer exit code; no trimming or diagnostic normalization",
+  }
+  @fs.write_file(
+    output + "/manifest.json",
+    manifest.stringify(indent=2),
+    create_mode=CreateNew,
+  )
+  let observations : Array[Observation] = []
+  let backend_comparisons : Array[Json] = []
+  let counts : Map[String, Int] = {
+    "pass": 0,
+    "fail": 0,
+    "error": 0,
+    "timeout": 0,
+    "skip": 0,
+  }
+  let mut backend_failures = 0
+  save_summary(
+    output, suite, observations, backend_comparisons, counts, backend_failures, false,
+  )
+  guard metadata_complete else {
+    fail(
+      "provenance metadata collection failed; inspect metadata bytes and manifest.json",
+    )
+  }
+  for fixture in suite.cases {
+    let directory = output + "/" + fixture.case_id
+    @fs.mkdir(directory)
+    @fs.write_file(
+      directory + "/stdin.bin",
+      payload(fixture.stdin_text, fixture.stdin_hex),
+      create_mode=CreateNew,
+    )
+    @fs.write_file(
+      directory + "/input.bin",
+      payload(fixture.file_text, fixture.file_hex),
+      create_mode=CreateNew,
+    )
+    let expected_stdout = expected_outputs[fixture.case_id]
+    let wasm_result = record(
+      fixture,
+      "wasm",
+      moonrun,
+      [wasm, "--"],
+      output,
+      deadline,
+      expected_stdout,
+    )
+    let native_result = record(
+      fixture,
+      "native",
+      native,
+      [],
+      output,
+      deadline,
+      expected_stdout,
+    )
+    for observation in [wasm_result, native_result] {
+      observations.push(observation)
+      counts[observation.status] = counts[observation.status] + 1
+      println(
+        "\{observation.case_id} \{observation.backend}: \{observation.status}",
+      )
+    }
+    let completed = (
+        wasm_result.status == "pass" || wasm_result.status == "fail"
+      ) &&
+      (native_result.status == "pass" || native_result.status == "fail")
+    let same = completed &&
+      wasm_result.exit_code == native_result.exit_code &&
+      @fs.read_file(output + "/" + wasm_result.stdout_path).binary() ==
+      @fs.read_file(output + "/" + native_result.stdout_path).binary() &&
+      @fs.read_file(output + "/" + wasm_result.stderr_path).binary() ==
+      @fs.read_file(output + "/" + native_result.stderr_path).binary()
+    if !same {
+      backend_failures += 1
+    }
+    backend_comparisons.push({
+      "case_id": fixture.case_id,
+      "status": if !completed {
+        "error"
+      } else if same {
+        "pass"
+      } else {
+        "fail"
+      },
+      "wasm": @json.to_json(wasm_result),
+      "native": @json.to_json(native_result),
+    })
+    save_summary(
+      output, suite, observations, backend_comparisons, counts, backend_failures,
+      false,
+    )
+  }
+  save_summary(
+    output, suite, observations, backend_comparisons, counts, backend_failures, true,
+  )
+  println("Evidence: " + output + "/summary.json")
+  guard counts["pass"] == suite.cases.length() * 2 && backend_failures == 0 else {
+    fail("CLI acceptance failed; inspect raw evidence and summary.json")
+  }
+}

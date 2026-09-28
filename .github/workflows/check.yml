@@ -1,0 +1,59 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: hustcer/setup-moonbit@bdc8c076af1f4c5012a6ac3451a2009ec75bf921 # v1.22
+      - name: Record toolchain
+        run: moon version --all
+      - name: Check all supported targets
+        run: moon check --target all --deny-warn
+      - name: Test Wasm
+        run: moon test --target wasm --deny-warn
+      - name: Test Native
+        run: moon test --target native --deny-warn
+      - name: Test oracle collector mechanics
+        run: moon run --deny-warn scripts/oracle.mbtx self-test
+      - name: Test process collector quoting
+        run: moon test --deny-warn scripts/check_cli.mbtx
+      - name: Check formatting
+        run: moon fmt --check
+      - name: Check script formatting
+        run: moon fmt --check scripts/check_cli.mbtx scripts/oracle.mbtx
+      - name: Check public interfaces
+        run: moon info --target all
+      - name: Reject interface drift
+        run: git diff --exit-code -- '*.mbti'
+      - name: Build Wasm executable
+        run: moon build --target wasm --release
+      - name: Build Native executable
+        run: moon build --target native --release
+      - name: Compare executable contracts
+        run: >-
+          moon run --deny-warn scripts/check_cli.mbtx
+          --wasm "${{ github.workspace }}/_build/wasm/release/build/cygpath.wasm"
+          --native "${{ github.workspace }}/_build/native/release/build/cygpath.exe"
+          --out "${{ github.workspace }}/_build/cli-evidence"
+      - name: Inspect package contents
+        run: moon package --list
+      - name: Upload process evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cli-evidence-${{ matrix.os }}
+          path: _build/cli-evidence
+          if-no-files-found: warn
