@@ -5,7 +5,8 @@ pub(all) suberror UnsupportedCodePage {
 
 ///|
 pub fn supported(codepage : Int) -> Bool {
-  codepage == 65001 || codepage_table(codepage) is Some(_)
+  codepage != 29001 &&
+  (codepage == 65001 || codepage_table(codepage) is Some(_))
 }
 
 ///|
@@ -46,12 +47,11 @@ pub fn encode(text : String, codepage : Int) -> Bytes raise UnsupportedCodePage 
   if codepage == 65001 {
     return @utf8.encode(text)
   }
-  // Windows' WideCharToMultiByte rejects CP29001 (Europa 3) on the official
-  // Cygwin/MSYS2 hosts exercised by the oracle. cygpath ignores that zero
-  // return and still emits its record LF, so the pure byte adapter preserves
-  // the observable empty payload while retaining the published table below.
+  // Europa 3's published table is retained as data. The observed upstream
+  // empty payload does not establish conversion semantics: cygpath ignores
+  // Windows conversion failures and may then read an uninitialized buffer.
   if codepage == 29001 {
-    return b""
+    raise UnsupportedCodePage(codepage)
   }
   guard codepage_table(codepage) is Some((table, fallback)) else {
     raise UnsupportedCodePage(codepage)

@@ -9,6 +9,7 @@ pub(all) suberror CliError {
   Usage
   IgnoredUsage
   InvalidRecord
+  PathNotFound(String)
   Conversion(@lib.ConversionError)
 }
 
@@ -16,7 +17,7 @@ pub(all) suberror CliError {
 fn conversion_exit_code(error : @lib.ConversionError) -> Int {
   match error {
     @lib.EmptyPath => 1
-    @lib.PathTooLong(_) => 1
+    @lib.PathTooLong(_) | @lib.InvalidDrivePrefix => 1
     @lib.InvalidContext(..)
     | @lib.MissingContext(..)
     | @lib.InvalidOptions(_) => 1
@@ -40,7 +41,8 @@ fn conversion_diagnostic(error : @lib.ConversionError) -> String {
   match error {
     @lib.EmptyPath => "can't convert empty path"
     @lib.PathTooLong(path) =>
-      "error converting \"" + path.escape() + "\" - File name too long"
+      "error converting \"" + path + "\" - File name too long"
+    @lib.InvalidDrivePrefix => "invalid-drive-prefix"
     @lib.InvalidPath(reason~, offset~) =>
       "invalid-path: UTF-16 offset \{offset}: " + reason.escape()
     @lib.InvalidContext(field~, reason~) =>
@@ -52,6 +54,24 @@ fn conversion_diagnostic(error : @lib.ConversionError) -> String {
     @lib.InvalidOptions(reason) => "invalid-options: " + reason.escape()
     @lib.ListEntryError(index~, cause) =>
       "list-entry: index \{index}: " + conversion_diagnostic(cause)
+  }
+}
+
+///|
+fn invalid_drive_prefix(error : @lib.ConversionError) -> Bool {
+  match error {
+    @lib.InvalidDrivePrefix => true
+    @lib.ListEntryError(index=_, cause) => invalid_drive_prefix(cause)
+    _ => false
+  }
+}
+
+///|
+fn path_too_long(error : @lib.ConversionError) -> Bool {
+  match error {
+    @lib.PathTooLong(_) => true
+    @lib.ListEntryError(index=_, cause) => path_too_long(cause)
+    _ => false
   }
 }
 
@@ -100,6 +120,8 @@ pub fn CliError::diagnostic(self : CliError) -> String {
     MissingInput => "missing-input: supply a NAME or --file"
     Usage | IgnoredUsage => ""
     InvalidRecord => "invalid-record: embedded CR or LF is not allowed"
+    PathNotFound(path) =>
+      "error converting \"" + path + "\" - No such file or directory"
     Conversion(error) => conversion_diagnostic(error)
   }
   "cygpath: " + detail

@@ -97,6 +97,8 @@ fn ordered_mounts(mounts : Array[Mount], windows~ : Bool) -> Array[Mount] {
 ///
 /// Cygwin defaults to `/cygdrive`, MSYS2 to `/`. Per-drive cwd keys are single
 /// ASCII letters, and each value must be absolute on that same drive.
+/// These entries are validated metadata; drive-relative conversion follows
+/// cygpath's drive-root rule instead of the Win32 per-drive working directory.
 pub fn Context::new(
   profile? : Profile = Cygwin,
   drive_prefix? : String,
@@ -167,8 +169,16 @@ pub fn Context::new(
   {
     profile,
     drive_prefix: prefix.components,
-    posix_mounts: ordered_mounts(mounts, windows=false),
-    windows_mounts: ordered_mounts(mounts, windows=true),
+    posix_mounts: if profile == Msys2 {
+      msys_ordered_mounts(mounts, windows=false)
+    } else {
+      ordered_mounts(mounts, windows=false)
+    },
+    windows_mounts: if profile == Msys2 {
+      msys_ordered_mounts(mounts, windows=true)
+    } else {
+      ordered_mounts(mounts, windows=true)
+    },
     posix_cwd: parse_cwd(posix_cwd, Posix, "posix_cwd"),
     windows_cwd: parse_cwd(windows_cwd, Windows, "windows_cwd"),
   }

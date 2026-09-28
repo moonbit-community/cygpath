@@ -139,3 +139,52 @@ test "overlong filename components retain the official conversion error" {
     _ => fail("overlong filename component was accepted")
   }
 }
+
+///|
+test "POSIX output accepts long components in arguments and fixed-size records" {
+  let context = @lib.Context::new()
+  let chunk = "C:\\" + "a".repeat(8189)
+  assert_eq(chunk.length(), 8192)
+  assert_eq(
+    context.convert(chunk, from=Windows, to=Posix),
+    "/cygdrive/c/" + "a".repeat(8189),
+  )
+  let remainder = "a".repeat(311) + "\\tail"
+  assert_eq(
+    context.convert(remainder, from=Windows, to=Posix),
+    "a".repeat(311) + "/tail",
+  )
+  assert_eq(
+    context.convert_list(chunk + ";D:/tail", from=Windows, to=Posix),
+    "/cygdrive/c/" + "a".repeat(8189) + ":/cygdrive/d/tail",
+  )
+  let ordinary = "/folder/" + "a".repeat(256)
+  assert_eq(context.convert(ordinary, from=Posix, to=Posix), ordinary)
+  assert_true(
+    conversion_error(() => {
+      context.convert_list("C:/ok;" + chunk, from=Windows, to=Mixed)
+    })
+    is @lib.ListEntryError(index=1, @lib.PathTooLong(_)),
+  )
+}
+
+///|
+test "an invalid drive beneath a custom prefix has a typed lexical failure" {
+  let context = @lib.Context::new(drive_prefix="/p3-drives", mounts=[
+    @lib.Mount::new("/", "C:/root"),
+  ])
+  assert_eq(
+    context.convert("/p3-drives/c/file", from=Posix, to=Windows),
+    "C:\\file",
+  )
+  assert_true(
+    conversion_error(() => {
+      context.convert("/p3-drives/cat/file", from=Posix, to=Windows)
+    })
+    is @lib.InvalidDrivePrefix,
+  )
+  assert_eq(
+    context.convert("/p3-drives-extra/cat/file", from=Posix, to=Windows),
+    "C:\\root\\p3-drives-extra\\cat\\file",
+  )
+}

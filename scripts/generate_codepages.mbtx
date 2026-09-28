@@ -362,6 +362,11 @@ async fn main {
       if !page_resolutions.is_empty() {
         fields["resolved_conflicts"] = @json.to_json(page_resolutions)
       }
+      if page == 29001 {
+        fields["encoding_supported"] = false
+        fields["boundary"] = "upstream-unsupported-codepage"
+        fields["boundary_reason"] = "The raw oracle emitted only LF; cygpath ignores Windows conversion failures and can read an uninitialized buffer. Empty output is not an encoding contract. The archived Europa 3 table is retained as data only."
+      }
     }
     evidence.push(entry)
   }

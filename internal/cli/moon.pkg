@@ -1,5 +1,4 @@
 import {
   "ZSeanYves/cygpath/lib",
   "ZSeanYves/cygpath/internal/encoding",
-  "moonbitlang/core/string",
 }

@@ -70,12 +70,17 @@ test "Macintosh and T61 mappings retain their distinct single and double bytes" 
 }
 
 ///|
-test "CP29001 preserves official empty payload behavior" {
-  assert_true(@encoding.supported(29001))
-  assert_eq(
-    @encoding.encode("/usr/éĀ中文日本한글ไทย", 29001),
-    b"",
-  )
+test "CP29001 rejects undefined upstream conversion output" {
+  assert_true(!@encoding.supported(29001))
+  for input in ["", "C:/ASCII", "/usr/éĀ中文日本한글ไทย"] {
+    try {
+      ignore(@encoding.encode(input, 29001))
+      fail("an observed empty payload must not become a compatibility rule")
+    } catch {
+      @encoding.UnsupportedCodePage(29001) => ()
+      _ => fail("expected UnsupportedCodePage(29001)")
+    }
+  }
 }
 
 ///|

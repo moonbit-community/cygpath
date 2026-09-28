@@ -3,6 +3,39 @@
   "validation_kind": "p3-scope",
   "rows": [
     {
+      "id": "C-posix-output-component-length",
+      "requirement": "POSIX output converts overlong components without Windows-output filename validation, for direct arguments, absolute conversion and PATH lists; file chunking is covered independently.",
+      "cases": [
+        {
+          "suite": "p3",
+          "case_id": "long-component-unix-argument",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "long-component-unix-absolute",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "long-component-unix-list",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        }
+      ]
+    },
+    {
       "id": "A-drive-unicode",
       "requirement": "Absolute drive paths, drive case, Unicode and spaces retain their intended syntax.",
       "cases": [
@@ -890,6 +923,69 @@
             "msys2"
           ],
           "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-decimal-leading-space-plus",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-decimal-plus",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-reject-hex",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-reject-underscore",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-reject-trailing-space",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-decimal-uint-wrap",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "codepage-decimal-overflow-unix",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
         }
       ]
     },
@@ -1344,6 +1440,15 @@
         {
           "suite": "matrix",
           "case_id": "line-protocol-rejection",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "list-overlong-member-diagnostic",
           "profiles": [
             "cygwin",
             "msys2"
@@ -2100,6 +2205,168 @@
         {
           "suite": "p3",
           "case_id": "max-path-relative-m",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-drive-w-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-w-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-absolute-w-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-drive-m-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-m-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-absolute-m-259",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-drive-w-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-w-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-absolute-w-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-drive-m-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-m-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-absolute-m-260",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-drive-w-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-w-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-absolute-w-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-drive-m-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-m-261",
+          "profiles": [
+            "cygwin",
+            "msys2"
+          ],
+          "validation_domain": "supported"
+        },
+        {
+          "suite": "p3",
+          "case_id": "max-path-valid-relative-absolute-m-261",
           "profiles": [
             "cygwin",
             "msys2"
@@ -4645,7 +4912,7 @@
     },
     {
       "id": "D-numeric-codepage-29001",
-      "requirement": "Each remaining stateless official Microsoft WCTABLE identity is compared using mapped scripts, best-fit Latin/fullwidth and supplementary fallback. Obsolete or Windows-unavailable identities remain raw failures until their capability contract is resolved.",
+      "requirement": "Record the upstream CP29001 observations and verify exact project rejection. Each Windows job must independently observe IsValidCodePage/GetCPInfo and prove WideCharToMultiByte failure with an untouched output buffer before accepting this capability boundary; it never counts as supported encoding parity.",
       "cases": [
         {
           "suite": "p3",
@@ -4654,7 +4921,7 @@
             "cygwin",
             "msys2"
           ],
-          "validation_domain": "supported"
+          "validation_domain": "unavailable-codepage-29001"
         },
         {
           "suite": "p3",
@@ -4663,7 +4930,7 @@
             "cygwin",
             "msys2"
           ],
-          "validation_domain": "supported"
+          "validation_domain": "unavailable-codepage-29001"
         }
       ]
     },
@@ -5022,13 +5289,27 @@
     "tampered-manifest"
   ],
   "pending_discovery": [],
+  "capability_boundaries": [
+    {
+      "id": "unavailable-codepage-29001",
+      "reason": "CP29001 conversion failure is measured directly through the Windows API. Upstream cygpath ignores the zero WideCharToMultiByte return and reads its uninitialized output allocation. Retain actual raw bytes without declaring them a valid encoding; require deterministic project rejection.",
+      "windows_api_evidence": "codepage-api-probe/result.json",
+      "source_urls": [
+        "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L775",
+        "https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/utils/cygpath.cc#L775"
+      ],
+      "source_sha256": "b88d2abc137835e384e40834825f561cd0d4cbc00605f342cd0c8b51cdcba46b",
+      "installed_binary_source_commit_attested": false
+    }
+  ],
   "excluded_host_capabilities": [
     "8.3 short/long filename lookup",
     "Windows system directories",
     "host ANSI/OEM codepage discovery",
     "device/symlink/junction canonicalization",
     "non-ASCII Windows mount case folding",
-    "stateful encodings and numeric codepages without an implemented stateless mapping table"
+    "stateful encodings and numeric codepages without an implemented stateless mapping table",
+    "CP29001: archived mapping data retained, unsupported Windows conversion separately measured"
   ],
   "scope_freeze": "After 111 stateless Microsoft table identities, natural argv detection, explicit measured default/custom environments, same-target aliases and ASCII-only insensitive mount matching. Subsequent changes resolve observed differences within these declared rows rather than increasing arbitrary test counts."
 }

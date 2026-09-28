@@ -20,6 +20,25 @@ discovery. Runtime availability of legacy identifiers is checked separately
 against the recorded Windows oracle; a mapping table's existence alone does
 not prove that a modern Windows installation accepts its number.
 
+CP29001 (Europa 3) is retained as mapping data but is rejected by both
+`supported` and `encode`; CLI Windows/Mixed output reports
+`UnsupportedCapability`. The observed Cygwin/MSYS2 CP29001 runs emitted only
+LF, which is retained as raw evidence rather than defined as an empty-string
+encoding rule. The pinned [Cygwin source](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L715)
+allocates an uninitialized byte buffer and ignores the result of
+`my_wcstombs` before treating that buffer as a C string. The matching
+[MSYS2 source](https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/utils/cygpath.cc#L775)
+has the same source SHA-256:
+`b88d2abc137835e384e40834825f561cd0d4cbc00605f342cd0c8b51cdcba46b`.
+Microsoft documents a zero return from
+[`WideCharToMultiByte`](https://learn.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte)
+as failure. That failure branch therefore has no defined path-output contract.
+The existing raw capture does not measure the Win32 return value or last-error
+code; the failure explanation remains an inference, and no claim is made that
+Europa 3 is invalid on every Windows installation. Its entry in the
+[identifier catalog](https://learn.microsoft.com/en-us/windows/win32/intl/code-page-identifiers)
+does not establish availability on the captured host.
+
 The source chain is [MS-UCODEREF section 2.2.2](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/d167d756-0c58-4564-a0de-77c647d367fa),
 its `CODEPAGEFILES` reference, and the [official Microsoft Download Center](https://www.microsoft.com/en-us/download/details.aspx?id=10921).
 The exact [archive URL](https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip)

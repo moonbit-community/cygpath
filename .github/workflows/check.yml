@@ -37,7 +37,7 @@ jobs:
       - name: Check formatting
         run: moon fmt --check
       - name: Check script formatting
-        run: moon fmt --check scripts/check_cli.mbtx scripts/check_consumer.mbtx scripts/generate_codepages.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx
+        run: moon fmt --check scripts/check_cli.mbtx scripts/check_consumer.mbtx scripts/generate_codepages.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx scripts/probe_windows_codepages.mbtx
       - name: Check public interfaces
         run: moon info --target all
       - name: Reject interface drift

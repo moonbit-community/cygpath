@@ -9,6 +9,75 @@
   "source_revision": "independent supported-domain discovery cases; official outputs are collected, never guessed",
   "cases": [
     {
+      "case_id": "long-component-unix-argument",
+      "category": "path-component-length",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-u",
+        "C:\\abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+      ],
+      "project_argv": [
+        "-u",
+        "C:\\abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "long-component-unix-absolute",
+      "category": "path-component-length",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-au",
+        "C:\\abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+      ],
+      "project_argv": [
+        "-au",
+        "C:\\abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "long-component-unix-list",
+      "category": "path-component-length",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-pu",
+        "C:\\abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;D:\\tail"
+      ],
+      "project_argv": [
+        "-pu",
+        "C:\\abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;D:\\tail"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
       "case_id": "drive-lowercase",
       "category": "path-options-and-context",
       "source_type": "windows",
@@ -8743,6 +8812,10 @@
     },
     {
       "case_id": "codepage-29001-text",
+      "validation_domain": "unavailable-codepage-29001",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: unsupported-capability: \"code page 29001 is not supported by the pure encoder\"\n",
+      "boundary_exit": 1,
       "category": "frozen-pure-capability-scope",
       "source_type": "windows",
       "upstream_argv": [
@@ -8768,6 +8841,10 @@
     },
     {
       "case_id": "codepage-29001-fallback",
+      "validation_domain": "unavailable-codepage-29001",
+      "boundary_stdout": "",
+      "boundary_stderr": "cygpath: unsupported-capability: \"code page 29001 is not supported by the pure encoder\"\n",
+      "boundary_exit": 1,
       "category": "frozen-pure-capability-scope",
       "source_type": "windows",
       "upstream_argv": [
@@ -8973,6 +9050,632 @@
         "-w",
         "-C20924",
         "/usr/Ÿ"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-drive-w-259",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-w-259",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-w",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-absolute-w-259",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-aw",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-aw",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-drive-m-259",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-m-259",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-m",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-absolute-m-259",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-am",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-am",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-drive-w-260",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-w-260",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-w",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-absolute-w-260",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-aw",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-aw",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-drive-m-260",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-m-260",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-m",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-absolute-m-260",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-am",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-am",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-drive-w-261",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-w",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-w-261",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-w",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-w",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-absolute-w-261",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-aw",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-aw",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-drive-m-261",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-m",
+        "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-m-261",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-m",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-m",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "max-path-valid-relative-absolute-m-261",
+      "category": "valid-long-path-threshold",
+      "source_type": "windows",
+      "upstream_argv": [
+        "-am",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "project_argv": [
+        "-am",
+        "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-decimal-leading-space-plus",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        " \t+1252",
+        "/usr/é"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        " \t+1252",
+        "/usr/é"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-decimal-plus",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "+1252",
+        "/usr/é"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "+1252",
+        "/usr/é"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-reject-hex",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "0x4e4",
+        "/usr/é"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "0x4e4",
+        "/usr/é"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-reject-underscore",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1_252",
+        "/usr/é"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1_252",
+        "/usr/é"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-reject-trailing-space",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "1252 ",
+        "/usr/é"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "1252 ",
+        "/usr/é"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-decimal-uint-wrap",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-w",
+        "-C",
+        "4294968548",
+        "/usr/é"
+      ],
+      "project_argv": [
+        "-w",
+        "-C",
+        "4294968548",
+        "/usr/é"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "codepage-decimal-overflow-unix",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-u",
+        "-C",
+        "18446744073709551616",
+        "C:/name"
+      ],
+      "project_argv": [
+        "-u",
+        "-C",
+        "18446744073709551616",
+        "C:/name"
+      ],
+      "stdin_hex": "",
+      "required": true,
+      "required_capabilities": [
+        "portable-paths"
+      ],
+      "allowed_backends": [
+        "wasm",
+        "native"
+      ],
+      "directory_preparation": "none-read-only"
+    },
+    {
+      "case_id": "list-overlong-member-diagnostic",
+      "category": "option-and-list-error-protocol",
+      "source_type": "posix",
+      "upstream_argv": [
+        "-wp",
+        "/proc/cygdrive/c/ok:/proc/cygdrive/c/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "project_argv": [
+        "-wp",
+        "/proc/cygdrive/c/ok:/proc/cygdrive/c/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       ],
       "stdin_hex": "",
       "required": true,

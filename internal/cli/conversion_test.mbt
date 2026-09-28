@@ -127,3 +127,79 @@ test "operand line breaks are preserved while diagnostics escape control text" {
   )
   assert_eq(error.exit_code(), 1)
 }
+
+///|
+test "POSIX output uses the same long-component rules for arguments and records" {
+  let converter = request(["-u", "-f", "-"]).prepare()
+  let chunk = "C:\\" + "a".repeat(8189)
+  let expected = "/cygdrive/c/" + "a".repeat(8189)
+  assert_eq(converter.convert(chunk), expected)
+  match converter.convert_file_record(chunk) {
+    Output(value) => assert_eq(value, expected)
+    _ => fail("expected a complete converted buffer chunk")
+  }
+  let remainder = "a".repeat(311) + "\\tail"
+  match converter.convert_file_record(remainder) {
+    Output(value) => assert_eq(value, "a".repeat(311) + "/tail")
+    _ => fail("expected the remaining chunk to be converted independently")
+  }
+}
+
+///|
+test "Windows length failures quote the original operand without escaping it" {
+  let converter = request(["-w", "-f", "-"]).prepare()
+  let path = "C:\\" + "a".repeat(256)
+  try converter.convert(path) catch {
+    error => {
+      assert_eq(error.exit_code(), 1)
+      assert_eq(
+        error.diagnostic(),
+        "cygpath: error converting \"" + path + "\" - File name too long",
+      )
+    }
+  } noraise {
+    _ => fail("expected the Windows output length failure")
+  }
+  try converter.convert_file_record(path) catch {
+    error => assert_eq(error.exit_code(), 1)
+  } noraise {
+    _ => fail("file records must retain Windows component-length validation")
+  }
+}
+
+///|
+test "a malformed configured drive path preserves the official operand diagnostic" {
+  let converter = request([
+    "-w", "--drive-prefix=/p3-drives", "--root=C:/root", "name",
+  ]).prepare()
+  let path = "/p3-drives/cat/file"
+  try converter.convert(path) catch {
+    error => {
+      assert_true(error is @cli.PathNotFound(_))
+      assert_eq(error.exit_code(), 1)
+      assert_eq(
+        error.diagnostic(),
+        "cygpath: error converting \"/p3-drives/cat/file\" - No such file or directory",
+      )
+    }
+  } noraise {
+    _ => fail("expected malformed drive-prefix failure")
+  }
+}
+
+///|
+test "list length failure reports the whole original operand atomically" {
+  let converter = request(["-wp", "name"]).prepare()
+  let path = "/proc/cygdrive/c/ok:/proc/cygdrive/c/" + "a".repeat(256)
+  try converter.convert(path) catch {
+    error => {
+      assert_eq(error.exit_code(), 1)
+      assert_eq(
+        error.diagnostic(),
+        "cygpath: error converting \"" + path + "\" - File name too long",
+      )
+    }
+  } noraise {
+    _ => fail("expected atomic list conversion failure")
+  }
+}

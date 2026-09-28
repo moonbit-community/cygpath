@@ -182,6 +182,8 @@ pub fn Converter::convert(
       )
     }
   } catch {
+    error if invalid_drive_prefix(error) => raise PathNotFound(path)
+    error if path_too_long(error) => raise Conversion(@lib.PathTooLong(path))
     error => raise Conversion(error)
   }
   if self.root_local && !self.list {

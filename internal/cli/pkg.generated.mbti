@@ -23,6 +23,7 @@ pub(all) suberror CliError {
   Usage
   IgnoredUsage
   InvalidRecord
+  PathNotFound(String)
   Conversion(@lib.ConversionError)
 }
 pub fn CliError::diagnostic(Self) -> String

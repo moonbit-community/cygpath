@@ -27,17 +27,18 @@ Explicit context (project extensions):
       --drive-prefix POSIX  Override the drive-prefix profile
       --posix-cwd POSIX      Supply an absolute POSIX cwd
       --windows-cwd WINDOWS Supply an absolute Windows cwd
-      --drive-cwd DRIVE WIN Supply a per-drive cwd (repeatable)
+      --drive-cwd DRIVE WIN Validate per-drive cwd metadata (repeatable)
 
 Options may follow NAME arguments. -- ends parsing. Short options may
 be combined; option values may be attached. No cwd or root is guessed.
 Without --from, -u recognizes POSIX absolute and Windows paths;
 -w/-m read POSIX syntax and recognize ordinary Windows prefixes.
 Single paths with a drive prefix or backslashes are recognized as Windows.
+Absolute/POSIX conversion anchors C:name at C:/; drive-cwd does not alter it.
 Output uses LF records. -C affects Windows output; POSIX stays UTF-8.
-Numeric pages use the generated Microsoft mapping catalog (92 enabled
+Numeric pages use the generated Microsoft mapping catalog (95 enabled
 Windows pages plus 15 Unicode pages and UTF-8/65001); unsupported or
-ambiguous pages are errors.
+unavailable pages (including 29001) are errors.
 -f cannot be combined with NAME. No shell quoting is applied to records.
 
 Recognized but unsupported:

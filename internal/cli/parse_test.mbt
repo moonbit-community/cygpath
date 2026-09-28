@@ -179,6 +179,23 @@ test "pure code page selection affects Windows output only" {
 }
 
 ///|
+test "numeric code pages use the official decimal unsigned grammar" {
+  for value in ["1252", "+1252", " \t+1252", "0001252", "4294968548"] {
+    assert_eq(request(["-w", "-C", value, "name"]).prepare().codepage(), 1252)
+  }
+  for value in ["0x4e4", "1_252", "1252 ", " ", "+", "-", "1252x"] {
+    assert_true(parse_failure(["-w", "-C", value, "name"]) is Usage)
+    assert_true(@cli.parse_args(["-i", "-C", value, "name"]) is ExitSuccess)
+  }
+  for value in ["", "-1", "4294967296", "18446744073709551616"] {
+    assert_eq(request(["-u", "-C", value, "C:/a"]).prepare().codepage(), 65001)
+    assert_true(
+      parse_failure(["-w", "-C", value, "name"]) is UnsupportedCapability(_),
+    )
+  }
+}
+
+///|
 test "file and NAME are mutually exclusive and ignore suppresses empty operands" {
   assert_true(parse_failure([]) is MissingInput)
   assert_true(@cli.parse_args(["-i"]) is ExitSuccess)

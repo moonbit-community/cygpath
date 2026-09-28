@@ -1,4 +1,17 @@
 ///|
+/// The Windows-output conversion checks component length. Windows-to-POSIX
+/// conversion remains lexical and accepts longer components, including the
+/// records produced by cygpath's fixed-size file-input buffer.
+fn validate_component_lengths(path : String) -> Unit raise ConversionError {
+  let text = path.replace_all(old="\\", new="/")
+  for component in text.split("/") {
+    if component.length() > 255 {
+      raise PathTooLong(path)
+    }
+  }
+}
+
+///|
 fn validate_options(
   to : OutputFormat,
   prefix : UnixPrefix,
@@ -20,6 +33,9 @@ pub fn Context::convert(
   unix_prefix? : UnixPrefix = Configured,
 ) -> String raise ConversionError {
   validate_options(to, unix_prefix)
+  if to != Posix {
+    validate_component_lengths(path)
+  }
   let path = if from == Windows && to == Posix {
     decode_windows_filename(path)
   } else {

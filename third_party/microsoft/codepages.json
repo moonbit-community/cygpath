@@ -1232,7 +1232,10 @@
       "default_character": 63,
       "archive_member": "CodpageFiles/29001.txt",
       "maximum_character_bytes": 1,
-      "source_entries": 256
+      "source_entries": 256,
+      "encoding_supported": false,
+      "boundary": "upstream-unsupported-codepage",
+      "boundary_reason": "The raw oracle emitted only LF; cygpath ignores Windows conversion failures and can read an uninitialized buffer. Empty output is not an encoding contract. The archived Europa 3 table is retained as data only."
     }
   ],
   "archive_url": "https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%20Supported%20Code%20Page%20Data%20Files.zip",

@@ -253,6 +253,38 @@ fn option_usage(ignore : Bool) -> Unit raise CliError {
 }
 
 ///|
+/// Match the decimal strtoul grammar used by the official CLI, including its
+/// unsigned-long saturation and subsequent conversion to a 32-bit code page.
+fn numeric_codepage(text : String, ignore : Bool) -> Int raise CliError {
+  if text.is_empty() {
+    return 0
+  }
+  let value = text.trim_start(chars=" \t\r\n\u000B\u000C")
+  let negative = value.has_prefix("-")
+  let digits = if negative || value.has_prefix("+") { value[1:] } else { value }
+  if digits.is_empty() {
+    option_usage(ignore)
+  }
+  let mut number = 0UL
+  let mut overflow = false
+  for digit in digits.code_units() {
+    if !(digit is ('0'..='9')) {
+      option_usage(ignore)
+    }
+    let digit = (digit.to_int() - 48).to_uint64()
+    if !overflow {
+      if number > (18446744073709551615UL - digit) / 10UL {
+        number = 18446744073709551615UL
+        overflow = true
+      } else {
+        number = number * 10UL + digit
+      }
+    }
+  }
+  (if negative && !overflow { 0UL - number } else { number }).to_int()
+}
+
+///|
 fn parse_args_inner(
   args : Array[String],
   from_file : Bool,
@@ -339,12 +371,7 @@ fn parse_args_inner(
         } else if values[0].to_upper() is ("ANSI" | "OEM") {
           unavailable_codepage = Some(values[0])
         } else {
-          codepage = @string.parse_int(values[0]) catch {
-            _ => {
-              option_usage(ignore)
-              65001
-            }
-          }
+          codepage = numeric_codepage(values[0], ignore)
           unavailable_codepage = if @encoding.supported(codepage) {
             None
           } else {

@@ -175,7 +175,7 @@ test "profiles and custom drive prefixes are explicit" {
   for path in ["/cygdrive", "/cygdrive/cc/a"] {
     assert_true(
       conversion_error(() => cygwin.convert(path, from=Posix, to=Windows))
-      is @lib.InvalidPath(reason=_, offset=_),
+      is @lib.InvalidDrivePrefix,
     )
   }
 }

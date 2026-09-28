@@ -4,6 +4,7 @@
 pub(all) suberror ConversionError {
   EmptyPath
   PathTooLong(String)
+  InvalidDrivePrefix
   InvalidPath(reason~ : String, offset~ : Int)
   InvalidContext(field~ : String, reason~ : String)
   MissingContext(field~ : String)

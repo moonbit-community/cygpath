@@ -322,12 +322,7 @@ fn drive_mount(posix : String, prefix : String) -> Bool {
 }
 
 ///|
-fn mounted_context(
-  raw : String,
-  prefix : String,
-  root : String,
-  usr_bin : String,
-) -> Array[Json] {
+fn mounted_context(raw : String, prefix : String) -> Array[Json] {
   let mounts : Array[Json] = []
   let seen : Map[String, Bool] = Map([])
   for line in raw.split("\n") {
@@ -359,16 +354,6 @@ fn mounted_context(
           seen[posix] = true
         }
       }
-    }
-  }
-  for (posix, windows) in [("/", root), ("/usr/bin", usr_bin)] {
-    if !seen.contains(posix) {
-      mounts.push({
-        "posix": posix,
-        "windows": windows,
-        "case_policy": "sensitive",
-      })
-      seen[posix] = true
     }
   }
   mounts
@@ -507,7 +492,10 @@ async fn validate_run(
           ("oracle", oracle_signature),
           ("project", project_signature),
         ] {
-        if domain == "malformed-utf8" && role == "oracle" {
+        if (
+            domain == "malformed-utf8" || domain == "unavailable-codepage-29001"
+          ) &&
+          role == "oracle" {
           continue
         }
         let key = suite + "/" + case_id + "/" + role
@@ -523,13 +511,14 @@ async fn validate_run(
       }
       if raw_status == "fail" &&
         gate_status != "inconsistent" &&
-        domain != "malformed-utf8" {
+        domain == "supported" {
         reason = Some(
           "exact official equality is required; no difference exemptions are applied",
         )
         accepted = false
       }
-      if domain == "malformed-utf8" && gate_status != "inconsistent" {
+      if (domain == "malformed-utf8" || domain == "unavailable-codepage-29001") &&
+        gate_status != "inconsistent" {
         let prefix = text_field(field(manifest, "context"), "drive_prefix")
         let drive_c = prefix.trim_end(chars="/").to_owned() + "/c"
         let expected_stdout = text_field(fixture_case, "boundary_stdout").replace_all(
@@ -543,13 +532,20 @@ async fn validate_run(
           digest(@utf8.encode(expected_stderr)) &&
           int_field(project, "exit_code") ==
           int_field(fixture_case, "boundary_exit") {
-          gate_status = "input-domain-boundary"
-          reason = Some(
-            "malformed UTF-8 is outside upstream defined conversion; raw oracle observation retained and strict project rejection verified independently",
-          )
+          if domain == "malformed-utf8" {
+            gate_status = "input-domain-boundary"
+            reason = Some(
+              "malformed UTF-8 is outside upstream defined conversion; raw oracle observation retained and strict project rejection verified independently",
+            )
+          } else {
+            gate_status = "capability-boundary"
+            reason = Some(
+              "CP29001 Windows API failure is independently measured; upstream ignores the failed conversion and has no defined output; raw observation retained and exact project rejection verified",
+            )
+          }
         } else {
           gate_status = "boundary-contract-fail"
-          reason = Some("strict malformed-input rejection contract failed")
+          reason = Some("strict unsupported-input rejection contract failed")
         }
       }
     } else {
@@ -558,7 +554,9 @@ async fn validate_run(
         "both actual processes must complete before a comparison can be accepted",
       )
     }
-    if gate_status != "pass" && gate_status != "input-domain-boundary" {
+    if gate_status != "pass" &&
+      gate_status != "input-domain-boundary" &&
+      gate_status != "capability-boundary" {
       accepted = false
     }
     results.push({
@@ -683,8 +681,14 @@ async fn audit_scope(
           (if domain == "supported" {
             result.gate_status == "pass"
           } else {
-            domain == "malformed-utf8" &&
-            result.gate_status == "input-domain-boundary"
+            (
+              domain == "malformed-utf8" &&
+              result.gate_status == "input-domain-boundary"
+            ) ||
+            (
+              domain == "unavailable-codepage-29001" &&
+              result.gate_status == "capability-boundary"
+            )
           })
         })
       if !verified {
@@ -821,6 +825,29 @@ async fn run(options : Map[String, String]) -> Unit {
     probe_environment,
   )
   let host = @json.parse(successful_text(output, host_probe))
+  let codepage_probe = probe(
+    output,
+    "windows-codepage-api",
+    moon,
+    [
+      "run",
+      "--deny-warn",
+      repository + "/scripts/probe_windows_codepages.mbtx",
+      output + "/codepage-api-probe",
+      powershell,
+    ],
+    repository,
+    environment,
+    deadline=120000,
+  )
+  ignore(successful_text(output, codepage_probe))
+  let codepage_result = @json.parse(
+    @fs.read_file(output + "/codepage-api-probe/result.json").text(),
+  )
+  require(
+    bool_field(codepage_result, "assertions_passed"),
+    "CP29001 capability boundary requires successful independent Windows API diagnosis",
+  )
   let version = probe(
     output,
     "upstream-version",
@@ -1030,12 +1057,18 @@ async fn run(options : Map[String, String]) -> Unit {
       probe(output, "drive-prefix", cygpath, ["-u", "C:\\"], cwd, environment),
     ),
   )
+  save_json(output + "/path-mapping-probes.json", {
+    "root": official_root,
+    "usr_bin": usr_bin,
+    "context_mount_source": "Only declarations from the raw mount table are supplied to the project; queried path mappings do not create extra mounts.",
+  })
   if variant == "custom" {
     require(
       prefix == "/p3-drives",
       "official runtime did not retain the configured custom drive prefix",
     )
-    let mounted = mounted_context(mount_table, prefix, official_root, usr_bin)
+    let mounted = mounted_context(mount_table, prefix)
+    let mapping_observations : Array[Json] = []
     for
       (posix, windows) in [
         ("/p3-mount", cwd + "/custom-base"),
@@ -1066,10 +1099,26 @@ async fn run(options : Map[String, String]) -> Unit {
           ),
         ),
       )
-      require(
-        measured.trim_end(chars="/").to_owned() == windows,
-        "independent custom mount mapping probe differs",
-      )
+      let direct_target_match = measured.trim_end(chars="/").to_owned() ==
+        windows
+      mapping_observations.push({
+        "posix": posix,
+        "declared_windows_target": windows,
+        "observed_windows_path": measured,
+        "direct_target_match": direct_target_match,
+        "probe": "observations/custom-mapping-" +
+        posix.replace_all(old="/", new="-") +
+        ".json",
+      })
+      // MSYS2 searches its separately sorted mount list; the existence of a
+      // nested declaration does not prove that declaration wins selection.
+      // Preserve the original declarations for product context and let the
+      // ordinary collect/replay cases enforce exact official/project equality.
+      if profile == "cygwin" {
+        require(
+          direct_target_match, "independent Cygwin custom mount mapping probe differs",
+        )
+      }
     }
     require(
       mounted.any(mount => {
@@ -1078,6 +1127,18 @@ async fn run(options : Map[String, String]) -> Unit {
       }),
       "official mount did not report requested posix=0 policy",
     )
+    save_json(output + "/custom-mapping-observations.json", {
+      "schema_version": 1,
+      "profile": profile,
+      "mount_declarations_verified": true,
+      "observations": @json.to_json(mapping_observations),
+      "selection_rule_source": if profile == "msys2" {
+        "https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/cygwin/mount.cc#L1420-L1500"
+      } else {
+        "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1330-L1405"
+      },
+      "acceptance": "Mount declarations are checked against the configured targets. These probes retain the official selection result; they do not replace declarations with observations or accept any official/project difference. All supported custom fixtures must still match stdout, stderr, and exit status exactly in both backends and replay.",
+    })
   }
   let windows_cwd = path_text(
     successful_text(
@@ -1204,14 +1265,12 @@ async fn run(options : Map[String, String]) -> Unit {
     "context": {
       "profile": profile,
       "drive_prefix": prefix,
-      "mounts": @json.to_json(
-        mounted_context(mount_table, prefix, official_root, usr_bin),
-      ),
+      "mounts": @json.to_json(mounted_context(mount_table, prefix)),
       "posix_cwd": posix_cwd,
       "windows_cwd": windows_cwd,
       "drive_cwds": { "C": drive_cwd },
     },
-    "context_mapping_evidence": "Sibling observations retain raw mount/locale/cygpath cwd and mapping probes with their exact argv, bytes, status, and hashes. Per-drive C cwd is measured by the native Windows .NET Path.GetFullPath API on C:.; it is not inferred by converting the ambiguous C: operand with cygpath. Mounts are transcribed in observed order; auto cygdrive and virtual /dev,/proc entries are excluded. Root and /usr/bin mappings are independently queried; CLI sensitive matching is explicit. Host facts come from the retained PowerShell observation; source Git provenance is separately qualified.",
+    "context_mapping_evidence": "Sibling observations retain raw mount/locale/cygpath cwd and mapping probes with their exact argv, bytes, status, and hashes. Per-drive C cwd is measured by the native Windows .NET Path.GetFullPath API on C:.; it is not inferred by converting the ambiguous C: operand with cygpath. Mounts are transcribed in observed order; auto cygdrive and virtual /dev,/proc entries are excluded. Mount case policy is transcribed from posix=0 and supplied explicitly. Root and /usr/bin mappings are independently queried. Custom declarations remain unchanged when MSYS2 selects another matching mount; custom-mapping-observations.json retains that distinction and strict fixture comparisons remain mandatory. Host facts come from the retained PowerShell observation; source Git provenance is separately qualified.",
     "capabilities": [
       "portable-paths", "utf8", "stdin", "root-mount", "usr-bin-mount", "posix-cwd",
       "windows-cwd", "drive-cwd-c",
@@ -1464,6 +1523,9 @@ async fn run(options : Map[String, String]) -> Unit {
     "input_domain_boundary_observations": results
     .filter(result => result.gate_status == "input-domain-boundary")
     .length(),
+    "capability_boundary_observations": results
+    .filter(result => result.gate_status == "capability-boundary")
+    .length(),
     "coverage_verified": coverage_verified,
     "fault_drills_verified": fault_verified,
     "infrastructure_errors": @json.to_json(infrastructure),
@@ -1493,15 +1555,24 @@ fn self_test() -> Unit raise {
   )
   let mounts = mounted_context(
     "C:/root on / type ntfs (binary)\nC: on /cygdrive/c type ntfs (binary)\nC:/root/bin on /usr/bin type ntfs (binary)",
-    "/cygdrive", "C:/root", "C:/root/bin",
+    "/cygdrive",
   )
   assert_eq(mounts.length(), 2)
   assert_eq(text_field(mounts[1], "posix"), "/usr/bin")
   let folded = mounted_context(
-    "C:/fold on /P3Fold type ntfs (binary,posix=0,user)", "/cygdrive", "C:/root",
-    "C:/root/bin",
+    "C:/fold on /P3Fold type ntfs (binary,posix=0,user)", "/cygdrive",
   )
   assert_eq(text_field(folded[0], "case_policy"), "ascii-insensitive")
+  assert_eq(folded.length(), 1)
+  let raw_msys = mounted_context(
+    "C:/msys64 on / type ntfs (binary,noacl,auto)\nC:/msys64/usr/bin on /bin type ntfs (binary,noacl,auto)",
+    "/",
+  )
+  assert_eq(raw_msys.length(), 2)
+  require(
+    !raw_msys.any(mount => text_field(mount, "posix") == "/usr/bin"),
+    "a queried mapping must not invent a mount absent from the raw table",
+  )
   let oracle : Json = {
     "stdout": { "sha256": digest(b"official"), "length": 8 },
     "stderr": { "sha256": digest(b""), "length": 0 },

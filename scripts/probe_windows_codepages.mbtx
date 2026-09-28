@@ -1,0 +1,207 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x@0.5.5/crypto",
+}
+
+///|
+/// Oracle diagnostics only: the product never loads this PowerShell/PInvoke
+/// probe. Keep the initialized destination buffer visible so a failed Win32
+/// conversion cannot be mistaken for a valid empty encoded string.
+let probe =
+  #|$ErrorActionPreference = 'Stop'
+  #|if (-not [OperatingSystem]::IsWindows()) { throw 'This probe requires Windows.' }
+  #|[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+  #|Add-Type -TypeDefinition @'
+  #|using System;
+  #|using System.Collections.Generic;
+  #|using System.Runtime.InteropServices;
+  #|public static class CygpathCodepageProbe {
+  #|  [StructLayout(LayoutKind.Sequential)]
+  #|  public struct CPINFO {
+  #|    public uint MaxCharSize;
+  #|    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] DefaultChar;
+  #|    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)] public byte[] LeadByte;
+  #|  }
+  #|  [DllImport("kernel32.dll", SetLastError = true)]
+  #|  [return: MarshalAs(UnmanagedType.Bool)]
+  #|  static extern bool IsValidCodePage(uint codepage);
+  #|  [DllImport("kernel32.dll", SetLastError = true)]
+  #|  [return: MarshalAs(UnmanagedType.Bool)]
+  #|  static extern bool GetCPInfo(uint codepage, out CPINFO info);
+  #|  [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = true)]
+  #|  static extern int WideCharToMultiByte(uint codepage, uint flags,
+  #|    [MarshalAs(UnmanagedType.LPWStr)] string input, int inputLength,
+  #|    [Out] byte[] output, int outputLength, IntPtr defaultChar, IntPtr usedDefault);
+  #|  static string Hex(byte[] bytes, int count) {
+  #|    return count == 0 ? "" : BitConverter.ToString(bytes, 0, count).Replace("-", "");
+  #|  }
+  #|  public static Dictionary<string, object> Capture(uint codepage, string input) {
+  #|    bool valid = IsValidCodePage(codepage);
+  #|    int validError = Marshal.GetLastWin32Error();
+  #|    CPINFO info;
+  #|    bool infoResult = GetCPInfo(codepage, out info);
+  #|    int infoError = Marshal.GetLastWin32Error();
+  #|    int sizeResult = WideCharToMultiByte(codepage, 0, input, -1, null, 0, IntPtr.Zero, IntPtr.Zero);
+  #|    int sizeError = Marshal.GetLastWin32Error();
+  #|    byte[] output = new byte[256];
+  #|    for (int i = 0; i < output.Length; i++) output[i] = 0xCC;
+  #|    int result = WideCharToMultiByte(codepage, 0, input, -1, output, output.Length, IntPtr.Zero, IntPtr.Zero);
+  #|    int error = Marshal.GetLastWin32Error();
+  #|    bool untouched = true;
+  #|    foreach (byte b in output) if (b != 0xCC) untouched = false;
+  #|    return new Dictionary<string, object> {
+  #|      ["codepage"] = codepage, ["input"] = input,
+  #|      ["is_valid_codepage"] = valid, ["is_valid_codepage_last_error"] = validError,
+  #|      ["get_cp_info_success"] = infoResult, ["get_cp_info_last_error"] = infoError,
+  #|      ["maximum_character_bytes"] = infoResult ? (object)info.MaxCharSize : null,
+  #|      ["default_character_hex"] = infoResult ? Hex(info.DefaultChar, 2) : null,
+  #|      ["lead_bytes_hex"] = infoResult ? Hex(info.LeadByte, 12) : null,
+  #|      ["size_result"] = sizeResult, ["size_last_error"] = sizeError,
+  #|      ["conversion_result"] = result, ["conversion_last_error"] = error,
+  #|      ["output_hex"] = Hex(output, result > 0 ? result : 0),
+  #|      ["destination_capacity"] = output.Length,
+  #|      ["destination_initial_byte"] = 204,
+  #|      ["destination_unchanged"] = untouched,
+  #|      ["destination_after_hex"] = Hex(output, output.Length)
+  #|    };
+  #|  }
+  #|}
+  #|'@
+  #|$inputs = @('C:\ASCII', 'C:\café\€')
+  #|$expected = @('433A5C415343494900', '433A5C636166E95C8000')
+  #|$rows = @()
+  #|$failures = @()
+  #|foreach ($cp in @(1252, 29001)) {
+  #|  for ($i = 0; $i -lt $inputs.Length; $i++) {
+  #|    $row = [CygpathCodepageProbe]::Capture($cp, $inputs[$i])
+  #|    $rows += $row
+  #|    if ($cp -eq 1252) {
+  #|      if (-not $row.is_valid_codepage -or -not $row.get_cp_info_success -or
+  #|          $row.output_hex -ne $expected[$i] -or
+  #|          $row.size_result -ne $row.conversion_result) {
+  #|        $failures += 'CP1252 control conversion did not produce the expected bytes.'
+  #|      }
+  #|    } elseif ($row.size_result -ne 0 -or $row.conversion_result -ne 0 -or
+  #|              -not $row.destination_unchanged -or $row.conversion_last_error -eq 0) {
+  #|      $failures += 'CP29001 did not demonstrate a failed conversion with an untouched destination; re-evaluate the boundary.'
+  #|    }
+  #|  }
+  #|}
+  #|$report = [ordered]@{
+  #|  schema_version = 1
+  #|  purpose = 'Direct Win32 oracle diagnosis; never used by the cygpath product'
+  #|  os_version = [Environment]::OSVersion.VersionString
+  #|  architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+  #|  powershell = [Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+  #|  powershell_version = $PSVersionTable.PSVersion.ToString()
+  #|  kernel32_version = [Diagnostics.FileVersionInfo]::GetVersionInfo([IO.Path]::Combine([Environment]::SystemDirectory, 'kernel32.dll')).FileVersion
+  #|  parameters = [ordered]@{ flags = 0; input_length = -1; default_character = 'NULL'; used_default = 'NULL' }
+  #|  observations = $rows
+  #|  assertions_passed = ($failures.Count -eq 0)
+  #|  failures = $failures
+  #|  last_error_note = 'Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error.'
+  #|}
+  #|[Console]::WriteLine(($report | ConvertTo-Json -Depth 12 -Compress))
+  #|if ($failures.Count -ne 0) { exit 1 }
+
+///|
+fn digest(bytes : Bytes) -> String {
+  @crypto.bytes_to_hex_string(@crypto.sha256(bytes))
+}
+
+///|
+async fn main {
+  let args = @env.args()[1:]
+  let (directory, powershell) = match args {
+    [directory] => (directory, "pwsh.exe")
+    [directory, powershell] => (directory, powershell)
+    _ =>
+      fail(
+        "usage: probe_windows_codepages.mbtx NEW_OUTPUT_DIRECTORY [POWERSHELL_EXE]",
+      )
+  }
+  guard !@fs.exists(directory) else { fail("output directory already exists") }
+  @fs.mkdir(directory)
+  let output = @fs.realpath(directory)
+  let environment : Map[String, String] = Map([])
+  for
+    key in [
+      "SystemRoot", "WINDIR", "SystemDrive", "ProgramFiles", "ProgramFiles(x86)",
+      "ProgramW6432", "ProgramData", "TEMP", "TMP", "USERPROFILE", "PSModulePath",
+      "PATH", "PATHEXT", "COMSPEC",
+    ] {
+    if @env.get_env_var(key) is Some(value) {
+      environment[key] = value
+    }
+  }
+  let argv = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", probe]
+  @fs.write_file(output + "/empty.bin", b"", create_mode=CreateNew)
+  let start = @async.now()
+  let exit_code = @async.with_timeout_opt(30000, () => {
+    @process.run(
+      powershell,
+      argv,
+      inherit_env=false,
+      extra_env=environment,
+      stdin=@process.redirect_from_file(output + "/empty.bin"),
+      stdout=@process.redirect_to_file(
+        output + "/stdout.bin",
+        create_mode=CreateNew,
+      ),
+      stderr=@process.redirect_to_file(
+        output + "/stderr.bin",
+        create_mode=CreateNew,
+      ),
+      cancel_handler=@process.hard_cancel(),
+    )
+  })
+  let stdout = @fs.read_file(output + "/stdout.bin").binary()
+  let stderr = @fs.read_file(output + "/stderr.bin").binary()
+  let capture : Json = {
+    "schema_version": 1,
+    "program": powershell,
+    "argv": @json.to_json(argv),
+    "inherit_env": false,
+    "environment": @json.to_json(environment),
+    "deadline_ms": 30000,
+    "elapsed_ms": (@async.now() - start).to_string(),
+    "exit_code": @json.to_json(exit_code),
+    "timed_out": exit_code is None,
+    "stdout": {
+      "path": "stdout.bin",
+      "length": stdout.length(),
+      "sha256": digest(stdout),
+    },
+    "stderr": {
+      "path": "stderr.bin",
+      "length": stderr.length(),
+      "sha256": digest(stderr),
+    },
+  }
+  @fs.write_file(
+    output + "/capture.json",
+    capture.stringify(indent=2) + "\n",
+    create_mode=CreateNew,
+  )
+  guard exit_code == Some(0) else {
+    fail("Windows code-page probe failed; raw evidence retained in " + output)
+  }
+  let result = @json.parse(@utf8.decode(stdout))
+  guard result is { "assertions_passed": True, .. } else {
+    fail(
+      "probe did not confirm its assertions; raw evidence retained in " + output,
+    )
+  }
+  @fs.write_file(
+    output + "/result.json",
+    result.stringify(indent=2) + "\n",
+    create_mode=CreateNew,
+  )
+  println("Win32 code-page assertions passed; evidence: " + output)
+}

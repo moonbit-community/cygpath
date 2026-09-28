@@ -64,10 +64,7 @@ fn drive_path(
   prefix_length : Int,
 ) -> ParsedPath raise ConversionError {
   guard path.components.get(prefix_length) is Some(drive) && is_drive(drive) else {
-    raise InvalidPath(
-      reason="drive prefix must be followed by a single ASCII drive letter",
-      offset=0,
-    )
+    raise InvalidDrivePrefix
   }
   {
     root: DriveAbsolute(upper_drive(drive)),

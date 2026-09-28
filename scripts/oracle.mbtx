@@ -556,7 +556,8 @@ fn validate_suite(suite : Suite, manifest : Manifest) -> Unit raise {
     }
     require(
       fixture.validation_domain is None ||
-      fixture.validation_domain == Some("malformed-utf8"),
+      fixture.validation_domain == Some("malformed-utf8") ||
+      fixture.validation_domain == Some("unavailable-codepage-29001"),
       "unknown input-domain boundary",
     )
     if fixture.validation_domain == Some("malformed-utf8") {
@@ -567,6 +568,19 @@ fn validate_suite(suite : Suite, manifest : Manifest) -> Unit raise {
         "malformed UTF-8 requires explicit strict-project contract",
       )
       expect_failure(() => ignore(@utf8.decode(@hex.decode(fixture.stdin_hex))))
+    }
+    if fixture.validation_domain == Some("unavailable-codepage-29001") {
+      require(
+        fixture.upstream_argv.contains("-C29001") &&
+        fixture.project_argv.contains("-C29001") &&
+        fixture.boundary_stdout == Some("") &&
+        fixture.boundary_stderr ==
+        Some(
+          "cygpath: unsupported-capability: \"code page 29001 is not supported by the pure encoder\"\n",
+        ) &&
+        fixture.boundary_exit == Some(1),
+        "CP29001 boundary requires explicit deterministic rejection",
+      )
     }
     for args in [fixture.upstream_argv, fixture.project_argv] {
       for arg in args {

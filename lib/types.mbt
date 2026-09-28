@@ -26,7 +26,7 @@ pub extend OutputFormat with Eq::{equal, not_equal}
 pub extend OutputFormat with @debug.Debug::{to_repr}
 
 ///|
-/// Selects the default drive prefix, without detecting the host environment.
+/// Selects mount ordering and default drive prefix without detecting the host.
 pub(all) enum Profile {
   Cygwin
   Msys2
