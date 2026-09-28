@@ -33,7 +33,7 @@ jobs:
         with:
           install-dir: 'C:\cygpath-cygwin'
           site: https://mirrors.kernel.org/sourceware/cygwin/
-          packages: cygwin
+          packages: cygwin coreutils
           add-to-path: false
       - name: Install official MSYS2
         id: msys2

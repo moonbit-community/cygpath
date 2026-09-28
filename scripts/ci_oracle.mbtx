@@ -832,6 +832,12 @@ async fn run(options : Map[String, String]) -> Unit {
   ignore(successful_text(output, version))
   // Official runtime startup must deliver the recorded argv literally. Its
   // native-parent wildcard expansion is unrelated to path conversion.
+  let argv_echo = bin + "/printf.exe"
+  require(
+    @fs.exists(argv_echo),
+    "official installation lacks coreutils printf.exe for literal argv transport evidence",
+  )
+  let argv_echo_artifact = artifact(argv_echo)
   let transport : Array[Json] = []
   for
     (id, payload) in [
@@ -842,11 +848,8 @@ async fn run(options : Map[String, String]) -> Unit {
     let check = probe(
       output,
       "argv-transport-" + id,
-      bin + "/bash.exe",
-      [
-        "--noprofile", "--norc", "-c", "printf '%s\\0' \"$@\"", "cygpath-argv-probe",
-        payload,
-      ],
+      argv_echo,
+      ["%s", payload],
       cwd,
       environment,
     )
@@ -854,7 +857,7 @@ async fn run(options : Map[String, String]) -> Unit {
       check.status == "completed" && check.exit_code == Some(0),
       "official runtime argv transport probe failed",
     )
-    let expected = @utf8.encode(payload) + b"\x00"
+    let expected = @utf8.encode(payload)
     require(
       @fs.read_file(output + "/" + check.stdout_path).binary() == expected &&
       check.stderr_length == 0,
@@ -870,6 +873,9 @@ async fn run(options : Map[String, String]) -> Unit {
   save_json(output + "/argv-transport.json", {
     "schema_version": 1,
     "verified": true,
+    "argv_echo_program": argv_echo_artifact,
+    "argv_echo_origin": "official coreutils printf.exe from the same selected installation as cygpath and its runtime",
+    "argv_echo_protocol": "direct process argv [%s, payload]; exact single-payload bytes, no shell code or delimiter",
     "runtime_environment": { "CYGWIN": "noglob", "MSYS": "noglob" },
     "source_urls": [
       "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/environ.cc",
