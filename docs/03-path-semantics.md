@@ -2,6 +2,11 @@
 
 Status: portable behavior contract. See [the architecture index](README.md) for implementation and verification status. This chapter defines the project's deterministic rules; behavior marked as a differential gate requires evidence collected on real Cygwin/MSYS2 before the corresponding compatibility can be claimed. See [01](01-upstream-and-scope.md) for the primary behavioral sources and immutable source links.
 
+The first real Windows runs now establish observations for the selected corpus;
+see [the remote validation report](09-remote-validation.md). Its recorded
+differences remain differences in raw output/status. They neither establish
+complete compatibility nor extend the supported scope beyond this chapter.
+
 ## 1. Input, output, and profile are separate dimensions
 
 The only input syntaxes are `Windows` and `Posix`, selected explicitly by the caller. Output formats are `Windows`, `Mixed`, and `Posix`. Mixed shares Windows path semantics and changes only the directory separator for ordinary paths. The profile is either `Cygwin` or `Msys2`; it determines the default drive prefix and the CLI's mode identification, not the host OS.
@@ -77,7 +82,36 @@ Special relative inputs require the following context:
 
 Do not interpret `C:` as `C:\`, or assume a drive root when its per-drive cwd is missing. `absolute` is not `realpath`, and the output does not establish that a file exists.
 
-The portable trailing-separator rule is: roots retain the separator needed to express the root; if a non-root input has a trailing separator, render exactly one target separator; preserve one trailing separator on ordinary relative `.`/`..` paths as well. This rule is subject to official differential checks. A different compatibility rule requires corresponding contract and fixture updates.
+The pinned Windows runs observed that both official programs resolve the tested
+`-au C:child` and `-au C:` inputs from the drive root, while this project's
+explicit per-drive cwd produces the declared cwd plus `child`, or the cwd itself.
+The existing explicit-context rule above remains the portable contract. For the
+tested `-au \\server\share\..\file`, both official programs preserve the parent
+component; this project's existing lexical rule clamps traversal at the share
+and yields `//server/share/file`. These are bounded observations for those
+fixtures and environments, recorded with their byte digests in
+[the reviewed differences](../testdata/oracle/reviewed-differences.json).
+They do not resolve every drive-state or UNC differential gate.
+
+The portable trailing-separator rule is: roots retain the separator needed to
+express the output root; if a non-root input has a trailing separator, render
+exactly one target separator; preserve one trailing separator on ordinary
+relative `.`/`..` paths as well. The slash in the bare POSIX root `/` is structural,
+not an optional suffix. Mapping `/` to an ordinary Windows directory such as
+`C:\root` therefore produces `C:\root`, without an extra backslash. Mapping it
+to a drive root or UNC share still produces the required `C:\` or
+`\\server\share\` form. Determine optional trailing-separator intent before
+normalization: `/folder/` retains its suffix, and `/folder/../` mapped through `/ → C:\root`
+produces `C:\root\` because a non-root input explicitly supplied that suffix.
+
+Commit `476d6a8` corrected the parser's conflation of the bare POSIX root slash
+with optional trailing separators. Both profiles use the same rule. In the
+recorded `-w /` case, Cygwin agrees with the corrected ordinary-directory output;
+MSYS2 appends a trailing backslash and is retained as a reviewed raw difference.
+See [the remote validation report](09-remote-validation.md) for pinned programs
+and evidence. Other root/trailing-separator combinations remain subject to their
+differential gates. A different compatibility rule requires corresponding
+contract and fixture updates.
 
 ## 6. Path lists are not simply batches of single paths
 
@@ -91,7 +125,15 @@ Empty-member rules follow the pinned upstream `conv_path_list` and are asymmetri
 - Windows → POSIX: discard empty members. Never inject the host cwd.
 - Rerendering a list in the same direction preserves empty-member positions. A single empty path passed to `convert("")` still produces `EmptyPath`.
 
-An empty POSIX list string represents one empty member. Converting a Windows list containing only empty members to POSIX yields the empty string under the portable contract. These endpoints and the exact official exit behavior require real-system differential checks; source-based inference alone does not establish compatibility.
+An empty POSIX list string represents one empty member. Converting a Windows list
+containing only empty members to POSIX yields the empty string under the portable
+contract. The CLI writes that result as LF and exits 0. In the recorded
+`empty-windows-list` case, both official CLIs reject the empty operand before
+list conversion, write no stdout, and report an error with exit 1. This confirms
+a difference for that case; it does not change the library's established
+empty-member contract. The [remote validation report](09-remote-validation.md)
+retains the exact observations. Further endpoint and option combinations still
+require real-system differential checks.
 
 Preserve member order and do not deduplicate. If a valid member fails conversion, return an error containing its original member index, with no prefix result. The index counts original empty members so diagnostics can identify the user's input. One CLI `-p NAME` is an atomic conversion unit; separate NAME arguments follow the per-item output rules.
 

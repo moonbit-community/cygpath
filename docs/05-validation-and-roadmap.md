@@ -17,12 +17,20 @@ Each case execution has exactly one of these outcomes:
 | Status | Definition | Meaning for acceptance |
 | --- | --- | --- |
 | `pass` | All required observations match the specified oracle | Covers only that input and environment |
-| `fail` | The program completes but violates the contract | Blocks completion of the corresponding stage |
+| `fail` | The program completes but differs from the specified expected observation | Remains a raw mismatch; requires correction or a scoped, reviewed difference record |
 | `skip` | A capability, host, or prerequisite is unavailable, with the reason recorded | Unverified; must not count as a pass |
 | `error` | The collector, toolchain, fixture preparation, or runtime environment fails | Repair the infrastructure before rerunning |
 | `timeout` | Execution exceeds the explicitly configured deadline for this run | Preserve partial output; do not treat it as an ordinary exit |
 
 Reports include counts for planned, executed, pass, fail, skip, error, and timeout, and retain the list of unexecuted cases. Record portable-contract results, backend consistency, and official behavior comparisons separately. Returning an error as designed can pass a project contract test without matching official output or establishing that the requested feature is implemented. Give each known difference its own identifier, affected scope, and evidence. Do not turn differences into passes by weakening assertions or updating snapshots in bulk.
+
+The Windows CI wrapper adds a separate acceptance result to the raw collector
+result. A `reviewed-difference` must match the checked-in profile/case, fixture
+digest, official executable/runtime digests, both streams, and both exit codes
+exactly. It does not change raw `fail` to `pass`. Unknown or changed differences,
+incomplete runs, skips, errors, timeouts, and backend/replay inconsistencies
+fail the gate. See [07](07-oracle-collection.md) for the mechanism and
+[09](09-remote-validation.md) for the first accepted evidence.
 
 ## 2. Test layers and responsibilities
 
@@ -69,7 +77,7 @@ Fix and record at least the following for every run:
 
 | Dimension | Required records |
 | --- | --- |
-| Upstream | Source URL, source commit/tag, distribution version, absolute executable path and SHA-256, raw `--version` output, runtime-library version |
+| Upstream | Source URL, source commit/tag when independently established, measured distribution package identity, absolute executable path and SHA-256, raw `--version` output, runtime-library version; explicitly identify unattested source-to-binary correspondence |
 | This project | Git SHA, dirty-workspace status, MoonBit version, backend, build mode, artifact digest |
 | Host | Windows version/build, architecture, filesystem type, Cygwin/MSYS2 installation root, launch method |
 | Path environment | cwd, current drive, per-drive cwd, mount table and cygdrive configuration, relevant environment variables, actual directory existence and permissions |
@@ -96,7 +104,7 @@ text previews do not participate in equality checks.
 
 The implemented portable suite uses
 [`testdata/contracts/cli.json`](../testdata/contracts/cli.json) and an exact
-[`help.txt`](../testdata/contracts/help.txt). Its 56 process fixtures exercise
+[`help.txt`](../testdata/contracts/help.txt). Its 57 process fixtures exercise
 options, explicit context, NAME/file/stdin input, UTF-8, record boundaries,
 partial output, list atomicity, and closed-stdout failures. The
 [`check_cli.mbtx`](../scripts/check_cli.mbtx) runner executes both artifacts,
@@ -128,8 +136,8 @@ The pure library and CLI packages compile for all standard compiler targets.
 An all-target check honors those package declarations; it does not assert that
 the executable supports Wasm GC or JavaScript. The checked-in
 [CI workflow](../.github/workflows/check.yml) schedules Wasm/Native tests and
-process acceptance separately on Linux, macOS, and Windows. It has not yet
-established any remote execution result.
+process acceptance separately on Linux, macOS, and Windows. All three hosts
+passed at `7dfe6ba`; [09](09-remote-validation.md) records the run and artifacts.
 
 | Suite | Host | Backend | What it establishes |
 | --- | --- | --- | --- |
@@ -158,13 +166,22 @@ Once real packages exist, each stage generates and reviews `.mbti` files using `
 
 P1/P2 may proceed from explicit project contracts, but unresolved upstream semantics must remain traceable. Do not advertise full Cygwin/MSYS2 compatibility before P3. P4 does not promise complete Windows-specific functionality. Capabilities such as 8.3 names, system directories, and code pages remain unsupported without a consistent pure MoonBit solution; FFI or system-command fallbacks must not bypass this gate. Before the first formal release, also review the support table, licenses, published package contents, consumer usability, and all required evidence.
 
-Current local macOS evidence includes 58 passing tests on each of Wasm and
-Native, and 56 portable process fixtures on each backend: 112 process results
-passed and all 56 backend comparisons matched stdout, stderr, and exit status
-exactly. The process report is `_build/cli-evidence-1`; it includes the actual
-artifact digests and raw output. This is local P2 evidence, not Windows host,
-remote CI, official differential, or registry/moonx acceptance. The index records
-the final check/interface/format results and any subsequent evidence updates.
+Current local macOS evidence includes 59 passing tests on each of Wasm and
+Native, and 57 portable process fixtures on each backend: 114 process results
+passed and all 57 backend comparisons matched stdout, stderr, and exit status
+exactly. The latest local process report is `_build/cli-root-regression/`.
+The same counts passed remotely on Linux, macOS, and Windows at `7dfe6ba`.
+
+The first real Windows oracle subset also passed its reviewed-difference gate
+at that revision: 50 cases per profile, two backends, and collection/replay
+produced 400 comparisons. Cygwin had 156 exact matches and 44 raw mismatches;
+MSYS2 had 152 exact matches and 48 raw mismatches. The 92 raw mismatches represent
+23 reviewed profile/case records and remain visible in the artifacts. There
+were zero unexplained differences, required skips, errors, timeouts, or
+backend/replay inconsistencies. [09](09-remote-validation.md) gives the fixed
+official binaries and limits of this evidence. Completing the full supported
+matrix and real Windows timeout/termination and tampering drills remains P3
+work; publication and registry/moonx acceptance remain P4 work.
 
 Use these tool commands for acceptance. Run MoonBit commands sequentially to avoid contention for the build lock. Tool behavior on the historical package-free module is not implementation validation:
 
@@ -205,8 +222,12 @@ directory is not evidence that P3 passed. Replay must preserve collected input
 and observations instead of overwriting them. Run the profiles separately.
 
 All automation uses `.mbtx` and launches subprocesses with argument arrays.
-The CI workflow schedules the same portable checks and uploads process evidence;
-its configuration is not a completed remote run. Before official collection,
+The [Check workflow](../.github/workflows/check.yml) runs portable checks and
+uploads process evidence. The [Windows oracle workflow](../.github/workflows/oracle.yml)
+installs official distributions and runs `scripts/ci_oracle.mbtx` to measure
+context, collect/replay both backends, and apply exact reviewed-difference
+records. Successful executions are linked in [09](09-remote-validation.md).
+Before official collection,
 validate the manifest, upstream digests, required capabilities, and fixture
 schema. Stop on failure; do not fall back to another `cygpath` found on system
 PATH. Official `cygpath` subprocess calls belong only in test tooling and are

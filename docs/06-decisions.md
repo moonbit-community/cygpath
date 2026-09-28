@@ -16,7 +16,7 @@ The cost is that the tool cannot immediately replace every official option uncon
 
 **Status: Selected design baseline.**
 
-The primary behavior is determined from pinned official source, manuals, and future observations on real systems. JavaScript implementations inform interface organization and test cases only; Go wrappers around external commands help explain boundaries. [01](01-upstream-and-scope.md) maintains the exact SHAs and licenses.
+The primary behavior is determined from pinned official source, manuals, and observations on real systems. JavaScript implementations inform interface organization and test cases only; Go wrappers around external commands help explain boundaries. [01](01-upstream-and-scope.md) maintains the research SHAs and licenses; [09](09-remote-validation.md) records the separately measured Windows distribution binaries and the limits of their source provenance.
 
 Cygwin's `/cygdrive/c` and the `/c` commonly used by MSYS2 must be selected explicitly. Do not infer the profile from the host platform or `MSYSTEM`, and do not confuse MSYS2 shell argument rewriting with this library's algorithms.
 
@@ -54,13 +54,22 @@ Selected portable behavior includes explicit source syntax, limited lexical norm
 
 The cost is maintaining a support matrix and difference records. The benefit is that compilation of an empty package, a few string cases, or recognizable error branches cannot be presented as a mature compatible implementation.
 
+The first Windows subset records 23 reviewed profile/case differences across
+the two profiles. CI accepts only their exact fixture, official-binary, and
+output signatures; raw comparisons retain `fail`. The observed root conversion
+also led to a product correction: `/` no longer adds an optional trailing
+separator when mapped to an ordinary Windows installation directory. Cygwin
+matches that result; the measured MSYS2 trailing separator remains a scoped
+difference. The report in [09](09-remote-validation.md) does not promote this
+subset to complete compatibility.
+
 ## ADR-006: Separate individual paths from path lists
 
 **Status: Selected design baseline supported by upstream source.**
 
 Expose `convert` and `convert_list`, with source syntax determining the list delimiter. Windows→POSIX and POSIX→Windows have different empty-member rules; drive-letter colons must not split Windows lists. A list fails atomically within one call and does not emit its already-converted prefix.
 
-Compared with a `split/replace/join` shortcut, this requires member indices and representability checks. It prevents silent changes to the number or order of PATH members or their current-directory meaning. Final behavior for entirely empty lists and errors still requires confirmation against official programs on real systems.
+Compared with a `split/replace/join` shortcut, this requires member indices and representability checks. It prevents silent changes to the number or order of PATH members or their current-directory meaning. In the first Windows subset, both official CLIs reject an entirely empty Windows list operand with exit 1; the portable contract produces an empty list and the CLI writes LF with exit 0. This observed difference is retained as `portable-empty-list-policy`. Broader list/error compatibility still requires additional differential coverage.
 
 ## ADR-007: Default to Wasm; use Native to verify consistency from the same source
 
@@ -88,15 +97,15 @@ P0 retained module metadata and the complete design while removing the Hello CLI
 
 Each subsequent slice includes actual behavior, necessary tests, generated interfaces, and documentation updates. Automation uses `.mbtx` only, and build commands run serially. Validate concrete failure risks before moving to the next item. Measure performance after correctness and compatibility scope have stabilized.
 
-The cost is that P0 provided no executable cygpath, consistent with its initialization-and-design deliverable. The next step is the first end-to-end workflow in P1/P2, not further abstraction layers without consumers.
+The cost was that P0 provided no executable cygpath, consistent with its initialization-and-design deliverable. P1/P2 subsequently implemented the first end-to-end workflow and the packages needed by it, following this rule.
 
 ## Open questions and minimum evidence
 
 | Question | Current conclusion | Evidence needed to resolve it |
 | --- | --- | --- |
-| General-purpose I/O dependency | Not added at P0; do not invent package or method names in documentation | Execute a minimal argv/UTF-8 stdin/stdout/stderr/exit-code probe on Wasm and Native |
-| Actual official distribution baseline | Research source is pinned; official artifacts have not been executed | Record installation packages, executable hashes, runtime versions, and environment snapshots on Windows |
-| `.`/`..`, aliases, and empty-list boundaries | Portable rules are specified; full compatibility is unconfirmed | Differential vectors with fixed cwd, mounts, and per-drive state |
+| General-purpose I/O dependency | Implemented with async 0.22.4 and x 0.5.5; Wasm/Native contract suites pass on Linux, macOS, and Windows | Revalidate the documented host boundary when dependencies or toolchains change |
+| Actual official distribution baseline | Cygwin 3.6.10-1 and MSYS2 runtime 3.6.10-5 executed on Windows; hashes and measured context retained in [09](09-remote-validation.md) | Preserve exact binary baselines; review upstream changes and do not infer unattested source commits |
+| `.`/`..`, aliases, and empty-list boundaries | The first subset records drive-cwd, UNC traversal, and empty-list differences; full compatibility is unconfirmed | Expand differential vectors with fixed cwd, mounts, and per-drive state to cover the remaining matrix |
 | Extended namespaces and per-line options | Initially explicitly unsupported; they do not block common pure conversions | A separate specification, a pure implementation strategy, and evidence from both backends and official differential tests before enabling support |
 | Non-UTF-8 code pages, 8.3 names, and system directories | No solution meeting the constraints; remain unsupported | Evidence of new, consistent pure MoonBit capabilities; otherwise no schedule to “complete” them |
 | Publishing namespace and final version | Retain the existing module name and development version provisionally | Verify the account, package availability, and actual moonx entry point before publishing |

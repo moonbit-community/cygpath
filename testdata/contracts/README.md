@@ -6,6 +6,15 @@ These are project contracts, not observations from official Cygwin or MSYS2.
 a stable identifier, semantic category, argv array, expected raw UTF-8 stdout and
 stderr, and an integer exit code. The suite records schema version and provenance.
 
+The current suite has 57 cases per backend. At commit `7dfe6ba`, the
+[three-host Check run](https://github.com/moonbit-community/cygpath/actions/runs/36371978473)
+passed on Linux, macOS, and Windows: each host passed 114 Wasm/Native process
+observations and all 57 backend comparisons. Each backend also passed 59 MoonBit
+tests on each host. The `mapped-root` fixture covers the structural POSIX root
+slash correction: `-w --root C:\root /` produces `C:\root` followed by LF, with
+no extra backslash. See [the remote validation report](../../docs/09-remote-validation.md)
+for the frozen revision, artifact evidence, and distinct official-oracle results.
+
 Run the collector after building both executable artifacts:
 
 ```text
@@ -53,5 +62,11 @@ run, retaining an incomplete summary with all unexecuted case identifiers.
 The script uses pinned official `moonbitlang/async` process/filesystem facilities
 and `moonbitlang/x/crypto` for SHA-256. These are test-tool dependencies. It never
 invokes official `cygpath`; a separate Windows collector owns compatibility
-observations. Passing this suite does not establish Windows host behavior,
-official compatibility, registry retrieval, or publication readiness.
+observations. Passing a host's suite establishes the tested portable behavior on
+that host; results on another host cannot substitute for it. The separate pinned
+Windows oracle run recorded 156 exact matches and 44 raw differences for Cygwin,
+and 152 exact matches and 48 raw differences for MSYS2, out of 200 comparisons
+each (collection/replay on two backends). Reviewed differences remain raw
+failures; they are not counted as exact matches. Passing portable contracts or
+the reviewed oracle gate does not establish full official compatibility,
+registry retrieval, or publication readiness.

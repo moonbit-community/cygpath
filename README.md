@@ -38,8 +38,15 @@ moonx ZSeanYves/cygpath -u 'C:\work\demo.txt'
 
 Use `moonx ZSeanYves/cygpath@<published-version>` to pin a release. The public
 conversion library lives in `lib/`, imported as `ZSeanYves/cygpath/lib`. No release
-has been published or verified through registry retrieval. Real Windows
-Cygwin/MSYS2 differential acceptance remains a separate gate.
+has been published or verified through registry retrieval. Publication is handled
+by the maintainer.
+
+Linux, macOS, and Windows CI pass on both Wasm and Native. The first Windows
+official comparison covers 50 inputs per profile: 400 collection/replay
+comparisons produced 308 exact matches and 92 raw mismatches covered by 23
+reviewed profile/case records. This verifies the recorded subset, not full
+Cygwin/MSYS2 compatibility. See the [remote validation report](docs/09-remote-validation.md)
+for the exact revisions, official binaries, differences, and remaining gates.
 
 ## Development
 
@@ -55,9 +62,10 @@ Run MoonBit commands serially. Behavioral tests must accompany implemented featu
 
 [`scripts/check_cli.mbtx`](scripts/check_cli.mbtx) compares built Wasm and Native
 executables against byte-exact [portable CLI fixtures](testdata/contracts/README.md).
-The [validation roadmap](docs/05-validation-and-roadmap.md) preserves the separate
-Windows oracle and publication gates. The three-host CI workflow is included
-in the source; its presence does not establish a successful remote run.
+The [validation roadmap](docs/05-validation-and-roadmap.md) preserves the remaining
+Windows coverage and publication gates. The three-host contract workflow and
+the Windows oracle workflow retain raw evidence as GitHub Actions artifacts;
+reviewed differences remain visible as raw mismatches.
 
 The module name remains `ZSeanYves/cygpath`; the GitHub repository is [moonbit-community/cygpath](https://github.com/moonbit-community/cygpath). The GitHub organization does not determine the Mooncakes publishing namespace. Verify the account and package coordinates before publishing.
 

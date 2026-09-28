@@ -1,6 +1,6 @@
 # 04 Library API, CLI, and moonx Delivery
 
-Status: implemented library and initial CLI contract. See [the architecture index](README.md) for current host/backend verification and open acceptance gates. The generated `lib/pkg.generated.mbti` is authoritative for the public library API. The pseudocode signatures below summarize the contract; executable MoonBit examples live in [the library guide](../lib/README.mbt.md). P2 source exists, while real Windows differential and registry/moonx acceptance remain separate requirements.
+Status: implemented library and initial CLI contract. See [the architecture index](README.md) for current host/backend verification and open acceptance gates. The generated `lib/pkg.generated.mbti` is authoritative for the public library API. The pseudocode signatures below summarize the contract; executable MoonBit examples live in [the library guide](../lib/README.mbt.md). Portable CLI acceptance has run on Linux, macOS, and Windows; selected real Windows differential results are recorded in [the remote validation report](09-remote-validation.md). Broader official compatibility and registry/moonx acceptance remain separate requirements.
 
 ## 1. Minimal library surface
 
@@ -184,13 +184,33 @@ Process NAME arguments in order. Write each successful result as one UTF-8 recor
 
 `-f FILE` and `-f -` are implemented. The first version prohibits combining `-f` with NAME to avoid ambiguous ordering. Files are read incrementally, accepting LF/CRLF and removing only line terminators, without trimming path spaces. A UTF-8 BOM is allowed and removed only at the first byte position of the file; a BOM elsewhere is path content. The final line need not have a terminator. A BOM-only file has no records, while a BOM followed by LF has one empty record. Memory use is bounded by the longest individual record, not the complete file.
 
-An empty line is an empty path and fails with EmptyPath; in `-p` mode, use the empty-list semantics from 03 instead. An empty file counts as no input, which `-i` may turn into success with no output. This empty-file/empty-line policy is a portable contract. Compare it against a real installation and document differences from official line-by-line behavior.
+An empty line is an empty path and fails with EmptyPath; in `-p` mode, use the empty-list semantics from 03 instead. An empty file counts as no input, which `-i` may turn into success with no output. This empty-file/empty-line policy is a portable contract. The recorded official differences below do not broaden `-i` or change that policy.
 
 All output uses UTF-8 regardless of Windows OEM/ANSI code pages or the environment locale. Do not translate line endings for the platform. Because the CLI uses a line protocol, validate CR/LF in NAME arguments and in each file/stdin record after removing its terminator, rejecting remaining embedded line breaks. Converted output is checked as well, including POSIX names introduced by explicit context. Such failures are `InvalidRecord` with exit code 2. Library single-path behavior is determined by its own syntax contract. File/stdin decoding rejects invalid UTF-8 rather than replacing characters automatically; argv is supplied as strings by the runtime.
 
 Process multiple NAME arguments or file lines in order and stop at the first conversion failure. Earlier successful output may already have been written. An individual list must convert completely before its line is written. After an output I/O failure, do not process later input or automatically retry the entire batch and duplicate results.
 
 `-i` only permits success with no output when there is no input at all. It does not suppress empty paths, invalid encoding, unknown options, missing context, or file-read errors.
+
+The pinned Windows runs observed the following differences in both official
+profiles. These descriptions apply to the collected fixtures, with exact raw
+bytes, status, versions, and review records in
+[the remote validation report](09-remote-validation.md):
+
+| Recorded case | Project contract | Observed official behavior |
+| --- | --- | --- |
+| Empty stdin without `-i` | Missing-input diagnostic, exit 1 | No output, exit 0 |
+| Empty single-path record or operand | Empty-path diagnostic, exit 2; preserve earlier output and stop | Different diagnostic, exit 1; the tested partial-input cases preserve the same earlier stdout |
+| Initial UTF-8 BOM | Remove it only at byte zero | Retain it as path content |
+| Malformed UTF-8 after a valid record | Preserve the earlier record, report invalid encoding, stop with exit 1 | Repeat the previous record, continue processing, and exit 0 in the measured fixture |
+| Embedded LF in an operand | Reject it with InvalidRecord, exit 2 | Emit the embedded LF and exit 0 |
+
+Reviewed differences remain failed byte/status comparisons in the raw oracle
+records. They are accepted only under the explicit portable policies and exact
+observations recorded for those fixtures; they are not blanket allowances for
+new output. The portable contract suite continues to check the project behavior
+independently. Unmeasured stream, platform, and filesystem conditions retain their
+acceptance gates.
 
 ## 7. Exit-code contract
 

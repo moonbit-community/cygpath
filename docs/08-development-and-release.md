@@ -2,7 +2,9 @@
 
 The executable is the root package; the reusable library is
 `ZSeanYves/cygpath/lib`. This guide describes local execution and the remaining
-release gates. [The architecture index](README.md) records actual results.
+release gates. [Remote Validation](09-remote-validation.md) records the green
+three-host checks and bounded official Windows comparisons at commit
+`7dfe6ba58520a6f5249c41bd9aad39cfeb215440`.
 
 ## Local execution
 
@@ -69,7 +71,19 @@ comparisons.
 The [CI workflow](../.github/workflows/check.yml) schedules equivalent checks
 on Linux, macOS, and Windows and uploads process evidence even on failure.
 Action references are pinned; the selected toolchain is recorded in each run.
-Creating the workflow locally does not establish remote CI success.
+[Check run 36371978473](https://github.com/moonbit-community/cygpath/actions/runs/36371978473)
+passed on Linux, macOS, and Windows: 59 tests per backend and 57 CLI process
+fixtures per backend, or 114 process executions per host. Wasm/Native byte and
+status comparisons passed in each host's actual runtime environment.
+
+The separate [Windows oracle workflow](../.github/workflows/oracle.yml) installs
+official Cygwin/MSYS2 and runs the manifest-generating CI wrapper. At the same
+commit, [run 36371978419](https://github.com/moonbit-community/cygpath/actions/runs/36371978419)
+completed 400 comparisons: 308 exact matches and 92 preserved reviewed
+differences. The latter correspond to 23 profile/case records bound to exact
+fixture and upstream hashes plus output bytes/status. Its green gate establishes
+the documented subset and backend consistency; it does not establish complete
+Cygwin/MSYS2 equivalence. See [the collection guide](07-oracle-collection.md).
 
 Native builds on the local macOS toolchain can print `libtool` warnings about
 empty platform-specific object files supplied by `moonbitlang/async`. The
@@ -95,19 +109,25 @@ retrieval. Use an isolated installation directory to preserve existing tools.
 
 ## Remaining release gates
 
-1. Execute the host matrix and inspect results from each actual environment.
-2. Collect and replay separate fixed Cygwin and MSYS2 Windows runs using
-   [the oracle collection guide](07-oracle-collection.md). Resolve every
-   unexplained difference, and retain known differences as differences.
+1. Preserve the green three-host contract matrix and rerun relevant checks for
+   subsequent code or dependency changes.
+2. Expand the verified 50-case-per-profile Windows subset to the remaining P3
+   matrix using [the oracle collection guide](07-oracle-collection.md). Complete
+   real Windows collector timeout/termination and evidence-tampering drills.
+   Resolve unexplained differences and retain reviewed differences as raw
+   failures, with exact approved scopes. Installed package identities and binary
+   hashes are recorded; upstream source Git commits are not independently attested.
 3. Choose a release version, synchronize module metadata and CLI version text,
    and record a reviewed commit and clean-workspace artifact hashes.
-4. Verify the Mooncakes account and `ZSeanYves/cygpath` coordinates independently
-   of the GitHub organization before a separately authorized publication.
+4. The repository owner will publish to Mooncakes. Before that step, verify the
+   account and `ZSeanYves/cygpath` coordinates independently of the GitHub
+   organization and review package contents. These CI workflows do not publish.
 5. After publication, retrieve the exact version through
    `moonx ZSeanYves/cygpath@<published-version>` on promised hosts and exercise
    help, version, conversion, failure statuses, file input, and stdin.
 
-Do not publish to obtain test evidence before the preceding release gates
-are met. No automatic publication workflow is installed. Pure MoonBit
+Publication has not been performed by this work, and registry retrieval remains
+unverified until the owner publishes an exact version. No automatic publication
+workflow is installed. Pure MoonBit
 extensions such as root-local output and per-line options require their own
 contracts and differential evidence before becoming supported capabilities.

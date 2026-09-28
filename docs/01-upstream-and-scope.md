@@ -2,6 +2,11 @@
 
 Status: Architecture baseline, 2026-09-28; implementation status is tracked in [docs/README.md](README.md). This document records facts established by reading upstream sources, the project's design constraints, and questions that still require execution evidence. The initial research did not run the official `cygpath` on Windows, Cygwin, or MSYS2, or execute third-party implementation tests. Source inspection does not replace compatibility acceptance testing.
 
+Subsequent Windows execution is recorded in [09 Remote Validation](09-remote-validation.md).
+Its measured distribution binaries are a separate baseline from the research
+source commits below; their exact correspondence to a full source commit has
+not been independently attested.
+
 ## 1. Product Goals and Reference Priority
 
 This project independently implements a `cygpath` path-conversion library and a command-line tool invoked through `moonx`, entirely in MoonBit. Wasm and Native share the same conversion implementation and semantics. The compatibility matrix retains the complete official option surface and explicitly marks system-specific capabilities that cannot be implemented reliably under this constraint as unsupported. Filling these gaps with FFI, external commands, or backend-specific implementations would violate the pure MoonBit requirement.

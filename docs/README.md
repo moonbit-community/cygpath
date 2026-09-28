@@ -32,41 +32,48 @@ Local macOS validation on 2026-09-28 used `moon 0.1.20260920 (914d7da)` and `moo
 | Command | Result |
 | --- | --- |
 | `moon check --target all --deny-warn` | Passed; pure packages checked on all targets, root/host on their declared Wasm/Native targets |
-| `moon test --target wasm --deny-warn` | 58 passed, 0 failed |
-| `moon test --target native --deny-warn` | 58 passed, 0 failed |
+| `moon test --target wasm --deny-warn` | 59 passed, 0 failed |
+| `moon test --target native --deny-warn` | 59 passed, 0 failed |
 | Release executable builds | Passed on Wasm and Native |
-| `scripts/check_cli.mbtx` | 56 cases per backend: 112 passed; all 56 exact byte/exit backend comparisons passed |
+| `scripts/check_cli.mbtx` | 57 cases per backend: 114 passed; all 57 exact byte/exit backend comparisons passed |
 | Isolated `moon install ./ --bin ...` | Passed; installed command passed version, conversion, and unknown-option smoke checks |
 | `moon package --list` | Passed; archive contains source, interfaces, documentation, and fixtures, without build outputs or installed dependencies |
 | `scripts/oracle.mbtx self-test` | Passed synthetic integrity, comparison, serialization, and manifest checks; validated 100 fixture/profile inputs; no official Windows program was run |
+| `scripts/ci_oracle.mbtx self-test` | Passed exact reviewed-difference matching and rejection checks; separate from actual Windows collection |
 | `moon test --deny-warn scripts/check_cli.mbtx` | One collector regression passed for Windows diagnostic escaping and raw argv preservation |
 | `moon info --target all` | Passed; generated interfaces reviewed for the intended public API |
 | `moon fmt` | Passed |
 
-The suite comprises 29 library blackbox tests in [`conversion_test.mbt`](../lib/conversion_test.mbt), [`context_test.mbt`](../lib/context_test.mbt), and [`parsing_test.mbt`](../lib/parsing_test.mbt), four executable documentation examples in the [library guide](../lib/README.mbt.md), 16 pure CLI tests, and nine host record/streaming tests. It covers conversion vectors, context validation and collection ownership, scoped round trips and normalization, list errors, option parsing, and strict input framing.
+The suite comprises 30 library blackbox tests in [`conversion_test.mbt`](../lib/conversion_test.mbt), [`context_test.mbt`](../lib/context_test.mbt), and [`parsing_test.mbt`](../lib/parsing_test.mbt), four executable documentation examples in the [library guide](../lib/README.mbt.md), 16 pure CLI tests, and nine host record/streaming tests. It covers conversion vectors, context validation and collection ownership, scoped round trips and normalization, list errors, option parsing, and strict input framing. The latest library regression distinguishes the structural slash in `/` from an optional trailing separator after mapping to a Windows directory.
 
 The separate [process fixtures](../testdata/contracts/README.md) exercise real
 executables, including closed stdout, file-read errors, invalid UTF-8, BOM/CRLF,
-partial earlier output, and atomic list failures. The initial successful run
-is saved locally under `_build/cli-evidence-1/`. A second successful run under
-`_build/cli-evidence-2/` adds raw toolchain-version and Git-state provenance to
-the same raw byte files, artifact/fixture SHA-256 hashes, manifest, and summary.
-These generated files
-are ignored by Git. Portable-contract success does not establish complete
-Cygwin/MSYS2 compatibility.
+partial earlier output, and atomic list failures. The latest local run is saved
+under `_build/cli-root-regression/`; it includes the new mapped-root case and
+retains raw byte files, toolchain/Git provenance, artifact/fixture SHA-256 hashes,
+manifest, and summary. Earlier local runs remain under `_build/cli-evidence-1/`
+and `_build/cli-evidence-2/`. These generated files are ignored by Git.
+Portable-contract success does not establish complete Cygwin/MSYS2 compatibility.
 
 During P1, an additional temporary consumer module imported `ZSeanYves/cygpath/lib` through a local `moon.work` dependency. Its public-API smoke test passed on both Wasm and Native with `--deny-warn`, covering named types, context and mount construction, both conversion methods, and error construction and matching. This checks use from another module, not registry retrieval. The module now declares runtime dependencies for the executable; `lib/moon.pkg` still imports only core facilities.
 
-The Linux/Windows P2 host matrix, P3 real Cygwin/MSYS2 differential verification,
-and P4 publication/moonx acceptance remain pending. The cross-platform CI
-workflow has been created locally; no remote run has been claimed. All-target
-compiler checks do not imply execution beyond the tested macOS Wasm and Native
-targets. [Oracle collection and replay tooling](07-oracle-collection.md) is
-implemented with explicit manifests and unexecuted input corpora; its local
-mechanics checks do not complete P3. Each profile has 10 dedicated inputs and
-40 shared inputs, giving 50 planned cases each for Cygwin and MSYS2. An incomplete example manifest was also
-confirmed to fail preflight before collecting results. No package has been
-published or pushed as part of this implementation.
+Remote validation on 2026-09-28 passed at `7dfe6ba58520a6f5249c41bd9aad39cfeb215440`:
+
+| Remote suite | Observed result |
+| --- | --- |
+| [Check](https://github.com/moonbit-community/cygpath/actions/runs/36371978473) | Linux, macOS, and Windows passed; each host ran 59 tests per backend and 114 process cases, with all 57 Wasm/Native comparisons matching |
+| [Windows oracle](https://github.com/moonbit-community/cygpath/actions/runs/36371978419) | Cygwin and MSYS2 passed the reviewed-difference gate; 400 comparisons completed, with 308 exact matches and 92 preserved raw mismatches covered by 23 reviewed profile/case records |
+
+The [remote validation report](09-remote-validation.md) records official
+versions and hashes, measured context, artifact locations, and each difference.
+Each profile has 10 dedicated inputs and 40 shared inputs, run on Wasm and Native
+in both collection and replay modes. There were no required skips, execution
+errors, timeouts, unexplained differences, or backend/replay inconsistencies.
+This completes the recorded P2 host matrix and a bounded P3 subset. Full P3
+coverage and real Windows collector fault drills remain open. P4 publication
+and retrieval of a published version through `moonx` are unexecuted; the
+maintainer will publish separately. Source and CI changes have been pushed to
+`main`; no Mooncakes publication was performed.
 
 ## Reading order
 
@@ -78,8 +85,9 @@ published or pushed as part of this implementation.
 | [04 Library API, CLI, and moonx Delivery](04-api-and-cli.md) | Invocation, option combinations, errors, input/output, and the published entry point |
 | [05 Validation and Implementation Roadmap](05-validation-and-roadmap.md) | Work at each stage, acceptance evidence, differential testing, and release gates |
 | [06 Architecture Decision Records](06-decisions.md) | Major choices, rationale, costs, and conditions for reconsideration |
-| [07 Oracle Collection](07-oracle-collection.md) | Manifest preparation, raw official observations, replay, and remaining Windows evidence |
+| [07 Oracle Collection](07-oracle-collection.md) | Manifest preparation, raw official observations, replay, and reviewed-difference gating |
 | [08 Development and Release](08-development-and-release.md) | Local execution, runtime dependencies, process acceptance, packaging, and release gates |
+| [09 Remote Validation](09-remote-validation.md) | Successful CI revisions, actual official baselines, observed differences, and the limits of the verified subset |
 
 Explicit user constraints take precedence when requirements conflict. Within this handbook, chapter 03 governs path contracts and chapter 04 governs interface contracts; chapter 01 records sources and scope, and chapter 05 assigns validation responsibilities. A semantic change must update the relevant chapters, fixtures, and API together. Snapshot updates must not conceal compatibility changes.
 
