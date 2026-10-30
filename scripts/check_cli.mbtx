@@ -1,4 +1,4 @@
-///|
+----
 import {
   "moonbitlang/async@0.22.4",
   "moonbitlang/async@0.22.4/fs",
@@ -10,6 +10,7 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/x@0.5.5/crypto",
 }
+----
 
 ///|
 struct Fixture {
@@ -152,21 +153,21 @@ async fn capture_metadata(
   let stdout = @fs.read_file(output + "/" + stdout_path).binary()
   let stderr = @fs.read_file(output + "/" + stderr_path).binary()
   let evidence : Json = {
-    "command": [program, ..args].to_json(),
-    "cwd": @env.current_dir().to_json(),
-    "start_unix_ms": start_unix_ms.to_json(),
-    "elapsed_ms": (@async.now() - start).to_json(),
-    "deadline_ms": deadline.to_json(),
-    "exit_code": code.to_json(),
-    "reason": reason.to_json(),
+    "command": Json([program, ..args]),
+    "cwd": Json(@env.current_dir()),
+    "start_unix_ms": Json(start_unix_ms),
+    "elapsed_ms": Json(@async.now() - start),
+    "deadline_ms": Json(deadline),
+    "exit_code": Json(code),
+    "reason": Json(reason),
     "stdout": {
       "path": stdout_path,
-      "length": stdout.length().to_json(),
+      "length": Json(stdout.length()),
       "sha256": digest(stdout),
     },
     "stderr": {
       "path": stderr_path,
-      "length": stderr.length().to_json(),
+      "length": Json(stderr.length()),
       "sha256": digest(stderr),
     },
   }
@@ -343,15 +344,15 @@ async fn save_summary(
   }
   let summary : Json = {
     "schema_version": 1,
-    "complete": complete.to_json(),
-    "planned": (suite.cases.length() * 2).to_json(),
-    "executed": observations.length().to_json(),
-    "counts": counts.to_json(),
-    "unexecuted": unexecuted.to_json(),
+    "complete": Json(complete),
+    "planned": Json(suite.cases.length() * 2),
+    "executed": Json(observations.length()),
+    "counts": Json(counts),
+    "unexecuted": Json(unexecuted),
     "official_comparison": "not performed",
-    "observations": observations.to_json(),
-    "backend_comparisons": comparisons.to_json(),
-    "backend_nonpass": backend_nonpass.to_json(),
+    "observations": Json(observations),
+    "backend_comparisons": Json(comparisons),
+    "backend_nonpass": Json(backend_nonpass),
     "manifest_sha256": digest(@fs.read_file(output + "/manifest.json").binary()),
   }
   // This is a progress checkpoint owned by this new run, never an oracle.
@@ -514,18 +515,18 @@ async fn main {
       MacOS => "macos"
       Windows => "windows"
     },
-    "start_unix_ms": @env.now().to_json(),
+    "start_unix_ms": Json(@env.now()),
     "fixture_sha256": digest(fixture_data),
     "wasm": { "path": wasm, "sha256": digest(@fs.read_file(wasm).binary()) },
     "native": {
       "path": native,
       "sha256": digest(@fs.read_file(native).binary()),
     },
-    "deadline_ms": deadline.to_json(),
-    "metadata_complete": metadata_complete.to_json(),
+    "deadline_ms": Json(deadline),
+    "metadata_complete": Json(metadata_complete),
     "toolchain": { "moon": moon_metadata, "moonrun": moonrun_metadata },
     "source": {
-      "head_sha": head_sha.to_json(),
+      "head_sha": Json(head_sha),
       "head_state": head_state,
       "working_tree": if status_code != Some(0) {
         "unknown"
@@ -534,7 +535,7 @@ async fn main {
       } else {
         "dirty"
       },
-      "git_probes": git_probes.to_json(),
+      "git_probes": Json(git_probes),
     },
     "environment_policy": "inherit environment; override HOME, MSYSTEM, LC_ALL as recorded per process; distinct cwd per backend",
     "comparison": "exact bytes and integer exit code; no trimming or diagnostic normalization",

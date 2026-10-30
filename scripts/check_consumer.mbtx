@@ -1,4 +1,4 @@
-///|
+----
 import {
   "moonbitlang/async@0.22.4",
   "moonbitlang/async@0.22.4/fs",
@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
 }
+----
 
 ///|
 async fn main {
@@ -20,7 +21,7 @@ async fn main {
   @fs.mkdir(consumer)
   @fs.write_file(
     output + "/moon.work",
-    "members = [\"./consumer\", " + repository.to_json().stringify() + "]\n",
+    "members = [\"./consumer\", " + Json(repository).stringify() + "]\n",
   )
   @fs.write_file(
     consumer + "/moon.mod",
@@ -57,8 +58,8 @@ async fn main {
     })
     results.push({
       "backend": target,
-      "command": ["moon", ..args].to_json(),
-      "exit_code": code.to_json(),
+      "command": Json(["moon", ..args]),
+      "exit_code": Json(code),
     })
     @fs.write_file(
       output + "/summary.json",
@@ -66,7 +67,7 @@ async fn main {
         {
           "validation_kind": "external-public-api-consumer",
           "source": repository,
-          "results": results.to_json(),
+          "results": Json(results),
         } : Json).stringify(indent=2) +
       "\n",
     )

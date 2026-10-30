@@ -1,4 +1,4 @@
-///|
+----
 import {
   "moonbitlang/async@0.22.4",
   "moonbitlang/async@0.22.4/fs",
@@ -10,6 +10,7 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/x@0.5.5/crypto",
 }
+----
 
 ///|
 fn words(line : String) -> Array[String] {
