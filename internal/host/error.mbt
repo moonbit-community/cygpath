@@ -7,7 +7,7 @@ pub(all) suberror HostError {
   FileNotDirectory
   ReadError(source~ : String)
   WriteError(stream~ : String)
-  InvalidEncoding(source~ : String, line~ : Int)
+  InvalidEncoding(source~ : String, line~ : Int32)
 }
 
 ///|
@@ -28,6 +28,6 @@ pub fn HostError::diagnostic(self : HostError) -> String {
 }
 
 ///|
-pub fn HostError::exit_code(_self : HostError) -> Int {
+pub fn HostError::exit_code(_self : HostError) -> Int32 {
   1
 }

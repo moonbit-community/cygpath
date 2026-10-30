@@ -29,8 +29,8 @@ pub fn Context::convert(
   path : String,
   from~ : InputSyntax,
   to~ : OutputFormat,
-  absolute? : Bool = false,
-  unix_prefix? : UnixPrefix = Configured,
+  absolute~ : Bool = false,
+  unix_prefix~ : UnixPrefix = Configured,
 ) -> String raise ConversionError {
   validate_options(to, unix_prefix)
   if to != Posix {

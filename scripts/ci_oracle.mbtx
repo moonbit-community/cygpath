@@ -18,17 +18,17 @@ struct Probe {
   argv : Array[String]
   cwd : String
   status : String
-  exit_code : Int?
+  exit_code : Int32?
   reason : String?
   stdout_path : String
   stdout_sha256 : String
-  stdout_length : Int
+  stdout_length : Int32
   stderr_path : String
   stderr_sha256 : String
-  stderr_length : Int
+  stderr_length : Int32
   start_unix_ms : UInt64
   elapsed_ms : Int64
-  deadline_ms : Int
+  deadline_ms : Int32
 } derive(ToJson)
 
 ///|
@@ -44,10 +44,10 @@ struct GateCase {
   reason : String?
   oracle_stdout_sha256 : String?
   oracle_stderr_sha256 : String?
-  oracle_exit_code : Int?
+  oracle_exit_code : Int32?
   project_stdout_sha256 : String?
   project_stderr_sha256 : String?
-  project_exit_code : Int?
+  project_exit_code : Int32?
 } derive(ToJson)
 
 ///|
@@ -76,7 +76,7 @@ fn text_field(value : Json, key : String) -> String raise {
 }
 
 ///|
-fn int_field(value : Json, key : String) -> Int raise {
+fn int_field(value : Json, key : String) -> Int32 raise {
   @json.from_json(field(value, key))
 }
 
@@ -214,14 +214,14 @@ async fn probe(
   argv : Array[String],
   cwd : String,
   environment : Map[String, String],
-  deadline? : Int = 30000,
+  deadline~ : Int32 = 30000,
 ) -> Probe {
   println("ci_oracle: starting " + name)
   let stdout_path = "observations/" + name + ".stdout.bin"
   let stderr_path = "observations/" + name + ".stderr.bin"
   let start_unix_ms = @env.now()
   let start = @async.now()
-  let mut code : Int? = None
+  let mut code : Int32? = None
   let mut status = "completed"
   let mut reason : String? = None
   try {
@@ -400,7 +400,7 @@ async fn validate_run(
   backend : String,
   manifest_path : String,
   fixture_path : String,
-  collector_exit : Int?,
+  collector_exit : Int32?,
   signatures : Map[String, String],
   results : Array[GateCase],
 ) -> Bool {
@@ -928,7 +928,7 @@ async fn run(options : Map[String, String]) -> Unit {
     ),
   )
   let prepared : Array[Json] = [{ "path": cwd, "kind": "working-directory" }]
-  let mut mount_holder : Int? = None
+  let mut mount_holder : Int32? = None
   let mut mount_holder_program : Json? = None
   if variant == "custom" {
     // Cygwin/MSYS user mounts are process-session state. Keep one official

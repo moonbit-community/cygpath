@@ -25,7 +25,7 @@ fn is_virtual_root(parts : Array[String]) -> Bool {
 pub fn Mount::new(
   posix : String,
   windows : String,
-  case? : MountCase = Sensitive,
+  case~ : MountCase = Sensitive,
 ) -> Mount raise ConversionError {
   let posix = context_path(posix, Posix, "mount.posix")
   guard posix.root == PosixRoot &&
@@ -100,12 +100,12 @@ fn ordered_mounts(mounts : Array[Mount], windows~ : Bool) -> Array[Mount] {
 /// These entries are validated metadata; drive-relative conversion follows
 /// cygpath's drive-root rule instead of the Win32 per-drive working directory.
 pub fn Context::new(
-  profile? : Profile = Cygwin,
+  profile~ : Profile = Cygwin,
   drive_prefix? : String,
-  mounts? : Array[Mount] = [],
+  mounts~ : Array[Mount] = [],
   posix_cwd? : String,
   windows_cwd? : String,
-  drive_cwds? : Map[String, String] = Map([]),
+  drive_cwds~ : Map[String, String] = Map([]),
 ) -> Context raise ConversionError {
   let prefix = match drive_prefix {
     Some(value) => value

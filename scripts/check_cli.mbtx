@@ -25,12 +25,12 @@ struct Fixture {
   stdout_closed : Bool?
   stderr_text : String?
   stderr_file : String?
-  exit_code : Int
+  exit_code : Int32
 } derive(@json.FromJson, ToJson)
 
 ///|
 struct Suite {
-  schema_version : Int
+  schema_version : Int32
   validation_kind : String
   source : Array[String]
   profile : String
@@ -48,20 +48,20 @@ struct Observation {
   extra_env : Map[String, String]
   start_unix_ms : UInt64
   elapsed_ms : Int64
-  deadline_ms : Int
-  exit_code : Int?
+  deadline_ms : Int32
+  exit_code : Int32?
   termination : String?
   stdin_path : String
-  stdin_length : Int
+  stdin_length : Int32
   stdin_sha256 : String
   input_path : String
-  input_length : Int
+  input_length : Int32
   input_sha256 : String
   stdout_path : String
-  stdout_length : Int
+  stdout_length : Int32
   stdout_sha256 : String
   stderr_path : String
-  stderr_length : Int
+  stderr_length : Int32
   stderr_sha256 : String
 } derive(ToJson)
 
@@ -113,13 +113,13 @@ async fn capture_metadata(
   id : String,
   program : String,
   args : Array[String],
-  deadline : Int,
-) -> (Json, Int?, Bytes) {
+  deadline : Int32,
+) -> (Json, Int32?, Bytes) {
   let stdout_path = "metadata/" + id + ".stdout.bin"
   let stderr_path = "metadata/" + id + ".stderr.bin"
   let start_unix_ms = @env.now()
   let start = @async.now()
-  let mut code : Int? = None
+  let mut code : Int32? = None
   let mut reason : String? = None
   try {
     code = @async.with_timeout_opt(deadline, () => {
@@ -180,7 +180,7 @@ async fn record(
   program : String,
   leading : Array[String],
   output : String,
-  deadline : Int,
+  deadline : Int32,
   expected_stdout : Bytes,
   expected_stderr_text : String,
 ) -> Observation {
@@ -206,7 +206,7 @@ async fn record(
   }
   let start_unix_ms = @env.now()
   let start = @async.now()
-  let mut code : Int? = None
+  let mut code : Int32? = None
   let mut status = "pass"
   let mut reason : String? = None
   let mut termination : String? = None
@@ -324,8 +324,8 @@ async fn save_summary(
   suite : Suite,
   observations : Array[Observation],
   comparisons : Array[Json],
-  counts : Map[String, Int],
-  backend_nonpass : Int,
+  counts : Map[String, Int32],
+  backend_nonpass : Int32,
   complete : Bool,
 ) -> Unit {
   let seen : Map[String, Bool] = Map([])
@@ -546,7 +546,7 @@ async fn main {
   )
   let observations : Array[Observation] = []
   let backend_comparisons : Array[Json] = []
-  let counts : Map[String, Int] = {
+  let counts : Map[String, Int32] = {
     "pass": 0,
     "fail": 0,
     "error": 0,

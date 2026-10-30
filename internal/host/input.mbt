@@ -18,7 +18,7 @@ fn decode_record(
   bytes : Bytes,
   terminated~ : Bool,
   source~ : String,
-  line~ : Int,
+  line~ : Int32,
 ) -> String? raise HostError {
   if !terminated && bytes.is_empty() {
     return None
@@ -41,7 +41,7 @@ async fn stream_reader_until(
   reader : &@io.Reader,
   source : String,
   consume : async (String) -> Bool,
-) -> Int {
+) -> Int32 {
   let pending = @buffer.Buffer()
   let mut count = 0
   let mut pending_cr = false
@@ -114,7 +114,7 @@ async fn stream_reader_until(
 pub async fn stream_file(
   path : String,
   consume : async (String) -> Unit,
-) -> Int {
+) -> Int32 {
   stream_file_until(path, record => {
     consume(record)
     true
@@ -127,7 +127,7 @@ pub async fn stream_file(
 pub async fn stream_file_until(
   path : String,
   consume : async (String) -> Bool,
-) -> Int {
+) -> Int32 {
   if path == "-" {
     stream_reader_until(@stdio.stdin, "stdin", consume)
   } else {

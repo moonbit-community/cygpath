@@ -1,5 +1,5 @@
 ///|
-async fn write_record(action : @cli.RecordAction, codepage : Int) -> Bool {
+async fn write_record(action : @cli.RecordAction, codepage : Int32) -> Bool {
   match action {
     Output(text) => {
       @host.write_stdout_bytes(@encoding.encode(text, codepage) + b"\n")

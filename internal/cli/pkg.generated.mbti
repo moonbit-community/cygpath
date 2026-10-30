@@ -28,7 +28,7 @@ pub(all) suberror CliError {
   Conversion(@lib.ConversionError)
 }
 pub fn CliError::diagnostic(Self) -> String
-pub fn CliError::exit_code(Self) -> Int
+pub fn CliError::exit_code(Self) -> Int32
 
 // Types and methods
 pub(all) enum Command {
@@ -41,7 +41,7 @@ pub(all) enum Command {
 pub struct Converter {
   // private fields
 }
-pub fn Converter::codepage(Self) -> Int
+pub fn Converter::codepage(Self) -> Int32
 pub fn Converter::convert(Self, String) -> String raise CliError
 pub fn Converter::convert_file_record(Self, String) -> RecordAction raise CliError
 pub fn Converter::convert_operand(Self, String) -> RecordAction raise CliError

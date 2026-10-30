@@ -5,13 +5,13 @@ pub(all) suberror ConversionError {
   EmptyPath
   PathTooLong(String)
   InvalidDrivePrefix
-  InvalidPath(reason~ : String, offset~ : Int)
+  InvalidPath(reason~ : String, offset~ : Int32)
   InvalidContext(field~ : String, reason~ : String)
   MissingContext(field~ : String)
   UnsupportedNamespace(String)
   UnrepresentablePath(component~ : String, reason~ : String)
   InvalidOptions(String)
-  ListEntryError(index~ : Int, ConversionError)
+  ListEntryError(index~ : Int32, ConversionError)
 } derive(Eq, Debug)
 
 ///|

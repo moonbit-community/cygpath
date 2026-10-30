@@ -3,7 +3,7 @@ async fn stream_reader(
   reader : &@io.Reader,
   source : String,
   consume : async (String) -> Unit,
-) -> Int {
+) -> Int32 {
   stream_reader_until(reader, source, record => {
     consume(record)
     true
