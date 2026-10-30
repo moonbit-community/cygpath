@@ -1,4 +1,4 @@
-///|
+----
 import {
   "moonbitlang/async@0.22.4",
   "moonbitlang/async@0.22.4/fs",
@@ -12,6 +12,7 @@ import {
   "moonbitlang/x@0.5.5/crypto",
   "moonbitlang/x@0.5.5/sys",
 }
+----
 
 ///|
 struct Artifact {
@@ -29,7 +30,7 @@ struct Upstream {
   runtime_version : String
   version_stdout_sha256 : String
   version_stderr_sha256 : String
-  version_exit_code : Int
+  version_exit_code : Int32
 } derive(@json.FromJson, ToJson)
 
 ///|
@@ -87,7 +88,7 @@ struct CoreContext {
 
 ///|
 struct Manifest {
-  schema_version : Int
+  schema_version : Int32
   profile : String
   upstream : Upstream
   project : Project
@@ -98,7 +99,7 @@ struct Manifest {
   context : CoreContext
   context_mapping_evidence : String
   capabilities : Array[String]
-  deadline_ms : Int
+  deadline_ms : Int32
 } derive(@json.FromJson, ToJson)
 
 ///|
@@ -117,13 +118,13 @@ struct Fixture {
   validation_domain : String?
   boundary_stdout : String?
   boundary_stderr : String?
-  boundary_exit : Int?
+  boundary_exit : Int32?
   known_difference_id : String?
 } derive(@json.FromJson, ToJson)
 
 ///|
 struct Suite {
-  schema_version : Int
+  schema_version : Int32
   validation_kind : String
   profiles : Array[String]
   source_url : String
@@ -134,7 +135,7 @@ struct Suite {
 ///|
 struct Blob {
   path : String
-  length : Int
+  length : Int32
   sha256 : String
 } derive(@json.FromJson, ToJson)
 
@@ -149,8 +150,8 @@ struct Observation {
   inherit_env : Bool
   start_unix_ms : UInt64
   elapsed_ms : Int64
-  deadline_ms : Int
-  exit_code : Int?
+  deadline_ms : Int32
+  exit_code : Int32?
   termination : String?
   stdin : Blob
   stdout : Blob
@@ -169,7 +170,7 @@ struct CaseResult {
 
 ///|
 struct Run {
-  schema_version : Int
+  schema_version : Int32
   mode : String
   validation_kind : String
   profile : String
@@ -177,9 +178,9 @@ struct Run {
   fixtures : Blob
   source_run : Blob?
   upstream_version : Observation?
-  planned : Int
-  executed : Int
-  counts : Map[String, Int]
+  planned : Int32
+  executed : Int32
+  counts : Map[String, Int32]
   unexecuted : Array[String]
   complete : Bool
   integrity_verified : Bool
@@ -199,7 +200,7 @@ fn digest(data : Bytes) -> String {
 }
 
 ///|
-fn valid_hex(value : String, length : Int) -> Bool {
+fn valid_hex(value : String, length : Int32) -> Bool {
   value.length() == length &&
   value.iter().all(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
 }
@@ -449,7 +450,7 @@ fn case_available(fixture : Fixture, manifest : Manifest) -> Bool {
 fn expand_arg(
   arg : String,
   manifest : Manifest,
-  case_id? : String = "validation",
+  case_id~ : String = "validation",
 ) -> String {
   arg
   .replace_all(old="{installation_root}", new=manifest.host.installation_root)
@@ -711,7 +712,7 @@ async fn execute(
   let stderr_path = base + "/stderr.bin"
   let start_unix_ms = @env.now()
   let start = @async.now()
-  let mut code : Int? = None
+  let mut code : Int32? = None
   let mut status = "completed"
   let mut reason : String? = None
   let mut termination : String? = None
@@ -830,7 +831,7 @@ fn summarize(
   version : Observation?,
   source_run : Blob?,
 ) -> Run {
-  let counts : Map[String, Int] = {
+  let counts : Map[String, Int32] = {
     "pass": 0,
     "fail": 0,
     "skip": 0,

@@ -15,7 +15,7 @@ pub(all) suberror CliError {
 }
 
 ///|
-fn conversion_exit_code(error : @lib.ConversionError) -> Int {
+fn conversion_exit_code(error : @lib.ConversionError) -> Int32 {
   match error {
     @lib.EmptyPath => 1
     @lib.PathTooLong(_) | @lib.InvalidDrivePrefix => 1
@@ -28,7 +28,7 @@ fn conversion_exit_code(error : @lib.ConversionError) -> Int {
 }
 
 ///|
-pub fn CliError::exit_code(self : CliError) -> Int {
+pub fn CliError::exit_code(self : CliError) -> Int32 {
   match self {
     Conversion(error) => conversion_exit_code(error)
     InvalidRecord => 2

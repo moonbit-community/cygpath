@@ -1,10 +1,10 @@
 ///|
 pub(all) suberror UnsupportedCodePage {
-  UnsupportedCodePage(Int)
+  UnsupportedCodePage(Int32)
 }
 
 ///|
-pub fn supported(codepage : Int) -> Bool {
+pub fn supported(codepage : Int32) -> Bool {
   codepage != 29001 &&
   (codepage == 65001 || codepage_table(codepage) is Some(_))
 }
@@ -19,12 +19,12 @@ fn join_chunks(chunks : Array[Bytes]) -> Bytes {
 }
 
 ///|
-fn word(table : Bytes, offset : Int) -> Int {
+fn word(table : Bytes, offset : Int32) -> Int32 {
   (table[offset].to_int() << 8) | table[offset + 1].to_int()
 }
 
 ///|
-fn lookup(table : Bytes, scalar : Int, fallback : Int) -> Int {
+fn lookup(table : Bytes, scalar : Int32, fallback : Int32) -> Int32 {
   for lower = 0, upper = table.length() / 4; lower < upper; {
     let middle = lower + (upper - lower) / 2
     let candidate = word(table, middle * 4)
@@ -43,7 +43,10 @@ fn lookup(table : Bytes, scalar : Int, fallback : Int) -> Int {
 ///|
 /// Encode explicit numeric Windows code pages using frozen Microsoft best-fit
 /// mapping data. No platform codec, locale detection, or FFI participates.
-pub fn encode(text : String, codepage : Int) -> Bytes raise UnsupportedCodePage {
+pub fn encode(
+  text : String,
+  codepage : Int32,
+) -> Bytes raise UnsupportedCodePage {
   if codepage == 65001 {
     return @utf8.encode(text)
   }

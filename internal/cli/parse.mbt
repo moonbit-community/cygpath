@@ -1,5 +1,5 @@
 ///|
-fn option_arity(option : String) -> Int raise CliError {
+fn option_arity(option : String) -> Int32 raise CliError {
   match option {
     "--unix"
     | "--windows"
@@ -255,7 +255,7 @@ fn option_usage(ignore : Bool) -> Unit raise CliError {
 ///|
 /// Match the decimal strtoul grammar used by the official CLI, including its
 /// unsigned-long saturation and subsequent conversion to a 32-bit code page.
-fn numeric_codepage(text : String, ignore : Bool) -> Int raise CliError {
+fn numeric_codepage(text : String, ignore : Bool) -> Int32 raise CliError {
   if text.is_empty() {
     return 0
   }
@@ -268,7 +268,7 @@ fn numeric_codepage(text : String, ignore : Bool) -> Int raise CliError {
   let mut number = 0UL
   let mut overflow = false
   for digit in digits.code_units() {
-    if !(digit is ('0'..='9')) {
+    if !(digit is ('0'..<='9')) {
       option_usage(ignore)
     }
     let digit = (digit.to_int() - 48).to_uint64()
@@ -436,7 +436,7 @@ fn parse_args_inner(
         windows_cwd = repeated_value(windows_cwd, values[0], option)
       "--drive-cwd" => {
         let drive = values[0]
-        if drive.length() != 1 || !(drive[0] is ('a'..='z' | 'A'..='Z')) {
+        if drive.length() != 1 || !(drive[0] is ('a'..<='z' | 'A'..<='Z')) {
           raise InvalidOptions(
             "--drive-cwd requires a single ASCII drive letter",
           )

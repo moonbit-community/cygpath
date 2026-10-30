@@ -8,9 +8,9 @@ pub fn Context::convert_list(
   paths : String,
   from~ : InputSyntax,
   to~ : OutputFormat,
-  absolute? : Bool = false,
-  recognize_windows? : Bool = false,
-  unix_prefix? : UnixPrefix = Configured,
+  absolute~ : Bool = false,
+  recognize_windows~ : Bool = false,
+  unix_prefix~ : UnixPrefix = Configured,
 ) -> String raise ConversionError {
   validate_options(to, unix_prefix)
   let input_sep = if from == Windows { ";" } else { ":" }

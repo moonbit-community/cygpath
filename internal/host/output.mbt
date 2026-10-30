@@ -23,6 +23,6 @@ pub async fn write_stderr(text : String) -> Unit {
 
 ///|
 /// Terminate with the command's already-classified exit status.
-pub fn exit(code : Int) -> Unit {
+pub fn exit(code : Int32) -> Unit {
   @sys.exit(code)
 }

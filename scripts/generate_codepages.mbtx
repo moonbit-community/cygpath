@@ -1,4 +1,4 @@
-///|
+----
 import {
   "moonbitlang/async@0.22.4",
   "moonbitlang/async@0.22.4/fs",
@@ -10,6 +10,7 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/x@0.5.5/crypto",
 }
+----
 
 ///|
 fn words(line : String) -> Array[String] {
@@ -24,7 +25,7 @@ fn words(line : String) -> Array[String] {
 }
 
 ///|
-fn number(text : String) -> Int raise {
+fn number(text : String) -> Int32 raise {
   if text.has_prefix("0x") {
     @string.parse_int(text[2:].to_owned(), base=16)
   } else {
@@ -33,7 +34,7 @@ fn number(text : String) -> Int raise {
 }
 
 ///|
-fn byte_escape(value : Int) -> String {
+fn byte_escape(value : Int32) -> String {
   let digits = "0123456789abcdef"
   "\\x" +
   digits[(value >> 4) & 15].to_char().unwrap().to_string() +
@@ -44,7 +45,7 @@ fn byte_escape(value : Int) -> String {
 /// The archived tables contain a few duplicate Unicode keys. These choices
 /// are bound to raw Windows oracle captures below; source order is never used
 /// as a tie breaker.
-fn official_conflict_choice(page : Int, unicode_word : Int) -> Int? {
+fn official_conflict_choice(page : Int32, unicode_word : Int32) -> Int32? {
   match (page, unicode_word) {
     (10005, 0x05b8) => Some(0xde)
     (10008, 0x2225) => Some(0xa1ce)
@@ -215,7 +216,7 @@ async fn main {
     }
     // Only ASCII numeric columns participate; comments may use legacy encodings.
     let source = @utf8.decode_lossy(bytes)
-    let mappings : Array[(Int, Int)] = []
+    let mappings : Array[(Int32, Int32)] = []
     let mut count = -1
     let mut fallback = -1
     let mut maximum_size = -1
@@ -243,7 +244,7 @@ async fn main {
     assert_true(fallback >= 0 && fallback <= 65535)
     let sha = @crypto.bytes_to_hex_string(@crypto.sha256(bytes))
     mappings.sort_by((left, right) => left.0.compare(right.0))
-    let unique : Array[(Int, Int)] = []
+    let unique : Array[(Int32, Int32)] = []
     let conflicts : Array[Json] = []
     let page_resolutions : Array[Json] = []
     for index, pair in mappings {

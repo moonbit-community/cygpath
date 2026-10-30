@@ -61,7 +61,7 @@ fn validate_posix_namespace(path : ParsedPath) -> Unit raise ConversionError {
 ///|
 fn drive_path(
   path : ParsedPath,
-  prefix_length : Int,
+  prefix_length : Int32,
 ) -> ParsedPath raise ConversionError {
   guard path.components.get(prefix_length) is Some(drive) && is_drive(drive) else {
     raise InvalidDrivePrefix

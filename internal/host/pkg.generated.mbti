@@ -4,11 +4,11 @@ package "ZSeanYves/cygpath/internal/host"
 // Values
 pub fn args() -> Array[String]
 
-pub fn exit(Int) -> Unit
+pub fn exit(Int32) -> Unit
 
-pub async fn stream_file(String, async (String) -> Unit) -> Int
+pub async fn stream_file(String, async (String) -> Unit) -> Int32
 
-pub async fn stream_file_until(String, async (String) -> Bool) -> Int
+pub async fn stream_file_until(String, async (String) -> Bool) -> Int32
 
 pub async fn write_stderr(String) -> Unit
 
@@ -23,10 +23,10 @@ pub(all) suberror HostError {
   FileNotDirectory
   ReadError(source~ : String)
   WriteError(stream~ : String)
-  InvalidEncoding(source~ : String, line~ : Int)
+  InvalidEncoding(source~ : String, line~ : Int32)
 }
 pub fn HostError::diagnostic(Self) -> String
-pub fn HostError::exit_code(Self) -> Int
+pub fn HostError::exit_code(Self) -> Int32
 
 // Types and methods
 

@@ -31,7 +31,7 @@ pub struct Request {
   priv drive_cwds : Map[String, String]
   priv root_local : Bool
   priv file_options : Bool
-  priv codepage : Int
+  priv codepage : Int32
 }
 
 ///|
@@ -44,7 +44,7 @@ pub struct Converter {
   priv mut unix_prefix : @lib.UnixPrefix
   priv mut root_local : Bool
   priv mut ignore : Bool
-  priv mut codepage : Int
+  priv mut codepage : Int32
   priv file_options : Bool
 }
 
@@ -61,7 +61,7 @@ pub fn Request::per_line_options(self : Request) -> Bool {
 }
 
 ///|
-pub fn Converter::codepage(self : Converter) -> Int {
+pub fn Converter::codepage(self : Converter) -> Int32 {
   if self.to == Posix {
     65001
   } else {
@@ -123,7 +123,7 @@ fn recognizable_windows(path : String) -> Bool {
   path.contains_char('\\') ||
   prefix.has_prefix("//?/") ||
   prefix.has_prefix("//./") ||
-  (path.length() >= 2 && path[0] is ('a'..='z' | 'A'..='Z') && path[1] == ':')
+  (path.length() >= 2 && path[0] is ('a'..<='z' | 'A'..<='Z') && path[1] == ':')
 }
 
 ///|
@@ -135,7 +135,7 @@ pub fn Converter::convert(
     raise Conversion(@lib.EmptyPath)
   }
   let drive_relative = path.length() >= 2 &&
-    path[0] is ('a'..='z' | 'A'..='Z') &&
+    path[0] is ('a'..<='z' | 'A'..<='Z') &&
     path[1] == ':' &&
     (path.length() == 2 || !(path[2] is ('/' | '\\')))
   let literal_drive = self.from is None &&

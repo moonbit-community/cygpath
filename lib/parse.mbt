@@ -20,7 +20,7 @@ fn validate_text(path : String) -> Unit raise ConversionError {
 
 ///|
 fn is_drive(value : String) -> Bool {
-  value.length() == 1 && (value[0] is ('a'..='z') || value[0] is ('A'..='Z'))
+  value.length() == 1 && (value[0] is ('a'..<='z') || value[0] is ('A'..<='Z'))
 }
 
 ///|
@@ -129,7 +129,7 @@ fn parse_path(
 ///|
 fn validate_windows_component(
   component : String,
-  device_names? : Bool = true,
+  device_names~ : Bool = true,
 ) -> Unit raise ConversionError {
   if component == "." || component == ".." {
     return
@@ -160,7 +160,7 @@ fn validate_windows_component(
       (
         stem.length() == 4 &&
         port_prefix &&
-        stem[3] is ('1'..='9' | '¹' | '²' | '³')
+        stem[3] is ('1'..<='9' | '¹' | '²' | '³')
       )
     if reserved {
       raise UnrepresentablePath(

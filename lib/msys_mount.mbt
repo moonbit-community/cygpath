@@ -3,13 +3,13 @@ priv struct MsysMountOrder {
   mount : Mount
   posix : String
   native : String
-  posix_bytes : Int
-  native_bytes : Int
-  declaration : Int
+  posix_bytes : Int32
+  native_bytes : Int32
+  declaration : Int32
 }
 
 ///|
-fn mount_utf8_length(text : String) -> Int {
+fn mount_utf8_length(text : String) -> Int32 {
   let mut length = 0
   for character in text {
     let code = character.to_int()
@@ -27,7 +27,7 @@ fn mount_utf8_length(text : String) -> Int {
 }
 
 ///|
-fn mount_byte_compare(left : String, right : String) -> Int {
+fn mount_byte_compare(left : String, right : String) -> Int32 {
   // UTF-8 byte order agrees with scalar order, unlike UTF-16 code-unit order
   // across the BMP/supplementary boundary.
   let left = left.iter().to_array()
@@ -42,7 +42,7 @@ fn mount_byte_compare(left : String, right : String) -> Int {
 }
 
 ///|
-fn msys_mount_order(mount : Mount, declaration : Int) -> MsysMountOrder {
+fn msys_mount_order(mount : Mount, declaration : Int32) -> MsysMountOrder {
   let posix = "/" + mount.posix.components.join("/")
   let native_root = match mount.windows.root {
     DriveAbsolute(drive) => drive + ":"
@@ -67,11 +67,11 @@ fn msys_mount_order(mount : Mount, declaration : Int) -> MsysMountOrder {
 ///|
 fn msys_mount_median(
   values : Array[MsysMountOrder],
-  a : Int,
-  b : Int,
-  c : Int,
-  compare : (MsysMountOrder, MsysMountOrder) -> Int,
-) -> Int {
+  a : Int32,
+  b : Int32,
+  c : Int32,
+  compare : (MsysMountOrder, MsysMountOrder) -> Int32,
+) -> Int32 {
   if compare(values[a], values[b]) < 0 {
     if compare(values[b], values[c]) < 0 {
       b
@@ -90,7 +90,11 @@ fn msys_mount_median(
 }
 
 ///|
-fn msys_mount_swap(values : Array[MsysMountOrder], a : Int, b : Int) -> Unit {
+fn msys_mount_swap(
+  values : Array[MsysMountOrder],
+  a : Int32,
+  b : Int32,
+) -> Unit {
   let value = values[a]
   values[a] = values[b]
   values[b] = value
@@ -99,9 +103,9 @@ fn msys_mount_swap(values : Array[MsysMountOrder], a : Int, b : Int) -> Unit {
 ///|
 fn msys_mount_insertion(
   values : Array[MsysMountOrder],
-  start : Int,
-  length : Int,
-  compare : (MsysMountOrder, MsysMountOrder) -> Int,
+  start : Int32,
+  length : Int32,
+  compare : (MsysMountOrder, MsysMountOrder) -> Int32,
 ) -> Unit {
   for i in (start + 1)..<(start + length) {
     let mut j = i
@@ -123,9 +127,9 @@ fn msys_mount_insertion(
 // A general-purpose stable sort cannot replace this algorithm.
 fn msys_mount_qsort(
   values : Array[MsysMountOrder],
-  start : Int,
-  length : Int,
-  compare : (MsysMountOrder, MsysMountOrder) -> Int,
+  start : Int32,
+  length : Int32,
+  compare : (MsysMountOrder, MsysMountOrder) -> Int32,
 ) -> Unit {
   let mut start = start
   let mut length = length

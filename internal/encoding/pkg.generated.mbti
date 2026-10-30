@@ -2,13 +2,13 @@
 package "ZSeanYves/cygpath/internal/encoding"
 
 // Values
-pub fn encode(String, Int) -> Bytes raise UnsupportedCodePage
+pub fn encode(String, Int32) -> Bytes raise UnsupportedCodePage
 
-pub fn supported(Int) -> Bool
+pub fn supported(Int32) -> Bool
 
 // Errors
 pub(all) suberror UnsupportedCodePage {
-  UnsupportedCodePage(Int)
+  UnsupportedCodePage(Int32)
 }
 
 // Types and methods
