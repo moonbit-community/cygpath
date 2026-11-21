@@ -1,44 +1,9 @@
 ///|
 priv struct MountOrder {
   mount : Mount
-  posix : String
-  native : String
-  posix_bytes : Int32
-  native_bytes : Int32
+  posix : Bytes
+  native : Bytes
   declaration : Int32
-}
-
-///|
-fn mount_utf8_length(text : String) -> Int32 {
-  let mut length = 0
-  for character in text {
-    let code = character.to_int()
-    length += if code < 0x80 {
-      1
-    } else if code < 0x800 {
-      2
-    } else if code < 0x10000 {
-      3
-    } else {
-      4
-    }
-  }
-  length
-}
-
-///|
-fn mount_byte_compare(left : String, right : String) -> Int32 {
-  // UTF-8 byte order agrees with scalar order, unlike UTF-16 code-unit order
-  // across the BMP/supplementary boundary.
-  let left = left.iter().to_array()
-  let right = right.iter().to_array()
-  for i in 0..<left.length().min(right.length()) {
-    let order = left[i].to_int().compare(right[i].to_int())
-    if order != 0 {
-      return order
-    }
-  }
-  left.length().compare(right.length())
 }
 
 ///|
@@ -61,10 +26,8 @@ fn MountOrder::new(mount : Mount, declaration : Int32) -> MountOrder {
   let native = mount.windows.native_mount_name()
   {
     mount,
-    posix,
-    native,
-    posix_bytes: mount_utf8_length(posix),
-    native_bytes: mount_utf8_length(native),
+    posix: @filename.encode(posix),
+    native: @filename.encode(native),
     declaration,
   }
 }
@@ -250,24 +213,24 @@ fn runtime_mount_order(
   mount_qsort(keys, 0, keys.length(), (a, b) => {
     let (order, left, right) = match (profile, windows) {
       (Cygwin, false) =>
-        (b.posix_bytes.compare(a.posix_bytes), a.posix, b.posix)
+        (b.posix.length().compare(a.posix.length()), a.posix, b.posix)
       (Cygwin, true) =>
-        (b.native_bytes.compare(a.native_bytes), a.native, b.native)
+        (b.native.length().compare(a.native.length()), a.native, b.native)
       (Msys2, true) =>
         (
-          (b.posix_bytes - b.native_bytes).compare(
-            a.posix_bytes - a.native_bytes,
+          (b.posix.length() - b.native.length()).compare(
+            a.posix.length() - a.native.length(),
           ),
           a.posix,
           b.posix,
         )
       (Msys2, false) =>
-        (a.native_bytes.compare(b.native_bytes), a.native, b.native)
+        (a.native.length().compare(b.native.length()), a.native, b.native)
     }
     if order != 0 {
       order
     } else {
-      let by_name = mount_byte_compare(left, right)
+      let by_name = left.compare(right)
       if by_name == 0 {
         a.tie(b)
       } else {

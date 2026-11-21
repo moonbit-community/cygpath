@@ -34,7 +34,7 @@ Signatures below omit the implicit method receiver and summarize defaults:
 Mount::new(posix, windows, case?=Sensitive)
   -> Mount raises ConversionError
 
-Context::new(profile?=Cygwin, drive_prefix?, mounts?=[],
+Context::new(profile?=Cygwin, drive_prefix?, drive_prefix_bytes?, mounts?=[],
              posix_cwd?, windows_cwd?, drive_cwds?=empty)
   -> Context raises ConversionError
 
@@ -57,6 +57,10 @@ Reuse a Context across conversions. Its constructor copies collections and
 validates mounts, prefixes, cwd, and drive metadata. `drive_cwds` is validated
 metadata, not a conversion-base override: explicit Windows drive-relative
 conversion follows cygpath's drive-root rule. Context never reads the host.
+
+`Mount::new` accepts either text or narrow bytes for each field. For a
+byte-valued drive prefix, pass `drive_prefix_bytes` in place of `drive_prefix`.
+`resolve_bind_source_bytes` returns the narrow native field and its mount index.
 
 `with_native_cwd` derives the POSIX working directory from an observed Windows
 directory using the existing mount table. A native component ending in U+F0FF

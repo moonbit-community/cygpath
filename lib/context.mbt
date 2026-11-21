@@ -1,10 +1,10 @@
 ///|
 fn context_path(
-  value : String,
+  value : &ToPathInput,
   syntax : InputSyntax,
   field : String,
 ) -> ParsedPath raise ConversionError {
-  parse_path(value, syntax) catch {
+  parse_validated_path(value.to_path_input().spelling(), syntax, operand=false) catch {
     error => raise InvalidContext(field~, reason="\{Repr(error)}")
   }
 }
@@ -27,8 +27,8 @@ fn is_reserved_posix_path(parts : Array[String]) -> Bool {
 /// Defines a mount using absolute, dot-free paths. Duplicate and drive-prefix
 /// conflicts are checked when a Context is constructed.
 pub fn Mount::new(
-  posix : String,
-  windows : String,
+  posix : &ToPathInput,
+  windows : &ToPathInput,
   case~ : MountCase = Sensitive,
   text_mode~ : Bool = false,
   dos_names~ : Bool = false,
@@ -109,6 +109,7 @@ pub fn Context::new(
   profile~ : Profile = Cygwin,
   nt_null? : Bool,
   drive_prefix? : String,
+  drive_prefix_bytes? : Bytes,
   drive_text_mode~ : Bool = false,
   drive_dos_names~ : Bool = false,
   drive_case~ : MountCase = WindowsInsensitive,
@@ -117,9 +118,15 @@ pub fn Context::new(
   windows_cwd? : String,
   drive_cwds~ : Map[String, String] = Map([]),
 ) -> Context raise ConversionError {
-  let prefix = match drive_prefix {
-    Some(value) => value
-    None => if profile == Cygwin { "/cygdrive" } else { "/" }
+  let prefix : PathInput = match (drive_prefix, drive_prefix_bytes) {
+    (Some(_), Some(_)) =>
+      raise InvalidContext(
+        field="drive_prefix",
+        reason="supply one drive prefix",
+      )
+    (_, Some(bytes)) => Narrow(bytes)
+    (Some(text), _) => Text(text)
+    _ => Text(if profile == Cygwin { "/cygdrive" } else { "/" })
   }
   let prefix = context_path(prefix, Posix, "drive_prefix")
   guard prefix.root == PosixRoot &&

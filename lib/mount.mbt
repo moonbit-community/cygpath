@@ -42,22 +42,19 @@ fn components_match(
       WindowsInsensitive => {
         // The wide comparison maps an invalid byte to U+F0xx. The narrow
         // boundary still counts one byte for it, even across components.
-        let wide = @filename.native_name(b)
-        if a.length() != wide.length() {
+        let left = @filename.native_name(a)
+        let right = @filename.native_name(b)
+        if left.length() != right.length() {
           return false
         }
-        for i in 0..<a.length() {
-          if a[i] != wide[i] &&
-            mount_upper(a[i].to_int()) != mount_upper(wide[i].to_int()) {
+        for i in 0..<left.length() {
+          if left[i] != right[i] &&
+            mount_upper(left[i].to_int()) != mount_upper(right[i].to_int()) {
             return false
           }
         }
-        let size = if b.length() == wide.length() {
-          mount_utf8_length(b)
-        } else {
+        width_difference += @filename.encode(a).length() -
           @filename.encode(b).length()
-        }
-        width_difference += mount_utf8_length(a) - size
         true
       }
     }
@@ -267,7 +264,27 @@ pub fn Context::resolve_bind_source(
   self : Context,
   path : String,
 ) -> (String, Int32?) raise ConversionError {
-  let input = parse_path(path, Posix)
+  let (native, mount) = self.bind_source(Text(path))
+  (@filename.native_name(native), mount)
+}
+
+///|
+/// Returns the narrow native field stored by an fstab bind declaration.
+pub fn Context::resolve_bind_source_bytes(
+  self : Context,
+  path : Bytes,
+) -> (Bytes, Int32?) raise ConversionError {
+  let (native, mount) = self.bind_source(Narrow(path))
+  (@filename.encode(native), mount)
+}
+
+///|
+fn Context::bind_source(
+  self : Context,
+  operand : PathInput,
+) -> (String, Int32?) raise ConversionError {
+  let path = operand.spelling()
+  let input = parse_validated_path(path, Posix, operand=false)
   guard input.is_absolute() else {
     raise InvalidOptions("bind source must be an absolute POSIX path")
   }
@@ -301,7 +318,7 @@ pub fn Context::resolve_bind_source(
   } else {
     native
   }
-  if mount_utf8_length(spelling) >= 260 {
+  if @filename.encode(spelling).length() >= 260 {
     raise PathTooLong(path)
   }
   let normal = mapped.normalize().0

@@ -40,15 +40,6 @@ fn is_separator(unit : UInt16, syntax : InputSyntax) -> Bool {
 }
 
 ///|
-fn parse_path(
-  path : String,
-  syntax : InputSyntax,
-) -> ParsedPath raise ConversionError {
-  validate_text(path)
-  parse_validated_path(path, syntax, operand=false)
-}
-
-///|
 fn parse_validated_path(
   path : String,
   syntax : InputSyntax,

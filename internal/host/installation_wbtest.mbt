@@ -295,7 +295,7 @@ async test "fstab bind captures preceding mappings and their effective options" 
 }
 
 ///|
-async test "installation loader reads actual files, optional layers and invalid encoding" {
+async test "installation loader reads optional layers and narrow mount fields" {
   let dir = @fs.tmpdir(prefix="cygpath-install-")
   defer @fs.remove(dir, recursive=true)
   let empty = load_installation("C:/install", dir, None, None)
@@ -319,13 +319,32 @@ async test "installation loader reads actual files, optional layers and invalid 
   } noraise {
     _ => fail("account path escaped the per-user directory")
   }
-  @fs.write_binary(dir + "/etc/fstab", b"\xff")
-  try load_installation("C:/install", dir, None, None) catch {
-    InstallationError(_) => ()
-    err => raise err
-  } noraise {
-    _ => fail("invalid fstab encoding was accepted")
-  }
+  @fs.write_binary(
+    dir + "/etc/fstab",
+    b"# caf\xe9\nD:/store-\xff /point-\xfe ntfs posix=0,text\nnone /drive-\xfd cygdrive binary\n",
+  )
+  @fs.write_binary(
+    dir + "/etc/fstab.d/alice",
+    b"/POINT-\xfe/child /bound none bind\n",
+  )
+  let bytes = load_installation("C:/install", dir, Some("alice"), None)
+  assert_eq(
+    bytes.windows_to_posix_bytes("D:/STORE-\uF0FF/file"),
+    b"/point-\xfe/file",
+  )
+  assert_eq(
+    bytes.convert("/bound/file", from=Posix, to=Mixed),
+    "D:/store-\uF0FF/child/file",
+  )
+  assert_eq(
+    bytes.convert(b"/POINT-\xfe/file", from=Posix, to=Mixed),
+    "D:/store-\uF0FF/file",
+  )
+  assert_eq(
+    bytes.convert("/point-\uF0FE/file", from=Posix, to=Mixed),
+    "C:/install/point-\uF0FE/file",
+  )
+  assert_eq(bytes.windows_to_posix_bytes("Z:/file"), b"/drive-\xfd/z/file")
 }
 
 ///|

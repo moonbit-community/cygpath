@@ -39,9 +39,10 @@ pub struct Context {
 pub fn[P : ToPathInput] Context::convert(Self, P, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
 pub fn Context::convert_list(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, recognize_windows? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
 pub fn[P : ToPathInput] Context::mode_candidate(Self, P, from~ : InputSyntax) -> ModeCandidate raise ConversionError
-pub fn Context::new(profile? : Profile, nt_null? : Bool, drive_prefix? : String, drive_text_mode? : Bool, drive_dos_names? : Bool, drive_case? : MountCase, mounts? : Array[Mount], posix_cwd? : String, windows_cwd? : String, drive_cwds? : Map[String, String]) -> Self raise ConversionError
+pub fn Context::new(profile? : Profile, nt_null? : Bool, drive_prefix? : String, drive_prefix_bytes? : Bytes, drive_text_mode? : Bool, drive_dos_names? : Bool, drive_case? : MountCase, mounts? : Array[Mount], posix_cwd? : String, windows_cwd? : String, drive_cwds? : Map[String, String]) -> Self raise ConversionError
 pub fn[P : ToPathInput] Context::relative_windows_name(Self, P, from~ : InputSyntax) -> String? raise ConversionError
 pub fn Context::resolve_bind_source(Self, String) -> (String, Int32?) raise ConversionError
+pub fn Context::resolve_bind_source_bytes(Self, Bytes) -> (Bytes, Int32?) raise ConversionError
 pub fn Context::windows_to_posix_bytes(Self, String, absolute? : Bool, unix_prefix? : UnixPrefix, list? : Bool) -> Bytes raise ConversionError
 pub fn Context::with_native_cwd(Self, String) -> Self raise ConversionError
 pub fn Context::with_network_server(Self, String, present~ : Bool) -> Self
@@ -70,7 +71,7 @@ pub struct Mount {
   system : Bool?
   // private fields
 }
-pub fn Mount::new(String, String, case? : MountCase, text_mode? : Bool, dos_names? : Bool, system? : Bool) -> Self raise ConversionError
+pub fn Mount::new(&ToPathInput, &ToPathInput, case? : MountCase, text_mode? : Bool, dos_names? : Bool, system? : Bool) -> Self raise ConversionError
 
 #derive(Eq, @debug.Debug)
 pub(all) enum MountCase {

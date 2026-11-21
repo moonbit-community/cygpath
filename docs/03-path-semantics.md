@@ -246,6 +246,13 @@ and [bounded comparison](https://github.com/cygwin/cygwin/blob/b11613e477c006b2c
 The root is an explicit mount. Supplying `/ → C:\cygwin64` does not create
 `/usr/bin`, `/usr/lib`, or any other alias. Callers must supply those mappings.
 
+The installed CLI reads the system and per-user fstab as bytes. A comment
+can contain non-UTF-8 text. In C.UTF-8 a mount field containing byte `FF`
+can address a Windows component containing U+F0FF. Reverse mapping writes the
+original POSIX field bytes. Bind mounts retain the native source bytes and
+drive-prefix mappings retain the POSIX bytes. The runtime compares mount
+name lengths and ordering using the stored bytes. [Cygwin fstab reader](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1195-L1253)
+
 When the CLI reads an installation's ordinary fstab rows, it normalizes drive
 and UNC sources without looking up their directories. For example,
 `D:/missing/../tools` mounts `D:/tools`. A POSIX mount point such as

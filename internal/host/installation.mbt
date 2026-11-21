@@ -87,7 +87,7 @@ fn InstallTable::context(
     profile=self.profile,
     nt_null?=self.nt_null,
     mounts~,
-    drive_prefix=self.prefix,
+    drive_prefix_bytes=@filename.encode(self.prefix),
     drive_text_mode~,
     drive_dos_names~,
     drive_case~,
@@ -134,8 +134,8 @@ async fn InstallTable::add(
   let entry = {
     path,
     mount: @lib.Mount::new(
-      path,
-      source,
+      input_name(path),
+      input_name(source),
       system~,
       case=if flags.contains("posix=0") {
         WindowsInsensitive
@@ -173,9 +173,13 @@ fn fstab_components(path : StringView) -> String {
 /// Upstream checks the initial byte of each UNC field for mount admission.
 fn fstab_unc_share(path : String) -> Bool {
   fn valid_initial(unit : UInt16, excluded : String) -> Bool {
-    unit >= 32 &&
-    unit != 127 &&
-    !excluded.iter().any(ch => ch.to_int() == unit.to_int())
+    // A zero here marks a retained high byte in the decoded field.
+    unit == 0 ||
+    (
+      unit >= 32 &&
+      unit != 127 &&
+      !excluded.iter().any(ch => ch.to_int() == unit.to_int())
+    )
   }
   path.has_prefix("//") &&
   path.length() > 2 &&
@@ -293,7 +297,9 @@ async fn InstallTable::read_fstab(
     let mut source = source.replace_all(old="\\040", new=" ")
     if flags.contains("bind") {
       let context = self.context(None)
-      let (native, origin) = context.resolve_bind_source(source) catch {
+      let (native, origin) = context.resolve_bind_source_bytes(
+        @filename.encode(source),
+      ) catch {
         @lib.UnsupportedNamespace(reason) =>
           raise InstallationError("unsupported bind source: " + reason)
         _ => continue
@@ -311,7 +317,7 @@ async fn InstallTable::read_fstab(
         flags.add("bind")
         system = owner
       }
-      source = native
+      source = @filename.decode(native)
     }
     let system = !per_user && system
     if kind == "cygdrive" {
@@ -420,9 +426,8 @@ async fn optional_fstab(path : String) -> String {
     @os_error.OsError(NotFound, ..) => return ""
     _ => raise ReadError(source=path)
   }
-  @utf8.decode(bytes) catch {
-    _ => raise InstallationError("invalid UTF-8 in " + @debug.to_string(path))
-  }
+  let end = bytes.find(b"\x00").unwrap_or(bytes.length())
+  @filename.decode(bytes[:end])
 }
 
 ///|
