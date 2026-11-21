@@ -1016,6 +1016,15 @@
       "exit_code": 0
     },
     {
+      "case_id": "unassigned-folder-ids-continue-in-file-input",
+      "category": "options",
+      "argv": ["-of-"],
+      "stdin_text": "-wF0x10024\n-mF0xff\n-F0x0c\n-m /cygdrive/c/after\n",
+      "stdout_text": "C:/after\n",
+      "stderr_text": "cygpath: failed to retrieve special folder path\ncygpath: failed to retrieve special folder path\ncygpath: failed to retrieve special folder path\n",
+      "exit_code": 0
+    },
+    {
       "case_id": "no-path-shell-folders-with-csidl-flags",
       "category": "options",
       "argv": ["-of-"],

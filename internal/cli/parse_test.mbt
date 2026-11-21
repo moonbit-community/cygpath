@@ -154,7 +154,10 @@ test "close uses the hexadecimal prefix and preserves ordinary actions for null 
 ///|
 test "system folders parse the final selector, validating operands before its ID" {
   for id in ["36", "044", "0x24", "  +0X24", "4294967332"] {
-    assert_true(request(["-F", id]).input() is Folder(FixedShellDirectory("")))
+    assert_true(
+      request(["-F", id]).input()
+      is Folder(FixedShellDirectory("", shell_if_missing=false)),
+    )
   }
   assert_true(request(["-Fbad", "-S"]).input() is Folder(SystemDirectory))
   assert_true(request(["-Fbad", "-f-"]).input() is File("-"))
@@ -165,8 +168,17 @@ test "system folders parse the final selector, validating operands before its ID
   }
   assert_true(parse_failure(["-Fbad", "name"]) is Usage)
   assert_true(@cli.parse_args(["-iW", "name"]) is ExitSuccess)
-  assert_true(request(["-D", "-A", "-F021"]).input() is Folder(VirtualFolder))
-  for id in ["0x4029", "0x8029", "0x3028"] {
+  assert_true(request(["-D", "-A", "-F021"]).input() is Folder(NoFolderPath))
+  for id in ["0x4029", "0x8029", "0xf829"] {
+    assert_true(
+      request(["-F", id]).input()
+      is Folder(FixedShellDirectory("SysWOW64", shell_if_missing=true)),
+    )
+  }
+  for id in ["0x10024", "0x7fffffff", "0x234", "0xff", "0x4011"] {
+    assert_true(request(["-wC29001", "-F", id]).input() is Folder(NoFolderPath))
+  }
+  for id in ["0x3028", "0x39", "0x3a", "0x3e"] {
     assert_true(parse_failure(["-F", id]) is UnsupportedCapability(_))
   }
 }

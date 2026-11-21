@@ -563,7 +563,7 @@ fn parse_args_inner(
   } else {
     None
   }
-  if !(source is Folder(VirtualFolder)) && output_error is Some(reason) {
+  if !(source is Folder(_)) && output_error is Some(reason) {
     raise UnsupportedCapability(reason)
   }
   for key, _ in mount_cases {

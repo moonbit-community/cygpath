@@ -35,18 +35,30 @@ fn parse_system_folder(
     "--sysdir" => SystemDirectory
     "--folder" => {
       let value = folder_id(id)
-      // NO_ALIAS and DONT_UNEXPAND still select the same absolute path for
-      // these fixed directories. Other flags can change filesystem lookup.
-      match value & (0x3000).lnot() {
-        0x14 => FixedShellDirectory("Fonts")
-        0x24 => FixedShellDirectory("")
-        0x25 => FixedShellDirectory("System32")
-        0x29 => FixedShellDirectory("SysWOW64")
-        0x38 => FixedShellDirectory("Resources")
-        // CSIDL flags do not give these virtual namespaces a filesystem path.
-        _ if (value & 0xffff07ff)
-          is (0x01 | 0x03 | 0x04 | 0x0a | 0x11 | 0x12 | 0x31 | 0x3d) =>
-          VirtualFolder
+      // The SDK reserves bits 8..15 for flags. Keep the high word when
+      // extracting the ID, so 0x10024 cannot alias CSIDL_WINDOWS.
+      let id = value & (0xff00).lnot()
+      let shell_if_missing = (value & 0xc000) != 0
+      match id {
+        0x14 => FixedShellDirectory("Fonts", shell_if_missing~)
+        0x24 => FixedShellDirectory("", shell_if_missing~)
+        0x25 => FixedShellDirectory("System32", shell_if_missing~)
+        0x29 => FixedShellDirectory("SysWOW64", shell_if_missing~)
+        0x38 => FixedShellDirectory("Resources", shell_if_missing~)
+        // Virtual namespaces and unassigned legacy IDs have no filesystem path.
+        // 0x39 and 0x3a are real, machine-dependent Shell locations.
+        0x01
+        | 0x03
+        | 0x04
+        | 0x0a
+        | 0x0c
+        | 0x0f
+        | 0x11
+        | 0x12
+        | 0x31..<=0x34
+        | 0x3c
+        | 0x3d
+        | 0x3f..<_ => NoFolderPath
         _ =>
           raise UnsupportedCapability(
             option + " requires Windows system-directory queries",
@@ -67,22 +79,30 @@ pub async fn Converter::folder_output(
   resolve : async (String) -> String?,
 ) -> Bytes? {
   let child = match folder {
-    VirtualFolder => return None
+    NoFolderPath => return None
     WindowsRoot => ""
     SystemDirectory => "System32"
-    FixedShellDirectory(name) => name
+    FixedShellDirectory(name, ..) => name
+  }
+  guard resolve(child) is Some(native) else {
+    match folder {
+      FixedShellDirectory(_, shell_if_missing=false) => return None
+      FixedShellDirectory(_, shell_if_missing=true) =>
+        raise UnsupportedCapability(
+          "missing system folder requires a Windows Shell query for CREATE or DONT_VERIFY",
+        )
+      _ => ()
+    }
+    raise UnsupportedCapability(
+      "cannot obtain the system directory's filesystem spelling",
+    )
+  }
+  if self.output_error is Some(reason) {
+    raise UnsupportedCapability(reason)
   }
   guard self.to == Posix else {
     raise UnsupportedCapability(
       "Windows system-directory API spelling is unavailable",
-    )
-  }
-  guard resolve(child) is Some(native) else {
-    if folder is FixedShellDirectory(_) {
-      return None
-    }
-    raise UnsupportedCapability(
-      "cannot obtain the system directory's filesystem spelling",
     )
   }
   Some(

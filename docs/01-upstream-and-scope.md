@@ -119,8 +119,8 @@ This table inventories the official primary options and the current implementati
 | `-O`, `--mydocs` | Documents directory | Windows system information | Unsupported; environment variables do not describe all folder redirection |
 | `-P`, `--smprograms` | Start Menu Programs directory | Windows system information | Unsupported; no equivalent verified runtime query across delivery targets |
 | `-S`, `--sysdir` | System directory | Windows host adapter | POSIX output resolves the local System32 directory under the kernel's SystemRoot. Raw Windows/mixed API spelling is pending |
-| `-W`, `--windir` | Windows directory | Windows host adapter | POSIX output resolves the kernel's SystemRoot. Windows differential execution is pending |
-| `-F`, `--folder ID` | Special folder by numeric ID | CLI and Windows host adapter | POSIX output for the Windows directory, System32, SysWOW64, Fonts and Resources on the standard 64-bit Windows layout. Eight virtual IDs follow the upstream no-path diagnostic |
+| `-W`, `--windir` | Windows directory | Windows host adapter | POSIX output resolves the kernel's SystemRoot. Both Windows runtimes exercise this path |
+| `-F`, `--folder ID` | Special folder by numeric ID | CLI and Windows host adapter | POSIX output for the Windows directory, System32, SysWOW64, Fonts and Resources on the standard 64-bit Windows layout. Virtual and unassigned legacy IDs follow the upstream no-path diagnostic |
 | `-A`, `--allusers` | Common-user locations for directory queries | Windows system information | Accepted without effect for ordinary conversions; common system-directory queries remain unsupported |
 | `-f`, `--file FILE` | Read records; - means stdin | CLI I/O | Implemented with measured text-mode record behavior, retained BOM, CRLF handling, fixed buffer chunks, final records, and ordered partial output |
 | `-o`, `--option` | Read per-line options with file input | CLI state | Implemented: leading-option records split at the first whitespace, reset conversion flags, and preserve Context; plain records reuse flags. This is not shell tokenization |

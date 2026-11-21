@@ -17,8 +17,8 @@ pub(all) enum InputSource {
 pub(all) enum SystemFolder {
   WindowsRoot
   SystemDirectory
-  FixedShellDirectory(String)
-  VirtualFolder
+  FixedShellDirectory(String, shell_if_missing~ : Bool)
+  NoFolderPath
 }
 
 ///|
@@ -344,7 +344,7 @@ pub fn Request::needs_device_probe(self : Request) -> Bool {
 
 ///|
 pub fn Request::installation_profile(self : Request) -> @lib.Profile? {
-  if !(self.source is Folder(VirtualFolder)) &&
+  if !(self.source is Folder(NoFolderPath)) &&
     self.mounts.is_empty() &&
     self.drive_prefix is None &&
     self.posix_cwd is None &&

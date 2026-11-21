@@ -84,8 +84,8 @@ pub fn Request::prepare(Self, installation? : @lib.Context, nt_null? : Bool, loc
 pub(all) enum SystemFolder {
   WindowsRoot
   SystemDirectory
-  FixedShellDirectory(String)
-  VirtualFolder
+  FixedShellDirectory(String, shell_if_missing~ : Bool)
+  NoFolderPath
 }
 
 // Type aliases

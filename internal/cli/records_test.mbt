@@ -418,6 +418,9 @@ async test "mount mode is its own output selector, including option records" {
 
 ///|
 async test "folder actions use Windows syntax, single-path mounts and per-record options" {
+  let missing = request(["-mC29001", "-F070"])
+  guard missing.input() is Folder(fixed) else { fail("expected a folder") }
+  assert_eq(missing.prepare().folder_output(fixed, _ => None), None)
   let converter = request(["--mount", "/win", "D:/WiN", "-of-"]).prepare()
   let seen = []
   let resolve : async (String) -> String? = child => {
@@ -443,13 +446,25 @@ async test "folder actions use Windows syntax, single-path mounts and per-record
       ("-uF0x1029", Some(b"/win/SysWOW64")),
       ("-uF0x2025", Some(b"/win/System32")),
       ("-uF0x3024", Some(b"/win")),
+      ("-uF0x4025", Some(b"/win/System32")),
+      ("-uF0x8024", Some(b"/win")),
       ("-uF070", None),
+      ("-mF070", None),
       ("-wF0x403d", None),
     ] {
     guard converter.convert_file_record(record) is QueryFolder(folder) else {
       fail("expected folder query")
     }
     assert_eq(converter.folder_output(folder, resolve), expected)
+  }
+  guard converter.convert_file_record("-uF0x4038") is QueryFolder(optional) else {
+    fail("expected a fixed-folder query")
+  }
+  try converter.folder_output(optional, resolve) catch {
+    @cli.UnsupportedCapability(_) => ()
+    err => raise err
+  } noraise {
+    _ => fail("a missing unverified folder needs the Shell")
   }
   guard converter.convert_file_record("-wdF17") is QueryFolder(folder) else {
     fail("expected virtual shell folder")
@@ -461,7 +476,8 @@ async test "folder actions use Windows syntax, single-path mounts and per-record
   let shorten : async (String) -> String? = name => Some(name + ".DOS")
   assert_eq(converter.encode_output(native, shorten~), b"D:\\next.DOS")
   assert_eq(seen, [
-    "System32", "", "Fonts", "SysWOW64", "SysWOW64", "System32", "", "Resources",
+    "System32", "", "Fonts", "SysWOW64", "SysWOW64", "System32", "", "System32",
+    "", "Resources", "Resources", "Resources",
   ])
   assert_true(
     converter.convert_file_record("-m /win/next") is Output("D:/WiN/next"),

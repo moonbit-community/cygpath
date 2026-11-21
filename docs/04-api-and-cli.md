@@ -290,8 +290,9 @@ including `-U`. For a linked subdirectory, the adapter reads the stored name
 from its parent. An unresolved root reparse point or a result without a DOS
 drive path produces a capability error. The upstream POSIX branch tries to
 restore disk casing, while Windows/mixed output preserves the spelling from
-the Windows API. That raw spelling and redirected shell folder queries remain
-open. [Cygwin folder conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L551-L674) ·
+the Windows API. On the Windows runner, `-wS` returned `C:\Windows\system32` and
+`-wF0x25` returned `C:\Windows\System32`. Returning these original API
+spellings and querying redirected shell folders still need host support. [Cygwin folder conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L551-L674) ·
 [Windows SystemRoot handle observation](https://bugs.python.org/msg226540).
 
 `-F` accepts a signed integer in decimal, octal or hexadecimal. IDs `0x24`
@@ -299,15 +300,20 @@ and `0x25` select the Windows and system directories. On the 64-bit Windows
 hosts supported by Cygwin and moonrun, `0x29` selects SysWOW64. IDs `0x14`
 and `0x38` select Fonts and Resources. The Wasm host looks up these entries
 under the NT SystemRoot using the documented fixed-folder layout. An absent
-entry supplies no folder path. The `NO_ALIAS` and `DONT_UNEXPAND` flags
-also select the absolute filesystem path for these fixed directories.
-[Windows known folders](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid)
-and [folder categories](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-kf_category).
+entry normally supplies no folder path. An existing fixed directory supports
+the CSIDL flags, including `CREATE` and `DONT_VERIFY`. When those two flags
+apply to a missing directory, the CLI reports that it needs the Shell to
+determine the result. [Windows known folders](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid)
+and [folder flags](https://learn.microsoft.com/en-us/windows/win32/shell/csidl).
 
 Virtual IDs `1`, `3`, `4`, `10`, `17`, `18`, `49` and `61` have no filesystem
-path, including when combined with the documented CSIDL flags. They emit the upstream
-diagnostic on stderr and allow subsequent file records to run. A malformed ID
-exits with status 1. The last folder selector wins, a folder query takes no NAME,
+path. Unassigned IDs `0x0c`, `0x0f`, `0x32–0x34`, `0x3c` and `0x3f–0xff`
+give the same result. The flags occupy bits 8–15. A nonzero high word selects
+an unknown ID, so `-wF0x10024` reports a missing folder and continues to the
+next file record. Localized Resources (`0x39`) and OEM Links (`0x3a`) require
+their registered Shell locations. [Windows SDK CSIDL definitions](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/ShlObj_core.h)
+
+A malformed ID exits with status 1. The last folder selector wins. A folder query takes no NAME,
 and plain input records use the current conversion options. [Windows CSIDL definitions](https://learn.microsoft.com/en-us/windows/win32/shell/csidl) ·
 [Shell path lookup contract](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetpathfromidlistw).
 
