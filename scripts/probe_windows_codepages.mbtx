@@ -130,6 +130,11 @@ let probe =
   #|  [CygpathCodepageProbe]::Capture(42, "$([char]0x1f)$([char]0xf020)$([char]0xf05c)$([char]0xf0ff)")
   #|  [CygpathCodepageProbe]::Capture(42, "$([char]0xf041)X")
   #|)
+  #|$iscii = foreach ($cp in 57002..57011) {
+  #|  foreach ($text in @('कকAখक', 'অঅসম', 'অஅఅಒഅଅਅઅ', 'ক€খ😀ग', 'क़ॐ॒॑॰', "क्$([char]0x200c)क्$([char]0x200d)क", "ক্$([char]0x200d)$([char]0x200c)ক", "$([char]0x200c)$([char]0x200d)", 'ক्/্ক', 'অঅ')) {
+  #|    ,([CygpathCodepageProbe]::Capture($cp, $text))
+  #|  }
+  #|}
   #|if ($symbols[0].output_hex -ne '1F205CFF00' -or $symbols[1].conversion_result -ne 0 -or
   #|    $symbols[1].conversion_last_error -ne 1113) {
   #|  $failures += 'CP_SYMBOL did not match the documented repertoire or unmappable-character error.'
@@ -147,13 +152,14 @@ let probe =
   #|  japanese_iso2022_observations = $jis
   #|  chinese_korean_stateful_observations = $chineseKorean
   #|  gsm_observations = $gsm
+  #|  iscii_observations = $iscii
   #|  symbol_observations = $symbols
   #|  scalar_file_format = 'bmp-CP.bin: one record per BMP scalar in order, excluding surrogates. One length byte followed by exactly the returned bytes, including the terminating NUL. A zero length means the Win32 call failed.'
   #|  assertions_passed = ($failures.Count -eq 0)
   #|  failures = $failures
   #|  last_error_note = 'Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error.'
   #|}
-  #|foreach ($cp in @(50220,50221,50222,50225,50227,50229,52936,55000,55001,55002,55003,55004,57002)) {
+  #|foreach ($cp in (@(50220,50221,50222,50225,50227,50229,52936,55000,55001,55002,55003,55004) + (57002..57011))) {
   #|  [CygpathCodepageProbe]::WriteScalarSamples($cp, $env:CYGPATH_CODEPAGE_OUTPUT)
   #|}
   #|[Console]::WriteLine(($report | ConvertTo-Json -Depth 12 -Compress))
