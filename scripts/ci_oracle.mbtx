@@ -1303,6 +1303,107 @@ async fn check_mount_owners(
       )
     }
   }
+  async fn compare_file(
+    tag : String,
+    here : String,
+    name : String,
+    code : Int32,
+    stderr : Bytes,
+    stdout : Bytes,
+  ) -> Unit {
+    let args = ["-uf", name]
+    compare_installed(tag, args, here, (code, Some(stderr)), Some(stdout))
+    let port = probe(
+      output,
+      tag + "-implicit",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..args],
+      here,
+      environment,
+    )
+    compare(
+      port.status == "completed" &&
+      port.exit_code == Some(code) &&
+      port.stdout_sha256 == digest(stdout) &&
+      port.stderr_sha256 == digest(stderr),
+      tag + " differs without an installation in " + profile,
+    )
+  }
+  let reader_dir = root + "/parent-input"
+  @fs.mkdir(reader_dir + "/dir/sub", recursive=true)
+  let local_record = b"from-cwd\n"
+  @fs.write_file(reader_dir + "/names", local_record)
+  @fs.write_file(reader_dir + "/file", b"not a directory")
+  @fs.write_file(target + "/names", b"from-link-parent\n")
+  @fs.write_file(root + "/mounted-names", b"from-mount\n")
+  @fs.symlink(reader_dir + "/link", target=target + "/sub", force_symlink=true)
+  let too_wide = "é".repeat(128)
+  @fs.mkdir(reader_dir + "/" + too_wide)
+  let missing = b"cygpath: No such file or directory\n"
+  let not_dir = b"cygpath: Not a directory\n"
+  for
+    (tag, name, diagnostic) in [
+      ("directory", "dir/./../names", b""),
+      ("two-parents", "dir/sub/../../names", b""),
+      ("missing", "absent/../names", missing),
+      ("file", "file/../names", not_dir),
+      ("inner-missing", "dir/absent/../../names", missing),
+      ("wide", too_wide + "/../names", not_dir),
+      ("windows", "absent\\..\\names", b""),
+      ("mixed-early", "absent\\../names", b""),
+      ("mixed-late", "absent/../dir\\..\\names", missing),
+    ] {
+    compare_file(
+      "file-parent-" + tag,
+      reader_dir,
+      name,
+      if diagnostic.is_empty() {
+        0
+      } else {
+        1
+      },
+      diagnostic,
+      if diagnostic.is_empty() {
+        local_record
+      } else {
+        b""
+      },
+    )
+  }
+  let link_args = ["-uf", "link/../names"]
+  for
+    (label, table, result) in [
+      ("link", lookup_table, b"from-link-parent\n"),
+      (
+        "remount",
+        lookup_table +
+        root.replace_all(old=" ", new="\\040") +
+        "/mounted-names /text/names ntfs binary\n",
+        b"from-mount\n",
+      ),
+    ] {
+    @fs.write_file(root + "/etc/fstab", table)
+    compare_installed(
+      "file-parent-" + label,
+      link_args,
+      reader_dir,
+      (0, Some(b"")),
+      Some(result),
+    )
+  }
+  @fs.write_file(root + "/etc/fstab", lookup_table)
+  let local_link = probe(
+    output,
+    "file-parent-link-implicit",
+    moonrun,
+    [wasm, "--", "--profile", profile, ..link_args],
+    reader_dir,
+    environment,
+  )
+  require(
+    local_link.status == "completed",
+    "local parent link observation failed",
+  )
   let raw_cwd = target + "/byte-\uF0FF"
   @fs.mkdir(raw_cwd + "/sub", recursive=true)
   @fs.write_file(raw_cwd + "/sub/doc.exe", b"doc")
@@ -1674,31 +1775,6 @@ async fn check_mount_owners(
       Some(stdout),
     )
   }
-  async fn compare_file_width(
-    tag : String,
-    name : String,
-    code : Int32,
-    stderr : Bytes,
-    stdout : Bytes,
-  ) -> Unit {
-    let args = ["-uf", name]
-    compare_installed(tag, args, dos_dir, (code, Some(stderr)), Some(stdout))
-    let port = probe(
-      output,
-      tag + "-implicit",
-      moonrun,
-      [wasm, "--", "--profile", profile, ..args],
-      dos_dir,
-      environment,
-    )
-    compare(
-      port.status == "completed" &&
-      port.exit_code == Some(code) &&
-      port.stdout_sha256 == digest(stdout) &&
-      port.stderr_sha256 == digest(stderr),
-      tag + " differs without an installation in " + profile,
-    )
-  }
   // The native spelling encodes ':' as U+F03A, which takes two more UTF-8
   // bytes. Compare both spellings with and without an installation selected.
   for i, width in [251, 252, 255, 256] {
@@ -1720,8 +1796,9 @@ async fn check_mount_owners(
       } else {
         (1, b"cygpath: No such file or directory\n", b"")
       }
-      compare_file_width(
+      compare_file(
         "file-width-" + spelling + "-" + width.to_string(),
+        dos_dir,
         name,
         code,
         stderr,
@@ -1740,8 +1817,9 @@ async fn check_mount_owners(
       } else {
         (1, b"cygpath: No such file or directory\n", b"")
       }
-      compare_file_width(
+      compare_file(
         "file-width-link-" + width.to_string(),
+        dos_dir,
         link,
         code,
         stderr,
