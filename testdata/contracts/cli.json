@@ -438,7 +438,7 @@
         "C:\\work",
         "C:demo"
       ],
-      "stdout_text": "/cygdrive/c/demo\n",
+      "stdout_text": "C:demo\n",
       "stderr_text": "",
       "exit_code": 0
     },
@@ -689,7 +689,7 @@
         "-pu",
         "C:\\one;D:relative"
       ],
-      "stdout_text": "/cygdrive/c/one:/cygdrive/d/relative\n",
+      "stdout_text": "/cygdrive/c/one:D:relative\n",
       "stderr_text": "",
       "exit_code": 0
     },

@@ -2297,6 +2297,7 @@ async fn run(options : Map[String, String]) -> Unit {
       ("folder-no-alias-expanded", ["-F0x3025"], 0),
       ("drive-link-directory", ["-m", "/proc/cygdrive"], 0),
       ("absolute-root-directory", ["-aw", "/"], 0),
+      ("drive-relative-list", ["-pu", "C:\\one;D:relative"], 0),
       ("drive-link-directory-slash", ["-aw", "/proc/cygdrive/"], 0),
       ("drive-link-parent", ["-m", "/proc/cygdrive/../p3-alias-neighbor"], 0),
       ("drive-link-drive", ["-w", "/proc/cygdrive/c/p3-alias-leaf"], 0),
