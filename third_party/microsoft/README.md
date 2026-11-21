@@ -1,12 +1,65 @@
 # Microsoft Windows code-page mapping data
 
+## Windows mount uppercase table
+
+`lib/mount_upper_ranges.mbt` derives from the 973 mappings in Microsoft's
+[Windows 8 Upper Case Mapping Table](https://download.microsoft.com/download/c/f/7/cf713a5e-9fbc-4fd6-9246-275f65c0e498/Windows%208%20Upper%20Case%20Mapping%20Table.txt).
+The generator checks the source SHA-256
+`76a66e29298eafc744fa1e8e11c80c3de28219c70539b3fb10efbccadb6ae335`.
+Unlisted UTF-16 units retain their values. The source comes from the
+[Microsoft download collection](https://www.microsoft.com/en-us/download/details.aspx?id=10921).
+See the [Open Specifications notice](LICENSE.txt).
+
+```sh
+moon run scripts/generate_mount_case.mbtx 'Windows 8 Upper Case Mapping Table.txt' lib/mount_upper_ranges.mbt
+```
+
+An independent comparison covered all 65,536 entries of the uppercase table
+in `Files/Windows/System32/l_intl.nls` from Microsoft's Nano Server LTSC 2025
+image (`10.0.26100.33828`, amd64). All entries matched. The layer SHA-256 was
+`e40d20b402e4d48fbc6bffc91e47b0ab3947db95f949e6de8e05c7b8167a9f4a`
+and the NLS file SHA-256 was `f8e9574c1c2ee28c669e903f5faf86ac24476f692076340b23881b4d0c82112b`.
+The 65,536 uppercase words in little-endian order have SHA-256
+`41c26bc7a12bdaeb26025c93118697c7e3ef81ee048b00fe5cce2a472e0e0742`.
+The library test checks the full range after decompression. End-to-end Cygwin
+and MSYS2 comparisons run as a separate check in the Windows custom-mount jobs.
+
+## Code-page mappings
+
 The additional OEM, ASCII, ISO-8859, KOI8, EBCDIC, Macintosh, and other legacy tables in `internal/encoding`
 derive from Microsoft's **Windows Supported Code Page Data Files.zip**.
 The generator emits 96 additional tables which, together with the original
 15 Unicode-hosted tables, cover all 111 table identities in that archive.
 CP29001 is retained as data but disabled at the encoder boundary, leaving
-**110 supported legacy numeric code pages plus UTF-8**. `codepages.json`
+**110 supported legacy numeric code pages from this archive**. `codepages.json`
 records all generated pages; its `excluded_pages` list is currently empty.
+
+The encoder also reproduces 394 best fits present in 21 Windows Server 2022
+NLS tables but absent from the archived encoder entries. Twenty ANSI and OEM
+pages map previously unmapped punctuation to page-specific equivalents. For
+example, U+202F maps to the nonbreaking space byte (`a0` on CP1252, `ff` on
+CP437). CP932 maps the combining kana marks U+3099 and U+309A to the same two
+byte sequences as their spacing forms. An explicit archived mapping takes
+precedence. The original tables and their digests remain reproducible.
+
+The regression test independently fingerprints the encoded bytes for every
+valid BMP scalar in each of the 56 numbered NLS files supplied by the
+[pinned Windows Server image](https://mcr.microsoft.com/v2/windows/nanoserver/manifests/sha256:076562f66717cad7b814e9665a95d1d773fcb073de511aa1929601dab50e8b58).
+The reference bytes come from the final 65,536 entries in each file, using
+one byte per entry for SBCS and one little-endian word for DBCS. An encoded
+word above 255 emits its high byte first. Windows CLI cases cover the ANSI,
+OEM and Japanese examples separately. See also [the additional UCM
+pages](../unicode/README.md#east-asian-windows-code-pages).
+
+In the same image, the SYSTEM hive at
+`ControlSet001\Control\Nls\CodePage` assigns `38598` to `c_28598.nls`
+and `51949` to `c_20949.nls`. The hive's SHA-256 is
+`15cfd4a2d880eb6193301847862b6bf567e873b35de1ac3f34fed0a085b6a44b`.
+Both numeric selectors reuse their registered tables. This matters for EUC
+Korean because the historical IMultiLanguage mapping for 51949 differs from
+the NLS encoding used by Win32. For example, U+0081 encodes as byte 81.
+[Microsoft code page assignments](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/28fefe92-d66c-4b03-90a9-97b473223d43).
+
 A conflicting source mapping cannot be selected without direct Windows
 evidence. The remote Windows capture resolved all four ambiguous
 members: 10005 U+05B8 -> DE, 10008 U+2225 -> A1CE, 20269 #^`~¤ -> A6 C3 C1
@@ -16,9 +69,9 @@ case IDs are recorded in `codepages.json` under
 `official_resolution_evidence`; the selected values are also recorded per
 page under `resolved_conflicts`. The generator requires
 `CPINFO` to declare one or two bytes, rejects wider mappings, and additionally
-requires single-byte tables to contain only single-byte values. Stateful
-encodings and four-byte GB18030 are feasible pure algorithm/data extensions
-that are not implemented by this catalog. Automatic ANSI/OEM page selection
+requires single-byte tables to contain only single-byte values. Four-byte
+GB18030 uses the separate [.NET mapping](../dotnet/README.md). Stateful
+encodings remain outside this catalog. Automatic ANSI/OEM page selection
 is a separate missing host-discovery capability. Runtime availability of
 legacy identifiers is checked separately
 against the recorded Windows oracle; a mapping table's existence alone does

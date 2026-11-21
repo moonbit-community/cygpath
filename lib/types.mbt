@@ -1,9 +1,28 @@
 ///|
+/// A mode query either needs an ordinary filesystem lookup or has a fixed
+/// binary-mode answer from Cygwin's virtual filesystem.
+/// For a null-backed device, `native_input` identifies the POSIX null stream.
+#derive(Eq, Debug)
+pub(all) enum ModeCandidate {
+  Filesystem(String, text_mode~ : Bool)
+  Virtual(directory~ : Bool)
+  NetworkDirectory(String?)
+  NullDevice(native_input~ : Bool)
+}
+
+///|
+pub extend ModeCandidate with Eq::{equal, not_equal}
+
+///|
+pub extend ModeCandidate with @debug.Debug::{to_repr}
+
+///|
 /// The input grammar, independent of the machine running the conversion.
+#derive(Eq, Debug)
 pub(all) enum InputSyntax {
   Windows
   Posix
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend InputSyntax with Eq::{equal, not_equal}
@@ -13,11 +32,12 @@ pub extend InputSyntax with @debug.Debug::{to_repr}
 
 ///|
 /// Mixed paths use Windows semantics with forward slashes.
+#derive(Eq, Debug)
 pub(all) enum OutputFormat {
   Windows
   Mixed
   Posix
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend OutputFormat with Eq::{equal, not_equal}
@@ -27,10 +47,11 @@ pub extend OutputFormat with @debug.Debug::{to_repr}
 
 ///|
 /// Selects mount ordering and default drive prefix without detecting the host.
+#derive(Eq, Debug)
 pub(all) enum Profile {
   Cygwin
   Msys2
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Profile with Eq::{equal, not_equal}
@@ -40,10 +61,11 @@ pub extend Profile with @debug.Debug::{to_repr}
 
 ///|
 /// Controls unmatched drive paths; explicit mounts always take precedence.
+#derive(Eq, Debug)
 pub(all) enum UnixPrefix {
   Configured
   ProcCygdrive
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend UnixPrefix with Eq::{equal, not_equal}
@@ -54,10 +76,12 @@ pub extend UnixPrefix with @debug.Debug::{to_repr}
 ///|
 /// Mount comparison policy. ASCII folding does not implement Windows Unicode
 /// case equivalence. Drive letters are always compared without case.
+#derive(Eq, Debug)
 pub(all) enum MountCase {
   Sensitive
   AsciiInsensitive
-} derive(Eq, Debug)
+  WindowsInsensitive
+}
 
 ///|
 pub extend MountCase with Eq::{equal, not_equal}
@@ -71,28 +95,38 @@ pub struct Mount {
   priv posix : ParsedPath
   priv windows : ParsedPath
   priv case : MountCase
+  priv text_mode : Bool
+  system : Bool?
 }
 
 ///|
 /// An immutable snapshot of the path environment. No conversion reads the host.
 pub struct Context {
   priv profile : Profile
+  priv nt_null : Bool?
+  priv network_servers : Map[String, Bool]
   priv drive_prefix : Array[String]
-  priv posix_mounts : Array[Mount]
-  priv windows_mounts : Array[Mount]
+  priv drive_text_mode : Bool
+  priv drive_case : MountCase
+  priv mounts : Array[Mount]
+  priv posix_mounts : Array[Int32]
+  priv windows_mounts : Array[Int32]
   priv posix_cwd : ParsedPath?
   priv windows_cwd : ParsedPath?
 }
 
 ///|
+#derive(Eq)
 priv enum PathRoot {
   Relative
   PosixRoot
   DriveAbsolute(String)
   DriveRelative(String)
   WindowsRooted
+  NetworkRoot
+  NetworkServer(String)
   Unc(String, String)
-} derive(Eq)
+}
 
 ///|
 priv struct ParsedPath {

@@ -24,8 +24,6 @@ jobs:
         run: moon update
       - name: Build Wasm executable
         run: moon build --target wasm --release --deny-warn
-      - name: Build Native executable
-        run: moon build --target native --release --deny-warn
       - name: Install official Cygwin
         id: cygwin
         if: matrix.profile == 'cygwin'
@@ -56,7 +54,6 @@ jobs:
           --context-variant ${{ matrix.context }}
           --root "$env:ORACLE_ROOT"
           --wasm "${{ github.workspace }}/_build/wasm/release/build/cygpath.wasm"
-          --native "${{ github.workspace }}/_build/native/release/build/cygpath.exe"
           --moon (Get-Command moon).Source
           --moonrun (Get-Command moonrun).Source
           --out "${{ github.workspace }}/_build/oracle-${{ matrix.profile }}${{ matrix.context == 'custom' && '-custom' || '' }}"

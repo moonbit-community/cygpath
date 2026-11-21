@@ -23,7 +23,7 @@ internal command-line and host types are not consumer library API.
 | `OutputFormat` | `Windows`, `Mixed`, or `Posix` |
 | `Profile` | `Cygwin` or `Msys2`: drive-prefix default, mount ordering, and mapped-root behavior |
 | `UnixPrefix` | `Configured` or `ProcCygdrive`, affecting unmatched drive fallback |
-| `MountCase` | `Sensitive` or ASCII-only `AsciiInsensitive` |
+| `MountCase` | `Sensitive`, `AsciiInsensitive`, or `WindowsInsensitive` |
 | `Mount` | Opaque validated absolute POSIX-to-Windows mapping |
 | `Context` | Opaque immutable explicit mapping/cwd snapshot |
 | `ConversionError` | Checked, structured failures without host exception objects |
@@ -45,12 +45,22 @@ Context::convert(path, from~, to~, absolute?=false,
 Context::convert_list(paths, from~, to~, absolute?=false,
                       recognize_windows?=false, unix_prefix?=Configured)
   -> String raises ConversionError
+
+Context::windows_to_posix_bytes(path, absolute?=false,
+                                unix_prefix?=Configured, list?=false)
+  -> Bytes raises ConversionError
 ```
 
 Reuse a Context across conversions. Its constructor copies collections and
 validates mounts, prefixes, cwd, and drive metadata. `drive_cwds` is validated
 metadata, not a conversion-base override: explicit Windows drive-relative
 conversion follows cygpath's drive-root rule. Context never reads the host.
+
+`convert`, `relative_windows_name` and `mode_candidate` take either a
+Unicode `String` or a narrow `Bytes` operand. For Windows output, byte
+operands preserve filename bytes through mount and working-directory lookup.
+For example, `convert(b"/cygdrive/c/\xff", from=Posix, to=Mixed)` returns
+`C:/` followed by U+F0FF.
 
 `convert_list` owns source delimiters, empty-member handling, and atomic failure.
 Its optional `recognize_windows` flag recognizes backslash-containing members
@@ -65,10 +75,15 @@ under their own batch policy; no generic batch framework is imposed.
 | `EmptyPath` | Empty single-path input |
 | `PathTooLong(String)` | Original path with an overlong Windows-output component |
 | `InvalidDrivePrefix` | Configured drive branch is not followed by one ASCII drive letter |
+| `InvalidWindowsPrefix` | The remaining NT or extended Windows prefix has an invalid drive or UNC form during Windows-to-POSIX conversion |
+| `NotDirectory` | A directory was required at a known virtual file or terminal |
+| `PathNotFound` | The virtual filesystem has no such entry |
+| `TooManyLinks` | Conversion exceeded Cygwin's ten-link lookup limit |
 | `InvalidPath(reason~, offset~)` | Invalid text/structure, including NUL or unpaired UTF-16 |
 | `InvalidContext(field~, reason~)` | Invalid mount, cwd, prefix, or drive metadata |
 | `MissingContext(field~)` | A required mapping or source cwd is absent |
-| `UnsupportedNamespace(String)` | Unsupported device, incomplete UNC, or virtual mapping |
+| `NetworkServerLookup(String)` | Cancelling a POSIX server component or rendering its absolute Windows/mixed directory spelling needs observed server presence |
+| `UnsupportedNamespace(String)` | Unsupported device or virtual mapping, or an incomplete UNC path in a conversion requiring a share |
 | `UnrepresentablePath(component~, reason~)` | Unsupported ordinary component/authority spelling |
 | `InvalidOptions(String)` | Invalid library option combination |
 | `ListEntryError(index~, cause)` | Original zero-based member index and underlying error |
@@ -112,7 +127,6 @@ Local invocation:
 
 ```sh
 moon run --target wasm . -- -u 'C:\work\demo.txt'
-moon run --target native . -- -u 'C:\work\demo.txt'
 ```
 
 After publication and namespace verification, ordinary usage is through the root
@@ -185,7 +199,7 @@ official control flow.
 | `-u`, `--unix` | POSIX output; ordinary default |
 | `-w`, `--windows` | Windows output with backslashes |
 | `-m`, `--mixed` | Windows semantics with forward slashes |
-| `-t`, `--type TYPE` | Case-insensitive `unix`, `windows`, or `mixed`; `dos` is recognized but unsupported |
+| `-t`, `--type TYPE` | Case-insensitive `unix`, `windows`, `mixed`, or `dos` |
 | `-a`, `--absolute` | Resolve relative paths from explicit context |
 | `-p`, `--path` | Convert each NAME/record as one atomic PATH list |
 | `-U`, `--proc-cygdrive` | POSIX drive fallback through `/proc/cygdrive`; ignored for Windows/Mixed output |
@@ -194,6 +208,8 @@ official control flow.
 | `-o`, `--option` | Interpret leading-hyphen records as per-record option declarations; requires `-f` |
 | `-i`, `--ignore` | Skip empty operands/records and suppress official usage failures occurring after this flag |
 | `-C`, `--codepage CP` | Select an implemented output encoding; ignored for POSIX output after syntax validation |
+| `-l`, `--long-name` | Expand ordinary short-name components on Windows with `-w` or `-m` |
+| `-d`, `--dos`, `-s`, `--short-name` | Return dot operands or an existing Windows drive root. A missing Windows operand or list member reports its converted spelling and exits 2. Other existing entries require their Windows 8.3 name record |
 | `-A`, `--allusers` | Accepted without effect on ordinary conversion |
 | `-h`, `--help`; `-V`, `--version` | Implementation help/version |
 
@@ -214,12 +230,69 @@ wins. Identical scalar project context declarations may repeat; conflicting
 values fail. Mounts append, and Context rejects duplicates/conflicts. Duplicate
 `--drive-cwd` letters are rejected after ASCII case folding.
 
-Recognized but unsupported capabilities remain explicit errors: `-d/--dos`,
-`-s/--short-name`, `-l/--long-name`, `-M/--mode`, `-c/--close HANDLE`,
-`-D/--desktop`, `-H/--homeroot`, `-O/--mydocs`, `-P/--smprograms`, `-S/--sysdir`,
-`-W/--windir`, and `-F/--folder ID`. Invalid combinations are diagnosed before
-attempting unavailable capabilities. See [01](01-upstream-and-scope.md) for the
-complete capability inventory.
+The absolute terminal names `/dev/tty` and `/dev/ptmx` and fixed `/proc`
+entries report binary mode without an installation snapshot.
+With an installed Cygwin snapshot, `-M/--mode` selects mode reporting instead
+of path output. It prints the original operand followed by `: text` or
+`: binary`. Ordinary missing names retain the selected mount mode; an empty
+name (even with `-i`) or a regular file used as a parent gets a diagnostic
+on stderr and does not stop later operands or change the exit status. `-f`
+and per-record `-o` use the same dispatch. Known limitations include live
+mount changes, Cygwin-only link metadata and native links without a resolvable
+target. Missing installation context is a capability failure, not a binary
+default. See [upstream mode lookup](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/external.cc#L403-L415).
+
+`-l` queries the Windows host after path conversion. For ordinary files and
+directories, `moonrun` obtains the normalized name of the opened entry. The CLI
+uses only the last component of that result so a junction in an earlier
+component keeps its spelling. Directory enumeration supplies the reparse point's
+own name, including an unambiguous ASCII case variant of an eligible DOS name.
+Unresolved reparse aliases and
+OEM-dependent case or alias decisions produce a capability error. A missing
+path returns the whole original spelling, including any short parent names.
+Lists apply the lookup to each member. With `-C`, the first encoded result
+must decode in the supported UTF-8 locale before the lookup. Windows
+comparisons use names obtained from the fixture volume itself.
+[Cygwin fallback](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L430-L445),
+[moonrun Windows realpath](https://github.com/moonbitlang/moon/blob/738607b/crates/moonrun/src/filesystem/job/runner.rs#L1343-L1405),
+and [Windows normalized names](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/20bcadba-808c-4880-b757-4af93e41edf6).
+
+On Windows, POSIX `-W` and `-S` use the running installation's NT
+`SystemRoot` link and the normalized local directory name from an open handle.
+The directory then passes through the selected mounts and drive prefix,
+including `-U`. For a linked subdirectory, the adapter reads the stored name
+from its parent. An unresolved root reparse point or a result without a DOS
+drive path produces a capability error. The upstream POSIX branch tries to
+restore disk casing, while Windows/mixed output preserves the spelling from
+the Windows API. That raw spelling and redirected shell folder queries remain
+open. [Cygwin folder conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L551-L674) ·
+[Windows SystemRoot handle observation](https://bugs.python.org/msg226540).
+
+`-F` accepts a signed integer in decimal, octal or hexadecimal. IDs `0x24`
+and `0x25` select the Windows and system directories. On the 64-bit Windows
+hosts supported by Cygwin and moonrun, `0x29` selects SysWOW64. IDs `0x14`
+and `0x38` select Fonts and Resources. The Wasm host looks up these entries
+under the NT SystemRoot using the documented fixed-folder layout. An absent
+entry supplies no folder path. The `NO_ALIAS` and `DONT_UNEXPAND` flags
+also select the absolute filesystem path for these fixed directories.
+[Windows known folders](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid)
+and [folder categories](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-kf_category).
+
+Virtual IDs `1`, `3`, `4`, `10`, `17`, `18`, `49` and `61` have no filesystem
+path, including when combined with the documented CSIDL flags. They emit the upstream
+diagnostic on stderr and allow subsequent file records to run. A malformed ID
+exits with status 1. The last folder selector wins, a folder query takes no NAME,
+and plain input records use the current conversion options. [Windows CSIDL definitions](https://learn.microsoft.com/en-us/windows/win32/shell/csidl) ·
+[Shell path lookup contract](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetpathfromidlistw).
+
+`-c HANDLE` reads a hexadecimal prefix, including an optional sign. A null
+handle or the 64-bit current process/thread pseudo handle (`-1` or `-2`) lets
+option processing continue. For example, `-c0 -u C:/x` converts the path.
+`-c0` alone reaches the usual missing-operand check. A real inherited handle
+requires a Windows handle operation. [Cygwin parser](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L865-L869),
+[current process](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess)
+and [current thread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentthread).
+See [the option inventory](01-upstream-and-scope.md) for their host requirements.
 
 ## 6. Explicit context and natural input recognition
 
@@ -231,15 +304,19 @@ These project extensions change the request, never the real host environment:
 | `--profile cygwin\|msys2` | Select drive-prefix defaults and profile-specific mapping rules |
 | `--root WINDOWS` | Add `/` as an explicit mount, without implicit aliases |
 | `--mount POSIX WINDOWS` | Append a mount using two operands |
-| `--mount-case POSIX sensitive\|ascii-insensitive` | Set a matching mount's comparison policy, independent of declaration order |
+| `--mount-case POSIX POLICY` | Set a mount's comparison policy to `sensitive`, `ascii-insensitive`, or `windows-insensitive`, independent of declaration order |
 | `--drive-prefix POSIX` | Override the profile's default prefix |
 | `--posix-cwd POSIX` | Supply an absolute POSIX cwd |
 | `--windows-cwd WINDOWS` | Supply an absolute Windows cwd/current drive |
 | `--drive-cwd DRIVE WINDOWS` | Validate per-drive cwd metadata; does not alter drive-relative conversion |
 
 Mount-case paths normalize trailing `/`; a policy without a matching mount is
-an error. Default comparison is Sensitive. No process cwd, HOME, MSYSTEM,
-registry, or installation-root guessing populates Context.
+an error. Default comparison is Sensitive. These arguments select the offline
+model; it never consults the host. On Windows, `CYGPATH_ROOT` selects an
+installed Cygwin or, with `--profile=msys2`, an MSYS2 installation when no
+explicit mount, prefix or cwd is supplied. In that
+mode both operands and `-f FILE` use the mount snapshot and physical cwd;
+`CYGPATH_USER` optionally selects a per-user fstab. Neither mode guesses a root.
 
 With no `--from`, POSIX output uses Windows grammar plus its already-POSIX
 absolute passthrough. Single Windows/Mixed output recognizes a drive prefix,
@@ -283,6 +360,16 @@ that a parent already changed.
 
 ## 7. File records and `-o` state
 
+`-f names.lst` opens the exact input name first and can open
+`names.lst.exe` if the exact entry is absent. The suffix applies to the final
+component. A directory found only by appending `.exe` is skipped. Opening
+an explicitly named readable directory returns zero records and exits
+successfully. With a selected installation, Cygwin mount mappings and
+native link traversal also apply to the input filename.
+[Cygwin open](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/syscalls.cc#L1479-L1489) ·
+[Suffix scan](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L2902-L3007) ·
+[File-input loop](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L1066-L1115).
+
 `-f FILE` and `-f -` stream input incrementally. The byte protocol is:
 
 1. Translate CRLF to LF. Preserve a standalone CR, including a final CR at EOF.
@@ -291,15 +378,24 @@ that a parent already changed.
    physical line becomes independently converted chunks.
 3. Treat the first NUL in a record as the end of path text. Bytes after it in
    that record are not UTF-8-decoded; subsequent records are still processed.
-4. Decode the visible bytes as strict UTF-8. Retain BOM characters at every
-   position, including byte zero. Preserve spaces and a final unterminated record.
+4. Apply the record's options, then interpret the filename using the selected
+   conversion. Retain BOM characters, spaces and a final unterminated record.
 
 An empty stream succeeds with no output. A BOM-only stream contains a BOM path.
 An empty record is an empty operand, including in list mode: report
-`can't convert empty path` with exit 1, or skip it with `-i`. Malformed UTF-8
-fails deterministically, preserving earlier output. Upstream malformed-input
-and unavailable-CP29001 observations are retained as separately identified
-boundaries, not advertised as successful conversion matches.
+`can't convert empty path` with exit 1, or skip it with `-i`. Unix output accepts
+UTF-8 and paired CESU-8, and preserves earlier output on a decoding error.
+For Windows and mixed output,
+C.UTF-8 filename bytes outside a valid sequence map to U+F080–U+F0FF.
+This mapping happens after POSIX mount matching. A raw `ff` and the three
+UTF-8 bytes for U+F0FF can therefore select different mounts. On a path
+error the diagnostic quotes the original filename bytes. [Cygwin filename conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/strfuncs.cc#L1155-L1210).
+
+A six-byte CESU-8 pair denotes two UTF-16 units. For example,
+`ed a0 bd ed b8 80` becomes 😀 and writes `f0 9f 98 80` under UTF-8 output.
+The single-name length check uses those two units. Narrow POSIX mount
+matching and error messages retain all six input bytes. The port currently
+rejects an isolated encoded surrogate unit. [Newlib multibyte decoder](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/newlib/libc/stdlib/mbtowc_r.c#L595-L637).
 
 With `-o`, only a record whose first character is `-` starts option parsing.
 Split it at its first ASCII whitespace character: the first token is an option
@@ -327,12 +423,58 @@ records. An ignored empty operand skips only that operand.
 
 Each successful conversion is encoded, then followed by one raw LF byte. Default
 output is UTF-8; POSIX output always uses UTF-8. Windows/Mixed output additionally
-supports 110 stateless legacy code pages plus UTF-8/65001. Their identities,
-mapping hashes, default characters, and source notices are frozen in the
+supports 115 table-based legacy code pages. The original 110 are recorded in the
 [Microsoft catalog](../third_party/microsoft/codepages.json) and
-[Unicode catalog](../third_party/unicode/codepages.json). Numeric pages use
+[Unicode catalog](../third_party/unicode/codepages.json). CP20932, CP20936
+and CP20949 use Unicode's published Windows mappings. All 65,536 encoder
+entries per page agree with the corresponding Windows Server 2022 NLS table.
+[Data sources and verification](../third_party/unicode/README.md#east-asian-windows-code-pages).
+CP38598 (logical Hebrew) uses CP28598 and preserves input character order.
+CP51949 (EUC Korean) uses CP20949, including its best-fit and control-character
+mappings. [Windows code page assignments](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/28fefe92-d66c-4b03-90a9-97b473223d43).
+Numeric pages use
 Windows best-fit mappings; unmapped UTF-16 words use the table's default
 character, so an unmapped supplementary scalar can yield two replacement bytes.
+On 20 ANSI/OEM pages the encoder applies the additional Windows punctuation
+best fits. CP932 also encodes U+3099 and U+309A as `81 4a` and `81 4b`
+respectively. [Windows table verification](../third_party/microsoft/README.md).
+
+CP50220 widens each halfwidth kana. CP50221 writes kana after `ESC ( I`.
+CP50222 uses SO/SI to enter kana and restore the previous character set.
+CP50225 designates the Korean set once per path and shifts between Korean
+and ASCII. CP52936 surrounds Chinese runs with `~{` and `~}` and writes
+a literal tilde as `~~`. Each encoder returns to ASCII at the end of the
+string. The local tests compare bytes against Microsoft's managed implementation.
+The Windows workflow compares actual paths against Cygwin.
+[Encoder provenance](../third_party/dotnet/README.md#iso-2022-and-hz).
+
+CP54936 uses the Windows-derived GB18030-2000 mapping and encodes each
+supplementary scalar as four bytes. The Windows comparison includes characters
+whose mappings changed in later standards. See [the data source and regeneration command](../third_party/dotnet/README.md).
+Mixed output encodes the Windows path and then replaces byte `5c` with `2f`.
+This also changes a Shift-JIS trail byte in ソ (`83 5c` becomes `83 2f`).
+
+CP42 (Windows Symbol) passes through U+0000–U+001F and maps U+F020–U+F0FF
+to bytes `20`–`ff`. For example, U+F041 U+F05C U+F042 renders as `A\B` with
+`-wC42` and `A/B` with `-mC42`. A character outside this repertoire causes
+the CLI to return status 1 before writing the affected record. Cygwin ignores
+the failed Win32 conversion, so its output on those inputs has no reliable
+byte contract. [Windows Symbol mapping](https://archives.miloush.net/michkap/archive/2005/11/08/490495.html) and [Cygwin conversion call](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L765-L796).
+
+For single Windows or mixed paths, the CLI also recognizes an extended drive
+or UNC prefix created by best-fit encoding. It removes the prefix if the
+encoded name fits in 259 bytes without it. A path list and explicit `-r`
+keep the prefix. [Cygwin output order](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L783-L811).
+
+CP65000 encodes each shifted run as unpadded Base64 of big-endian UTF-16
+units. Windows ends the run with a hyphen, encodes a literal plus as `+-`,
+and shifts optional punctuation including backslash. Consequently `-mC65000`
+can retain an encoded Windows separator. Single-path `-wr` inspects and
+prefixes the encoded bytes. For example, a short drive path gets the four
+literal prefix bytes even with UTF-7 or EBCDIC output.
+[RFC 2152](https://www.rfc-editor.org/rfc/rfc2152#section-2),
+[Win32 encoding test vectors](https://github.com/wine-mirror/wine/blob/wine-11.0/dlls/kernel32/tests/codepage.c#L509-L747),
+and [Cygwin output order](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L768-L810).
 
 `UTF8` and `UTF-8` aliases are case-insensitive. Numeric `-C` values use the
 official decimal `strtoul` grammar: leading ASCII whitespace and an optional sign
@@ -341,8 +483,11 @@ Unsigned-long overflow saturates before conversion to a 32-bit page number.
 `-C 4294968548`, for example, selects 1252. `-i` observes syntax errors in scan
 order. Repeated `-C` replaces the previous selection.
 
-Windows-output `ANSI`, `OEM`, and `0` require unavailable host selection and are
-rejected. CP29001 and unimplemented/stateful pages are also rejected. POSIX
+A numeric value of zero restores the default conversion. Cygwin uses the
+current locale for that branch. The Wasm CLI's default encoding is UTF-8.
+[Cygwin multibyte conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L156-L163).
+Windows-output `ANSI` and `OEM` require host selection. They, CP29001 and
+unimplemented pages such as ISO-2022-CN are rejected. POSIX
 output ignores a syntactically valid codepage selection, including unavailable
 identities, because that branch does not invoke the Windows encoder. No locale
 or platform codec participates in product encoding.

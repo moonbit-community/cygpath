@@ -9,6 +9,166 @@ test "explicit Windows code pages preserve their distinct byte mappings" {
 }
 
 ///|
+test "ISO-2022-KR designates once and shifts back at ASCII and record end" {
+  assert_true(@encoding.supported(50225))
+  assert_eq(@encoding.encode("ASCII~", 50225), b"ASCII~")
+  assert_eq(
+    @encoding.encode("A한글/한 B", 50225),
+    b"A\x1b$)C\x0eGQ1[\x0f/\x0eGQ\x0f B",
+  )
+  assert_eq(@encoding.encode("한", 50225), b"\x1b$)C\x0eGQ\x0f")
+  assert_eq(@encoding.encode("₩힣😀", 50225), b"\\???")
+}
+
+///|
+test "HZ-GB-2312 separates GB runs from literal tilde escapes" {
+  assert_true(@encoding.supported(52936))
+  assert_eq(@encoding.encode("~{}~", 52936), b"~~{}~~")
+  assert_eq(@encoding.encode("A中文~中文B", 52936), b"A~{VPND~}~~~{VPND~}B")
+  assert_eq(@encoding.encode("文", 52936), b"~{ND~}")
+  assert_eq(@encoding.encode("丂€😀\u{f8f5}", 52936), b"?\x80??\xff")
+}
+
+///|
+test "the Japanese ISO-2022 selectors preserve their distinct kana transitions" {
+  assert_eq(@encoding.encode("日ｶ本", 50220), b"\x1b$BF|%+K\\\x1b(B")
+  assert_eq(
+    @encoding.encode("日ｶ本", 50221),
+    b"\x1b$BF|\x1b(I6\x1b$BK\\\x1b(B",
+  )
+  assert_eq(@encoding.encode("日ｶ本", 50222), b"\x1b$BF|\x0e6\x0fK\\\x1b(B")
+  assert_eq(@encoding.encode("ｶﾞ", 50220), b"\x1b$B%+!+\x1b(B")
+  assert_eq(@encoding.encode("Aｶ", 50222), b"A\x0e6\x0f")
+  for page in [50220, 50221, 50222] {
+    assert_true(@encoding.supported(page))
+    assert_eq(@encoding.encode("丂髙①😀", page), b"?\x1b$B|b-!\x1b(B??")
+  }
+}
+
+///|
+test "stateful code pages match the Microsoft managed encoder across the BMP" {
+  let bmp = StringBuilder()
+  for value in 0..<0x10000 {
+    if value.to_char() is Some(character) {
+      bmp.write_char(character)
+    }
+  }
+  let text = bmp.to_string()
+  for
+    (page, size, expected) in [
+      (50220, 98261, 0xc698bca7U),
+      (50221, 98198, 0xfdaebae1U),
+      (50222, 98194, 0xb19c698fU),
+      (50225, 82341, 0x5849b5f1U),
+      (52936, 86781, 0x986e05a0U),
+    ] {
+    let encoded = @encoding.encode(text, page)
+    let mut hash = 2166136261U
+    for byte in encoded {
+      hash = (hash ^ byte.to_uint()) * 16777619U
+    }
+    assert_eq((page, encoded.length(), hash), (page, size, expected))
+  }
+}
+
+///|
+test "Windows JIS, GB2312 and Wansung use their own mappings" {
+  assert_eq(
+    @encoding.encode("日ｶ丂髙№\u{e000}\u{e3ac}", 20932),
+    b"\xc6\xfc\x8e\xb6\xb0\x21\xf4\x29\xad\xe2\xf5\xa1\xf5\x21",
+  )
+  // CP20936 can decode two byte sequences as ∥. Only A1 CE is emitted.
+  assert_eq(@encoding.encode("中∥", 20936), b"\xd6\xd0\xa1\xce")
+  assert_eq(
+    @encoding.encode("한글₩¢힣", 20949),
+    b"\xc7\xd1\xb1\xdb\\\xa1\xcb?",
+  )
+  for page in [20932, 20936, 20949] {
+    assert_true(@encoding.supported(page))
+    assert_eq(@encoding.encode("😀", page), b"??")
+  }
+}
+
+///|
+test "installed Windows NLS tables agree over every valid BMP scalar" {
+  let bmp = StringBuilder()
+  for scalar in 0..<0x10000 {
+    if scalar.to_char() is Some(c) {
+      bmp.write_char(c)
+    }
+  }
+  let text = bmp.to_string()
+  // FNV-1a over each Windows Server 2022 Nano NLS output in scalar order.
+  for
+    (page, expected) in [
+      (437, 0x82dfd698U),
+      (708, 0xaef7f238U),
+      (720, 0x7afd9fe6U),
+      (737, 0xebd30d14U),
+      (775, 0x5d483687U),
+      (850, 0x680aa08eU),
+      (852, 0xc11b9129U),
+      (855, 0xd0ae84b0U),
+      (857, 0x9c1f1f35U),
+      (858, 0xd3d048d0U),
+      (860, 0x0a0c799dU),
+      (861, 0x767acfd7U),
+      (862, 0xbf348f70U),
+      (863, 0x9ecf74dbU),
+      (864, 0x95506d02U),
+      (865, 0x960e2fc6U),
+      (866, 0x44d7cd56U),
+      (869, 0x01937867U),
+      (874, 0x1339a051U),
+      (932, 0x47bf5357U),
+      (936, 0x8dbef818U),
+      (949, 0xa6083006U),
+      (950, 0x1575a607U),
+      (1250, 0x1c24ef27U),
+      (1251, 0xe9c66bd4U),
+      (1252, 0xeec5e75dU),
+      (1253, 0x7c077eaaU),
+      (1254, 0x39b8ca9cU),
+      (1255, 0x8d18fd6dU),
+      (1256, 0xcff516ccU),
+      (1257, 0x2c5fb691U),
+      (1258, 0xbe206427U),
+      (1361, 0xbf2eeabdU),
+      (20000, 0x286cc1d5U),
+      (20001, 0xa44b07c2U),
+      (20002, 0x45228007U),
+      (20003, 0x526a1cebU),
+      (20004, 0xa6e767d0U),
+      (20005, 0x6d2b152dU),
+      (20127, 0x019da4ebU),
+      (20261, 0xa14c75abU),
+      (20866, 0x076fd5f0U),
+      (20932, 0xff267cdcU),
+      (20936, 0xc21cef27U),
+      (20949, 0xf10b7290U),
+      (21866, 0x86fd1ebeU),
+      (28591, 0x02292c81U),
+      (28592, 0x29c79432U),
+      (28593, 0xb47f1856U),
+      (28594, 0xf8444e9eU),
+      (28595, 0xec8869aeU),
+      (28596, 0x6012a72bU),
+      (28597, 0x7789186fU),
+      (28598, 0xc3d634e8U),
+      (28599, 0xaaa802eeU),
+      (28605, 0xb510e9a3U),
+      (38598, 0xc3d634e8U),
+      (51949, 0xf10b7290U),
+    ] {
+    let mut hash = 2166136261U
+    for byte in @encoding.encode(text, page) {
+      hash = (hash ^ byte.to_uint()) * 16777619U
+    }
+    assert_eq((page, hash), (page, expected))
+  }
+}
+
+///|
 test "best fit, missing characters, and UTF-8 are explicit policies" {
   assert_eq(@encoding.encode("Ａ", 1252), b"A")
   assert_eq(@encoding.encode("中文", 1252), b"??")
@@ -23,6 +183,27 @@ test "best fit, missing characters, and UTF-8 are explicit policies" {
   } catch {
     @encoding.UnsupportedCodePage(0) => ()
     _ => fail("wrong encoding error")
+  }
+}
+
+///|
+test "CP_SYMBOL maps its full byte repertoire and rejects other characters" {
+  let symbols = StringBuilder()
+  for byte in 0..<256 {
+    let scalar = if byte < 32 { byte } else { 0xf000 + byte }
+    symbols.write_char(scalar.to_char().unwrap())
+  }
+  assert_eq(
+    @encoding.encode(symbols.to_string(), 42),
+    Bytes::makei(256, i => i.to_byte()),
+  )
+  for text in [" ", "\u{f01f}", "\u{f100}", "\u{f041}X", "😀"] {
+    try @encoding.encode(text, 42) catch {
+      @encoding.UnmappableCharacter(42) => ()
+      err => raise err
+    } noraise {
+      _ => fail("encoded input outside the Windows Symbol repertoire")
+    }
   }
 }
 
@@ -81,6 +262,60 @@ test "CP29001 rejects undefined upstream conversion output" {
       _ => fail("expected UnsupportedCodePage(29001)")
     }
   }
+}
+
+///|
+test "Windows UTF-7 direct characters, shift boundaries, and UTF-16 units" {
+  assert_true(@encoding.supported(65000))
+  assert_eq(@encoding.encode("", 65000), b"")
+  assert_eq(
+    @encoding.encode("AZaz09'(),-./:? \t\r\n\u0000", 65000),
+    b"AZaz09'(),-./:? \t\r\n\x00",
+  )
+  assert_eq(
+    @encoding.encode("é+éé/ééé!", 65000),
+    b"+AOk-+-+AOkA6Q-/+AOkA6QDpACE-",
+  )
+  assert_eq(@encoding.encode("~\\-++", 65000), b"+AH4AXA--+-+-")
+  assert_eq(@encoding.encode("😀", 65000), b"+2D3eAA-")
+  let pair = "😀"
+  assert_eq(
+    @encoding.encode(pair.unsafe_substring(start=0, end=1), 65000),
+    b"+2D0-",
+  )
+  assert_eq(
+    @encoding.encode(pair.unsafe_substring(start=1, end=2), 65000),
+    b"+3gA-",
+  )
+}
+
+///|
+test "CP54936 covers the Windows GB18030-2000 repertoire" {
+  assert_true(@encoding.supported(54936))
+  assert_eq(
+    @encoding.encode("A€中\u{1e3f}\u{e7c7}\u{fe10}\u{e78d}", 54936),
+    b"A\xa2\xe3\xd6\xd0\x81\x35\xf4\x37\xa8\xbc\x84\x31\x82\x36\xa6\xd9",
+  )
+  assert_eq(
+    @encoding.encode("\u{ffff}\u{10000}\u{10ffff}", 54936),
+    b"\x84\x31\xa4\x39\x90\x30\x81\x30\xe3\x32\x9a\x35",
+  )
+  for start in 0..<2 {
+    let lone = "😀".unsafe_substring(start~, end=start + 1)
+    assert_eq(@encoding.encode(lone, 54936), b"\x84\x31\xa4\x37")
+  }
+  // FNV-1a of Python 3.14's gb18030 encoding of each valid BMP scalar in order.
+  let bmp = StringBuilder()
+  for scalar in 0..<0x10000 {
+    if scalar.to_char() is Some(c) {
+      bmp.write_char(c)
+    }
+  }
+  let mut hash = 2166136261U
+  for byte in @encoding.encode(bmp.to_string(), 54936) {
+    hash = (hash ^ byte.to_uint()) * 16777619U
+  }
+  assert_eq(hash, 0x6ed0ef95U)
 }
 
 ///|

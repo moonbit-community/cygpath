@@ -28,7 +28,7 @@ Start with [environment.example.json](../testdata/oracle/environment.example.jso
 
 Environment inheritance is disabled. The CI wrapper supplies Windows necessities and a limited environment, sets `CYGWIN=noglob` and `MSYS=noglob`, fixes `LANG=LC_ALL=C.UTF-8`, and records MSYS argument/environment conversion exclusions. Direct same-installation `printf.exe` probes prove the selected argv payloads arrive unchanged. Extended-namespace stdin cases separately isolate conversion from argv transport.
 
-Context contains profile, drive prefix, ordered mount declarations, optional POSIX/Windows cwd, and per-drive cwd. Mount policies are `sensitive` or `ascii-insensitive`; the collector generates `--mount-case` explicitly. Raw mount declarations alone populate context. Independent queries for `/` and `/usr/bin` are retained without inventing additional mounts. MSYS2 may select a different matching mount from Cygwin; custom mapping observations preserve both declared targets and measured results.
+Context contains profile, drive prefix, ordered mount declarations, optional POSIX/Windows cwd, and per-drive cwd. The collector records `posix=0` as `windows-insensitive` and passes `--mount-case` explicitly. Historical manifests retain their `ascii-insensitive` policy. Raw mount declarations alone populate context. Independent queries for `/` and `/usr/bin` are retained without inventing additional mounts. MSYS2 may select a different matching mount from Cygwin; custom mapping observations preserve both declared targets and measured results.
 
 The low-level collector verifies platform, artifacts, version bytes, cwd, immutable inputs, and evidence integrity. A manual manifest still relies on its author for descriptive host facts. The wrapper measures those facts. Neither route independently attests that an installed binary was built from a particular source commit.
 
@@ -84,16 +84,16 @@ The wrapper retains package, version, uname, mount, locale, root/path/cwd, argv-
 An equivalent manual wrapper invocation is:
 
 ```text
-moon run --deny-warn scripts/ci_oracle.mbtx -- --profile msys2 --context-variant custom --root C:/cygpath-msys2/msys64 --wasm C:/repo/_build/wasm/release/build/cygpath.wasm --native C:/repo/_build/native/release/build/cygpath.exe --moon C:/tools/moon.exe --moonrun C:/tools/moonrun.exe --out C:/evidence/msys2-custom-new
+moon run --deny-warn scripts/ci_oracle.mbtx -- --profile msys2 --context-variant custom --root C:/cygpath-msys2/msys64 --wasm C:/repo/_build/wasm/release/build/cygpath.wasm --moon C:/tools/moon.exe --moonrun C:/tools/moonrun.exe --out C:/evidence/msys2-custom-new
 ```
 
-Default jobs run profile/matrix/P3 suites; custom jobs also run the custom suite. Each suite executes collect/replay with both backends. The wrapper independently verifies exact manifest and fixture identities, complete cases, stream lengths/hashes, collector exit, raw equality, and backend/replay consistency. A scope audit requires exactly four unique observations for each applicable case, rejects duplicate/missing/unmapped references, and records out-of-variant rows explicitly.
+Default jobs run profile/matrix/P3 suites; custom jobs also run the custom suite. The current wrapper requires two observations per applicable case: Wasm collection and replay. It verifies exact manifest/fixture identities, complete cases, stream lengths/hashes, collector exit, raw equality and replay consistency. The scope audit rejects duplicate/missing/unmapped references. The default jobs also compare installation-aware invocations with `CYGPATH_ROOT` set on the project side. The MSYS2 job supplies `--profile=msys2` and compares `/bin`, executable suffixes, reverse conversion, drives, cwd and mode. The four profile/context jobs compare fixed shell folders using their measured mounts.
 
 Supported-domain results pass only through exact stdout/stderr/exit equality. Two separate boundary domains require exact deterministic project rejection:
 
 | Domain | Required evidence and interpretation |
 | --- | --- |
-| Malformed UTF-8 | Retain actual upstream bytes, including instability; verify the project's fixed diagnostic/exit and any earlier successful output across both backends and replay. Pinned upstream source exposes an unchecked failed conversion, so these inputs do not establish defined upstream-output parity. |
+| Malformed UTF-8 for Unix output | Retain upstream bytes and verify the project's diagnostic, exit and preceding output. The Windows-output `ff` file record uses the filesystem conversion API and requires exact equality. |
 | CP29001 | Each Windows job must first pass the direct Win32 probe, including a correct CP1252 control and CP29001 conversion failure with an untouched initialized buffer. The project must emit exactly the unsupported-capability diagnostic, empty stdout, and exit 1. The observed platform is unavailable for this encoding; this is not a universal claim about every Windows installation. |
 
 The Win32 probe's PowerShell/PInvoke code exists only in validation tooling. It is not a product dependency. Probe failure prevents boundary acceptance. Boundaries are counted separately from `supported_exact_comparisons`; raw failures remain in low-level evidence. A process error or timeout cannot be reclassified as a boundary.

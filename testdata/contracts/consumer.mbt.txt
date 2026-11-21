@@ -5,6 +5,8 @@ test "external consumer constructs and uses the public conversion API" {
   assert_eq(context.convert("/usr/bin/tool", from=Posix, to=Windows), "C:\\cygwin\\bin\\tool")
   assert_eq(context.convert("D:\\work", from=Windows, to=Posix), "/cygdrive/d/work")
   assert_eq(context.convert_list("C:\\one;D:\\two", from=Windows, to=Posix), "/cygdrive/c/one:/cygdrive/d/two")
+  assert_eq(context.windows_to_posix_bytes("C:/\uF0FF;;D:/é", list=true), b"/cygdrive/c/\xff:/cygdrive/d/\xc3\xa9")
+  assert_eq(context.convert(b"/usr/bin/\xff", from=Posix, to=Mixed), "C:/cygwin/bin/\uF0FF")
   assert_eq(context.convert("../next", from=Posix, to=Mixed, absolute=true), "C:/cygwin/home/next")
 }
 

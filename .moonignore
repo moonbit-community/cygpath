@@ -1,0 +1,16 @@
+.DS_Store
+_build/
+target/
+.mooncakes/
+.moonagent/
+/docs/
+/scripts/
+/testdata/
+/AGENTS.md
+*_test.mbt
+*_wbtest.mbt
+*_benchmark.mbt
+/.github/
+/.gitattributes
+/.gitignore
+/.moonignore

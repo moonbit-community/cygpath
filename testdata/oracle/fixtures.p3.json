@@ -2858,8 +2858,8 @@
     },
     {
       "case_id": "utf8-invalid-windows-output",
-      "category": "malformed-utf8-boundary",
-      "source_type": "windows",
+      "category": "byte-filename-windows-output",
+      "source_type": "posix",
       "upstream_argv": [
         "-w",
         "-f-"
@@ -2877,11 +2877,7 @@
         "wasm",
         "native"
       ],
-      "directory_preparation": "none-read-only",
-      "validation_domain": "malformed-utf8",
-      "boundary_stdout": "",
-      "boundary_stderr": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 1\n",
-      "boundary_exit": 1
+      "directory_preparation": "none-read-only"
     },
     {
       "case_id": "stdin-buffer-boundary",

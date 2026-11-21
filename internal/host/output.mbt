@@ -16,7 +16,12 @@ pub async fn write_stdout_bytes(bytes : Bytes) -> Unit {
 ///|
 /// Write a diagnostic as UTF-8 without implicit newline conversion.
 pub async fn write_stderr(text : String) -> Unit {
-  @stdio.stderr.write(@utf8.encode(text)) catch {
+  write_stderr_bytes(@utf8.encode(text))
+}
+
+///|
+pub async fn write_stderr_bytes(bytes : Bytes) -> Unit {
+  @stdio.stderr.write(bytes) catch {
     _ => raise WriteError(stream="stderr")
   }
 }
@@ -24,5 +29,5 @@ pub async fn write_stderr(text : String) -> Unit {
 ///|
 /// Terminate with the command's already-classified exit status.
 pub fn exit(code : Int32) -> Unit {
-  @sys.exit(code)
+  @env.exit(code)
 }

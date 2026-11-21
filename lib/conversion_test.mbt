@@ -10,6 +10,66 @@ fn conversion_error(
 }
 
 ///|
+test "fixed proc paths preserve virtual names and distinguish missing entries" {
+  let context = @lib.Context::new(posix_cwd="/proc", mounts=[
+    @lib.Mount::new("/", "C:/root"),
+  ])
+  for
+    entry in [
+      "codesets", "cpuinfo", "devices", "filesystems", "loadavg", "locales", "meminfo",
+      "misc", "partitions", "stat", "swaps", "uptime", "version",
+    ] {
+    let name = "/proc/" + entry
+    assert_eq(context.convert(name, from=Posix, to=Windows), name)
+    assert_eq(context.convert(entry, from=Posix, to=Windows), entry)
+    assert_eq(
+      context.convert(entry, from=Posix, to=Windows, absolute=true),
+      name,
+    )
+  }
+  assert_eq(
+    context.convert("../outside", from=Posix, to=Mixed),
+    "C:/root/outside",
+  )
+  assert_eq(context.convert("net/.", from=Posix, to=Windows), "net\\")
+  assert_eq(context.convert("/proc/net/..", from=Posix, to=Mixed), "/proc/")
+  assert_eq(
+    context.convert("/proc/net/..", from=Posix, to=Windows, absolute=true),
+    "/proc",
+  )
+  let hive = "/proc/registry64/hkey_current_user"
+  assert_eq(context.convert(hive, from=Posix, to=Windows), hive)
+  for name in ["/proc/version/.", "/proc/uptime/", "/proc/stat/../version"] {
+    assert_true(
+      conversion_error(() => context.convert(name, from=Posix, to=Windows))
+      is @lib.NotDirectory,
+    )
+  }
+  for
+    name in [
+      "/proc/VERSION", "/proc/version/child", "/proc/absent/../version", "/proc/net/absent",
+    ] {
+    assert_true(
+      conversion_error(() => context.convert(name, from=Posix, to=Windows))
+      is @lib.PathNotFound,
+    )
+  }
+  for
+    name in [
+      "/proc/123/fd/1",
+      "/proc/self/../version",
+      "/proc/net/if_inet6",
+      "/proc/sysvipc/sem",
+      hive + "/Software",
+    ] {
+    assert_true(
+      conversion_error(() => context.convert(name, from=Posix, to=Windows))
+      is @lib.UnsupportedNamespace(_),
+    )
+  }
+}
+
+///|
 test "documented drive conversion vectors" {
   let context = @lib.Context::new()
   assert_eq(
@@ -75,12 +135,12 @@ test "absolute normalization cannot escape a root and retains trailing separator
   assert_eq(context.convert("/a//./b/../../..", from=Posix, to=Posix), "/")
   assert_eq(
     context.convert("//server/share/a/../../b/", from=Posix, to=Posix),
-    "//server/share/../b/",
+    "//server/b/",
   )
   assert_eq(context.convert("C:\\", from=Windows, to=Windows), "C:\\")
   assert_eq(
     context.convert("//server/share", from=Posix, to=Windows),
-    "\\\\server\\share\\",
+    "\\\\server\\share",
   )
   assert_eq(context.convert("./", from=Posix, to=Windows), ".\\")
   assert_eq(context.convert("../", from=Posix, to=Windows), "..\\")
@@ -121,7 +181,19 @@ test "POSIX root mapping distinguishes structural and optional separators" {
     for
       (target, windows, mixed) in [
         ("C:\\", "C:\\", "C:/"),
-        ("//server/share", "\\\\server\\share\\", "//server/share/"),
+        (
+          "//server/share",
+          if profile == Msys2 {
+            "\\\\server\\share\\"
+          } else {
+            "\\\\server\\share"
+          },
+          if profile == Msys2 {
+            "//server/share/"
+          } else {
+            "//server/share"
+          },
+        ),
       ] {
       let root = @lib.Context::new(profile~, mounts=[
         @lib.Mount::new("/", target),
@@ -257,22 +329,77 @@ test "Windows filename output encodes punctuation and preserves ordinary names" 
 }
 
 ///|
+test "null-backed devices use the observed NT object before CLI alias lookup" {
+  let present = @lib.Context::new(nt_null=true, posix_cwd="/dev")
+  let missing = @lib.Context::new(nt_null=false)
+  for
+    name in [
+      "null", "zero", "full", "random", "urandom", "windows", "mixer", "dsp", "clipboard",
+    ] {
+    let path = "/dev/" + name
+    assert_eq(
+      present.convert(name, from=Posix, to=Windows),
+      "\\\\.\\GLOBALROOT\\Device\\Null",
+    )
+    assert_eq(
+      present.convert(path, from=Posix, to=Mixed),
+      "//./GLOBALROOT/Device/Null",
+    )
+    assert_eq(present.convert(path, from=Posix, to=Posix), path)
+    assert_true(
+      present.mode_candidate(path, from=Posix) is NullDevice(native_input=x) &&
+      x == (name == "null"),
+    )
+    assert_true(
+      conversion_error(() => missing.convert(path, from=Posix, to=Windows))
+      is NoSuchDeviceOrAddress,
+    )
+    assert_true(
+      conversion_error(() => present.convert(path + "/", from=Posix, to=Windows))
+      is NotDirectory,
+    )
+  }
+  assert_true(
+    conversion_error(() => {
+      missing.convert("/dev/null/../x", from=Posix, to=Windows)
+    })
+    is PathNotFound,
+  )
+}
+
+///|
 test "namespace handling is explicit and does not masquerade as disk paths" {
   let context = @lib.Context::new(mounts=[@lib.Mount::new("/", "C:\\root")])
-  for
-    path in ["\\\\?\\GLOBALROOT\\Device\\Harddisk0", "\\\\.\\COM1", "//server"] {
-    assert_true(
-      conversion_error(() => context.convert(path, from=Windows, to=Posix))
-      is @lib.UnsupportedNamespace(_),
-    )
-  }
-  for
-    path in ["/dev/null", "/proc/self", "/proc/cygdrive", "/proc/cygdrive/cc/a"] {
-    assert_true(
-      conversion_error(() => context.convert(path, from=Posix, to=Windows))
-      is @lib.UnsupportedNamespace(_),
-    )
-  }
+  assert_true(
+    conversion_error(() => {
+      context.convert(
+        "\\\\?\\GLOBALROOT\\Device\\Harddisk0",
+        from=Windows,
+        to=Posix,
+      )
+    })
+    is @lib.MissingContext(field="windows_cwd drive"),
+  )
+  assert_eq(context.convert("\\\\.\\COM1", from=Windows, to=Posix), "//./COM1")
+  assert_eq(context.convert("//server", from=Windows, to=Posix), "//server")
+  assert_true(
+    conversion_error(() => context.convert("/proc/self", from=Posix, to=Windows))
+    is @lib.UnsupportedNamespace(_),
+  )
+  assert_true(
+    conversion_error(() => context.convert("/dev/null", from=Posix, to=Windows))
+    is @lib.MissingContext(field="nt_null"),
+  )
+  assert_eq(
+    context.convert("/proc/cygdrive", from=Posix, to=Windows),
+    "C:\\root\\cygdrive",
+  )
+  assert_true(
+    conversion_error(() => {
+      context.convert("/proc/cygdrive/cc/a", from=Posix, to=Windows)
+    })
+    is @lib.InvalidDrivePrefix,
+  )
   assert_eq(
     context.convert("/proc/cygdrive/c/a", from=Posix, to=Windows),
     "C:\\a",
@@ -336,9 +463,9 @@ test "list errors retain the original index and output delimiters follow cygpath
   let context = @lib.Context::new()
   assert_true(
     conversion_error(() => {
-      context.convert_list(";C:\\ok;;\\\\.\\COM1", from=Windows, to=Posix)
+      context.convert_list(";C:\\ok;;\\??\\GLOBALROOT", from=Windows, to=Posix)
     })
-    is @lib.ListEntryError(index=3, @lib.UnsupportedNamespace(_)),
+    is @lib.ListEntryError(index=3, @lib.InvalidWindowsPrefix),
   )
   assert_eq(context.convert("a;b", from=Posix, to=Windows), "a;b")
   assert_eq(context.convert_list("ok:a;b", from=Posix, to=Windows), "ok;a;b")

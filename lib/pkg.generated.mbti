@@ -6,20 +6,28 @@ import {
 }
 
 // Values
+pub let nt_null_path : String
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ConversionError {
   EmptyPath
   PathTooLong(String)
   InvalidDrivePrefix
+  InvalidWindowsPrefix
+  NotDirectory
+  PathNotFound
+  NoSuchDeviceOrAddress
+  TooManyLinks
   InvalidPath(reason~ : String, offset~ : Int32)
   InvalidContext(field~ : String, reason~ : String)
   MissingContext(field~ : String)
+  NetworkServerLookup(String)
   UnsupportedNamespace(String)
   UnrepresentablePath(component~ : String, reason~ : String)
   InvalidOptions(String)
   ListEntryError(index~ : Int32, ConversionError)
-} derive(Eq, @debug.Debug)
+}
 pub fn ConversionError::equal(Self, Self) -> Bool
 pub fn ConversionError::not_equal(Self, Self) -> Bool
 pub fn ConversionError::to_repr(Self) -> @debug.Repr
@@ -28,52 +36,81 @@ pub fn ConversionError::to_repr(Self) -> @debug.Repr
 pub struct Context {
   // private fields
 }
-pub fn Context::convert(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
+pub fn[P : ToPathInput] Context::convert(Self, P, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
 pub fn Context::convert_list(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, recognize_windows? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
-pub fn Context::new(profile? : Profile, drive_prefix? : String, mounts? : Array[Mount], posix_cwd? : String, windows_cwd? : String, drive_cwds? : Map[String, String]) -> Self raise ConversionError
+pub fn[P : ToPathInput] Context::mode_candidate(Self, P, from~ : InputSyntax) -> ModeCandidate raise ConversionError
+pub fn Context::new(profile? : Profile, nt_null? : Bool, drive_prefix? : String, drive_text_mode? : Bool, drive_case? : MountCase, mounts? : Array[Mount], posix_cwd? : String, windows_cwd? : String, drive_cwds? : Map[String, String]) -> Self raise ConversionError
+pub fn[P : ToPathInput] Context::relative_windows_name(Self, P, from~ : InputSyntax) -> String? raise ConversionError
+pub fn Context::resolve_bind_source(Self, String) -> (String, Int32?) raise ConversionError
+pub fn Context::windows_to_posix_bytes(Self, String, absolute? : Bool, unix_prefix? : UnixPrefix, list? : Bool) -> Bytes raise ConversionError
+pub fn Context::with_network_server(Self, String, present~ : Bool) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum InputSyntax {
   Windows
   Posix
-} derive(Eq, @debug.Debug)
+}
 pub fn InputSyntax::equal(Self, Self) -> Bool
 pub fn InputSyntax::not_equal(Self, Self) -> Bool
 pub fn InputSyntax::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
+pub(all) enum ModeCandidate {
+  Filesystem(String, text_mode~ : Bool)
+  Virtual(directory~ : Bool)
+  NetworkDirectory(String?)
+  NullDevice(native_input~ : Bool)
+}
+pub fn ModeCandidate::equal(Self, Self) -> Bool
+pub fn ModeCandidate::not_equal(Self, Self) -> Bool
+pub fn ModeCandidate::to_repr(Self) -> @debug.Repr
+
 pub struct Mount {
+  system : Bool?
   // private fields
 }
-pub fn Mount::new(String, String, case? : MountCase) -> Self raise ConversionError
+pub fn Mount::new(String, String, case? : MountCase, text_mode? : Bool, system? : Bool) -> Self raise ConversionError
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MountCase {
   Sensitive
   AsciiInsensitive
-} derive(Eq, @debug.Debug)
+  WindowsInsensitive
+}
 pub fn MountCase::equal(Self, Self) -> Bool
 pub fn MountCase::not_equal(Self, Self) -> Bool
 pub fn MountCase::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum OutputFormat {
   Windows
   Mixed
   Posix
-} derive(Eq, @debug.Debug)
+}
 pub fn OutputFormat::equal(Self, Self) -> Bool
 pub fn OutputFormat::not_equal(Self, Self) -> Bool
 pub fn OutputFormat::to_repr(Self) -> @debug.Repr
 
+pub(all) enum PathInput {
+  Text(String)
+  Narrow(Bytes)
+}
+pub impl ToPathInput for PathInput
+
+#derive(Eq, @debug.Debug)
 pub(all) enum Profile {
   Cygwin
   Msys2
-} derive(Eq, @debug.Debug)
+}
 pub fn Profile::equal(Self, Self) -> Bool
 pub fn Profile::not_equal(Self, Self) -> Bool
 pub fn Profile::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum UnixPrefix {
   Configured
   ProcCygdrive
-} derive(Eq, @debug.Debug)
+}
 pub fn UnixPrefix::equal(Self, Self) -> Bool
 pub fn UnixPrefix::not_equal(Self, Self) -> Bool
 pub fn UnixPrefix::to_repr(Self) -> @debug.Repr
@@ -81,3 +118,8 @@ pub fn UnixPrefix::to_repr(Self) -> @debug.Repr
 // Type aliases
 
 // Traits
+pub trait ToPathInput {
+  fn to_path_input(Self) -> PathInput
+}
+pub impl ToPathInput for String
+pub impl ToPathInput for Bytes

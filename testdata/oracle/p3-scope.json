@@ -1585,7 +1585,7 @@
     },
     {
       "id": "F-malformed-utf8-boundaries",
-      "requirement": "Malformed first/second records, prefixes/suffixes, truncated sequences, long preceding allocation and Windows output are rejected deterministically by the project.",
+      "requirement": "Reject malformed UTF-8 for Unix output. For Windows output compare the byte-valued filename with the official process.",
       "cases": [
         {
           "suite": "p3",
@@ -1657,7 +1657,7 @@
             "cygwin",
             "msys2"
           ],
-          "validation_domain": "malformed-utf8"
+          "validation_domain": "supported"
         },
         {
           "suite": "p3",
@@ -5278,7 +5278,7 @@
   "input_domain_boundaries": [
     {
       "id": "malformed-utf8",
-      "reason": "Pinned upstream wide_path helper adds one to failed mbstowcs length and subsequently reads uninitialized allocation; malformed UTF-8 has no stable upstream result. Original bytes and actual observations are preserved while strict project rejection is separately verified on both backends and replay.",
+      "reason": "The Unix-output wide_path helper lacks a defined result when mbstowcs rejects the record. Keep those raw observations and verify project rejection independently. Windows output uses the runtime's narrow filename conversion.",
       "source_urls": [
         "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/wide_path.h#L19",
         "https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/utils/wide_path.h#L19"

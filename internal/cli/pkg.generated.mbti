@@ -23,11 +23,16 @@ pub(all) suberror CliError {
   Usage
   IgnoredUsage
   InvalidRecord
-  PathNotFound(String)
+  InvalidFileEncoding(source~ : String, line~ : Int32)
+  InvalidFolderId(String)
+  UnrepresentableName(Int32)
+  ShortNameFailure(String)
+  PathErrno(String, String)
   ListConversion(String, @lib.ConversionError)
   Conversion(@lib.ConversionError)
 }
 pub fn CliError::diagnostic(Self) -> String
+pub fn CliError::diagnostic_bytes(Self) -> Bytes
 pub fn CliError::exit_code(Self) -> Int32
 
 // Types and methods
@@ -39,20 +44,29 @@ pub(all) enum Command {
 }
 
 pub struct Converter {
+  context : @lib.Context
+  server_lookup : (async (String) -> Bool)?
   // private fields
 }
 pub fn Converter::codepage(Self) -> Int32
 pub fn Converter::convert(Self, String) -> String raise CliError
-pub fn Converter::convert_file_record(Self, String) -> RecordAction raise CliError
-pub fn Converter::convert_operand(Self, String) -> RecordAction raise CliError
+pub async fn Converter::convert_file_bytes(Self, Bytes, source~ : String, line~ : Int32) -> RecordAction
+pub async fn Converter::convert_file_record(Self, String) -> RecordAction
+pub async fn Converter::convert_operand(Self, String) -> RecordAction
+pub async fn Converter::encode_output(Self, String, expand? : async (String) -> String, shorten? : async (String) -> String?) -> Bytes
+pub async fn Converter::folder_output(Self, SystemFolder, async (String) -> String?) -> Bytes?
 
 pub(all) enum InputSource {
   Names(Array[String])
   File(String)
+  Folder(SystemFolder)
 }
 
 pub(all) enum RecordAction {
   Output(String)
+  OutputBytes(Bytes)
+  QueryMode(String)
+  QueryFolder(SystemFolder)
   Skip
   Stop(String)
 }
@@ -62,8 +76,17 @@ pub struct Request {
 }
 pub fn Request::ignore_missing(Self) -> Bool
 pub fn Request::input(Self) -> InputSource
+pub fn Request::installation_profile(Self) -> @lib.Profile?
+pub fn Request::needs_device_probe(Self) -> Bool
 pub fn Request::per_line_options(Self) -> Bool
-pub fn Request::prepare(Self) -> Converter raise CliError
+pub fn Request::prepare(Self, installation? : @lib.Context, nt_null? : Bool, server_lookup? : async (String) -> Bool, lookup? : async (@lib.Context, String, @lib.InputSyntax, Bool) -> Result[String, String]) -> Converter raise CliError
+
+pub(all) enum SystemFolder {
+  WindowsRoot
+  SystemDirectory
+  FixedShellDirectory(String)
+  VirtualFolder
+}
 
 // Type aliases
 

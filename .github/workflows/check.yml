@@ -26,8 +26,6 @@ jobs:
         run: moon check --target all --deny-warn
       - name: Test Wasm
         run: moon test --target wasm --deny-warn
-      - name: Test Native
-        run: moon test --target native --deny-warn
       - name: Test oracle collector mechanics
         run: moon run --deny-warn scripts/oracle.mbtx self-test
       - name: Test Windows oracle gate mechanics
@@ -37,7 +35,7 @@ jobs:
       - name: Check formatting
         run: moon fmt --check
       - name: Check script formatting
-        run: moon fmt --check scripts/check_cli.mbtx scripts/check_consumer.mbtx scripts/generate_codepages.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx scripts/probe_windows_codepages.mbtx
+        run: moon fmt --check scripts/check_cli.mbtx scripts/check_consumer.mbtx scripts/generate_codepages.mbtx scripts/generate_mount_case.mbtx scripts/oracle.mbtx scripts/ci_oracle.mbtx scripts/probe_windows_codepages.mbtx
       - name: Check public interfaces
         run: moon info --target all
       - name: Reject interface drift
@@ -46,13 +44,10 @@ jobs:
         run: moon run --deny-warn scripts/check_consumer.mbtx _build/consumer-evidence
       - name: Build Wasm executable
         run: moon build --target wasm --release
-      - name: Build Native executable
-        run: moon build --target native --release
       - name: Compare executable contracts
         run: >-
           moon run --deny-warn scripts/check_cli.mbtx
           --wasm "${{ github.workspace }}/_build/wasm/release/build/cygpath.wasm"
-          --native "${{ github.workspace }}/_build/native/release/build/cygpath.exe"
           --out "${{ github.workspace }}/_build/cli-evidence"
       - name: Inspect package contents
         run: moon package --list

@@ -9,6 +9,10 @@ and [Windows oracle run 36385821354](https://github.com/moonbit-community/cygpat
 All three contract jobs and all four official comparison jobs succeeded.
 This completes P3 for the frozen explicit-context portable matrix.
 
+The current Wasm gate compares `utf8-invalid-windows-output` for exact equality.
+The four archived official processes each wrote `ef 83 bf 0a` and exited zero.
+The September counts below retain their original classification.
+
 [`p3-evidence.json`](../testdata/oracle/p3-evidence.json) is the retained summary.
 It was generated only after checking every job conclusion, clean project SHA,
 complete coverage audit, accepted raw-comparison summary, API probe, and the
@@ -154,7 +158,7 @@ archives when investigating a specific case.
 The code is a validated candidate for the documented portable subset. It does
 not resolve filesystem entities, provide 8.3 names or system-directory lookup,
 discover ANSI/OEM settings, or implement non-ASCII Windows mount folding.
-Stateful encodings and GB18030 remain unimplemented algorithmic extensions.
+The recorded revision predates the GB18030-2000 encoder. Stateful encodings remain outside this evidence.
 See [scope](01-upstream-and-scope.md) for the complete exclusions.
 
 Mooncakes publication remains with the maintainer. No publication, account

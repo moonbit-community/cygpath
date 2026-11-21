@@ -4,9 +4,13 @@ This handbook describes the implemented contracts, package boundaries, upstream
 references, validation evidence, and remaining delivery work. Its baseline is
 2026-09-28. The reusable library and root executable are implemented; P3 is
 complete for the explicit-context portable matrix frozen in
-[`p3-scope.json`](../testdata/oracle/p3-scope.json).
+[September scope](https://github.com/moonbit-community/cygpath/blob/b32dd7448658bc251b216ba93a5c120ef54fdbc9/testdata/oracle/p3-scope.json).
 
 ## Verified status
+
+The current executable target is `moonx` linear-memory Wasm. The following table
+is historical, not certification of the refactor or its installation-aware path.
+Current local acceptance commands are in [chapter 08](08-development-and-release.md).
 
 Code revision **`b32dd7448658bc251b216ba93a5c120ef54fdbc9`** passed
 [Check](https://github.com/moonbit-community/cygpath/actions/runs/36385821361)

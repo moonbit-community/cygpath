@@ -6,13 +6,11 @@ test "ordinary extended namespaces retain ordinary drive and UNC semantics" {
     assert_eq(context.convert(path, from=Windows, to=Windows), "C:\\name")
   }
   for
-    path in [
-      "\\\\?\\UNC\\server\\share\\name", "\\??\\UNC\\server\\share\\name",
+    (path, posix) in [
+      ("\\\\?\\UNC\\server\\share\\name", "//server/share/name"),
+      ("\\??\\UNC\\server\\share\\name", "/??/UNC/server/share/name"),
     ] {
-    assert_eq(
-      context.convert(path, from=Windows, to=Posix),
-      "//server/share/name",
-    )
+    assert_eq(context.convert(path, from=Windows, to=Posix), posix)
     assert_eq(
       context.convert(path, from=Windows, to=Mixed),
       "//server/share/name",
@@ -45,6 +43,64 @@ test "unmatched Windows UNC spelling preserves traversal and terminal separators
     mounted.convert("//server/share/a/../b", from=Windows, to=Posix),
     "/net/b",
   )
+  for
+    name in [
+      "//server/else/../share/b", "//other/../server//share/b", "\\\\?\\UNC\\server\\share\\b",
+      "\\??\\UNC\\server\\share\\b",
+    ] {
+    assert_eq(mounted.convert(name, from=Windows, to=Posix), "/net/b")
+  }
+  for
+    (name, expected) in [
+      ("//server/share/.", "/net"),
+      ("//server/share/a/b/..", "/net/a/"),
+      ("//server/share/a/../", "/net/"),
+      ("//server/other/../miss", "//server/other/../miss"),
+    ] {
+    assert_eq(mounted.convert(name, from=Windows, to=Posix), expected)
+  }
+  assert_eq(
+    mounted.convert_list(
+      "\\\\?\\UNC\\server\\miss;\\\\?\\UNC\\server\\share\\ok",
+      from=Windows,
+      to=Posix,
+    ),
+    "//?/UNC/server/miss:/net/ok",
+  )
+  let cwd = @lib.Context::new(windows_cwd="//server/old/base", mounts=[
+    @lib.Mount::new("/net", "//server/share"),
+  ])
+  assert_eq(
+    cwd.convert("../../share/ok", from=Windows, to=Posix, absolute=true),
+    "/net/ok",
+  )
+  assert_eq(
+    cwd.convert("../../miss/ok", from=Windows, to=Posix, absolute=true),
+    "../../miss/ok",
+  )
+}
+
+///|
+test "Windows lookup distinguishes terminal dot normalization from explicit separators" {
+  let context = @lib.Context::new(windows_cwd="D:/work", mounts=[
+    @lib.Mount::new("/", "C:/root"),
+  ])
+  for
+    (name, output) in [
+      ("C:/root/", "//"),
+      ("C:/root/.", "/"),
+      ("C:/root/d/.", "/d/"),
+      ("D:/work/x/..", "/cygdrive/d/work/"),
+      ("D:/x/..", "/cygdrive/d"),
+      ("///x", "///x"),
+      ("\\\\\\x", "/cygdrive/d/x"),
+    ] {
+    assert_eq(context.convert(name, from=Windows, to=Posix), output)
+  }
+  let msys = @lib.Context::new(profile=Msys2, mounts=[
+    @lib.Mount::new("/", "C:/root"),
+  ])
+  assert_eq(msys.convert("C:/root/", from=Windows, to=Posix), "/")
 }
 
 ///|
@@ -87,6 +143,118 @@ test "filename private-use encoding is reversible without changing Unicode names
     context.convert("C:/parent/\uF02E\uF02E/file", from=Windows, to=Posix),
     "/cygdrive/c/file",
   )
+}
+
+///|
+test "Windows filename bytes survive mount matching, fallback and list conversion" {
+  let context = @lib.Context::new(mounts=[
+    @lib.Mount::new("/\uF0FF", "D:/é", case=WindowsInsensitive),
+  ])
+  assert_eq(
+    context.windows_to_posix_bytes("D:/\uF0C3\uF089/\uF0FF"),
+    b"/\xef\x83\xbf/\xff",
+  )
+  assert_eq(
+    context.convert("D:/\uF0C3\uF0A9", from=Windows, to=Posix),
+    "/\uF0FF",
+  )
+  assert_eq(
+    context.windows_to_posix_bytes(
+      ";\uF080;;//server/x/\uF0FE;D:/é;",
+      list=true,
+    ),
+    b"\x80://server/x/\xfe:/\xef\x83\xbf",
+  )
+  assert_eq(
+    context.convert("C:/\uF0FF/../x", from=Windows, to=Posix),
+    "/cygdrive/c/x",
+  )
+  assert_eq(
+    context.windows_to_posix_bytes(
+      "\uF0EF\uF083\uF0BF\uF0C0\uF080\uF0ED\uF0A0\uF080\uF0F0\uF09F\uF098\uF080",
+    ),
+    b"\xef\x83\xbf\xc0\x80\xed\xa0\x80\xf0\x9f\x98\x80",
+  )
+  try context.convert_list("ok;;\uF0FF", from=Windows, to=Posix) catch {
+    @lib.ListEntryError(
+      index=2,
+      @lib.UnrepresentablePath(component="\uF0FF", ..),
+    ) => ()
+    error => raise error
+  } noraise {
+    _ => fail("invalid UTF-8 returned as text")
+  }
+}
+
+///|
+test "CESU-8 pairs retain narrow mount boundaries and render as a single scalar" {
+  let context = @lib.Context::new(mounts=[
+    @lib.Mount::new("/", "C:/root"),
+    @lib.Mount::new("/😀", "D:/canonical", case=WindowsInsensitive),
+    @lib.Mount::new("/ⱯⱯ/😀", "E:/balanced", case=WindowsInsensitive),
+  ])
+  let pair = b"\xed\xa0\xbd\xed\xb8\x80"
+  assert_eq(context.convert(b"/" + pair, from=Posix, to=Mixed), "C:/root/😀")
+  assert_eq(context.convert("/😀", from=Posix, to=Mixed), "D:/canonical")
+  assert_eq(
+    context.convert(b"/\xc9\x90\xc9\x90/" + pair, from=Posix, to=Mixed),
+    "E:/balanced",
+  )
+  assert_eq(
+    context.convert(b"D:/name" + pair, from=Windows, to=Posix),
+    "/cygdrive/d/name😀",
+  )
+  // Six actual byte escapes in a Windows filename still reach stdout unchanged.
+  assert_eq(
+    context.windows_to_posix_bytes("\uF0ED\uF0A0\uF0BD\uF0ED\uF0B8\uF080"),
+    pair,
+  )
+  for isolated in [b"\xed\xa0\xbd", b"\xed\xb8\x80", pair + b"\xed\xb0\x80"] {
+    try context.convert(isolated, from=Posix, to=Mixed) catch {
+      @lib.UnrepresentablePath(..) => ()
+      err => raise err
+    } noraise {
+      _ => fail("isolated surrogate accepted")
+    }
+  }
+}
+
+///|
+test "narrow Windows-output filenames count native units and preserve byte identity in mounts" {
+  let context = @lib.Context::new(windows_cwd="C:/work", mounts=[
+    @lib.Mount::new("/", "C:/work"),
+    @lib.Mount::new("/\uF0FF", "D:/literal", case=WindowsInsensitive),
+  ])
+  assert_eq(context.convert(b"/\xff", from=Posix, to=Mixed), "C:/work/\uF0FF")
+  assert_eq(
+    context.convert(b"/\xef\x83\xbf", from=Posix, to=Mixed),
+    "D:/literal",
+  )
+  assert_eq(context.relative_windows_name(b"/\xff", from=Posix), Some("\uF0FF"))
+  assert_true(
+    context.mode_candidate(b"/\xff", from=Posix)
+    is Filesystem("C:\\work\\\uF0FF", ..),
+  )
+  assert_eq(
+    context.convert(Bytes::make(255, b'\xff'), from=Posix, to=Windows),
+    "\uF0FF".repeat(255),
+  )
+  try context.convert(Bytes::make(256, b'\xff'), from=Posix, to=Windows) catch {
+    @lib.PathTooLong(_) => ()
+    e => raise e
+  } noraise {
+    _ => fail("overlong native component")
+  }
+  assert_eq(
+    context.convert(b"\xf0\x9f\x98x", from=Posix, to=Mixed),
+    "\uF0F0\uF09F\uF098x",
+  )
+  try context.convert(b"a\x00b", from=Posix, to=Mixed) catch {
+    @lib.InvalidPath(offset=1, ..) => ()
+    e => raise e
+  } noraise {
+    _ => fail("embedded NUL")
+  }
 }
 
 ///|

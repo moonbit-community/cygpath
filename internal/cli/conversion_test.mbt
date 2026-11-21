@@ -104,10 +104,10 @@ test "lists have one input syntax and fail atomically" {
     request(["-pw", "--root=C:/cyg", "C:/a"]).prepare().convert("C:/a"),
     "C;C:\\cyg\\a",
   )
-  try windows.convert("C:/good;\\\\.\\COM1") catch {
+  try windows.convert("C:/good;\\??\\GLOBALROOT") catch {
     error => {
-      assert_eq(error.exit_code(), 2)
-      assert_true(error.diagnostic().contains("list-entry: index 1:"))
+      assert_eq(error.exit_code(), 1)
+      assert_true(error.diagnostic().contains("Unknown error -1"))
     }
   } noraise {
     _ => fail("expected atomic list failure")
@@ -129,24 +129,70 @@ test "operand line breaks are preserved while diagnostics escape control text" {
 }
 
 ///|
-test "POSIX output uses the same long-component rules for arguments and records" {
-  let converter = request(["-u", "-f", "-"]).prepare()
+async test "POSIX output uses the same long-component rules for arguments and records" {
+  let converter = request(["-u", "--windows-cwd=D:/work", "-f", "-"]).prepare()
   let chunk = "C:\\" + "a".repeat(8189)
   let expected = "/cygdrive/c/" + "a".repeat(8189)
   assert_eq(converter.convert(chunk), expected)
   match converter.convert_file_record(chunk) {
-    Output(value) => assert_eq(value, expected)
+    OutputBytes(value) => assert_eq(value, @utf8.encode(expected))
     _ => fail("expected a complete converted buffer chunk")
   }
   let remainder = "a".repeat(311) + "\\tail"
   match converter.convert_file_record(remainder) {
-    Output(value) => assert_eq(value, "a".repeat(311) + "/tail")
+    OutputBytes(value) =>
+      assert_eq(value, @utf8.encode("/cygdrive/d/" + "a".repeat(308) + "/tail"))
     _ => fail("expected the remaining chunk to be converted independently")
   }
 }
 
 ///|
-test "Windows length failures quote the original operand without escaping it" {
+async test "Unix file conversion measures CESU-8 pairs in UTF-16 units" {
+  let converter = request(["-u", "--windows-cwd=D:/work", "-f-"]).prepare()
+  let encoded = b"\xed\xa0\xbd\xed\xb8\x80"
+  let tail = Bytes::makei(127 * 6, i => encoded[i % 6])
+  let short = b"abc" + tail + b"x"
+  let text = "😀".repeat(127)
+  for
+    (record, expected) in [
+      (short, "abc" + text + "x"),
+      (short + b"y", "/cygdrive/d/" + text + "xy"),
+    ] {
+    guard converter.convert_file_bytes(record, source="stdin", line=1)
+      is OutputBytes(bytes) else {
+      fail("expected filename bytes")
+    }
+    assert_eq(bytes, @utf8.encode(expected))
+  }
+}
+
+///|
+test "the wide argument prefix uses UTF-16 length for single POSIX output only" {
+  let single = request(["-u", "--windows-cwd=D:/work", "name"]).prepare()
+  let list = request(["-pu", "--windows-cwd=D:/work", "name"]).prepare()
+  let tail = "😀".repeat(127)
+  let short = "abc" + tail + "x"
+  let long = short + "y"
+  assert_eq(short.length(), 258)
+  assert_eq(single.convert(short), short)
+  assert_eq(single.convert(long), "/cygdrive/d/" + tail + "xy")
+  assert_eq(list.convert(long + ";C:/file"), long + ":/cygdrive/c/file")
+  assert_eq(
+    single.convert("//server/share/" + tail),
+    "/cygdrive/d/erver/share/" + tail,
+  )
+  assert_eq(
+    single.convert("\\\\server\\share\\" + tail),
+    "//server/share/" + tail,
+  )
+  assert_eq(
+    single.convert("\\\\?\\GLOBALROOT\\Device\\Null"),
+    "/cygdrive/d/BALROOT/Device/Null",
+  )
+}
+
+///|
+async test "Windows length failures quote the original operand without escaping it" {
   let converter = request(["-w", "-f", "-"]).prepare()
   let path = "C:\\" + "a".repeat(256)
   try converter.convert(path) catch {
@@ -161,7 +207,8 @@ test "Windows length failures quote the original operand without escaping it" {
     _ => fail("expected the Windows output length failure")
   }
   try converter.convert_file_record(path) catch {
-    error => assert_eq(error.exit_code(), 1)
+    @cli.CliError::_ as error => assert_eq(error.exit_code(), 1)
+    err => raise err
   } noraise {
     _ => fail("file records must retain Windows component-length validation")
   }
@@ -175,7 +222,7 @@ test "a malformed configured drive path preserves the official operand diagnosti
   let path = "/p3-drives/cat/file"
   try converter.convert(path) catch {
     error => {
-      assert_true(error is @cli.PathNotFound(_))
+      assert_true(error is @cli.PathErrno(_, "No such file or directory"))
       assert_eq(error.exit_code(), 1)
       assert_eq(
         error.diagnostic(),
@@ -197,7 +244,7 @@ test "list length failure reports the whole original operand atomically" {
         error
         is @cli.ListConversion(
           _,
-          @lib.ListEntryError(index=1, @lib.PathTooLong(_))
+          @lib.ListEntryError(index=1, @lib.PathTooLong(_)),
         ),
       )
       assert_eq(error.exit_code(), 1)
@@ -221,7 +268,7 @@ test "list drive-prefix failure preserves its typed cause and wrapper diagnostic
         error
         is @cli.ListConversion(
           _,
-          @lib.ListEntryError(index=1, @lib.InvalidDrivePrefix)
+          @lib.ListEntryError(index=1, @lib.InvalidDrivePrefix),
         ),
       )
       assert_eq(error.exit_code(), 1)

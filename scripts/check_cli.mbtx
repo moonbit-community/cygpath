@@ -1,18 +1,19 @@
 ----
 import {
-  "moonbitlang/async@0.22.4",
-  "moonbitlang/async@0.22.4/fs",
-  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/async@0.22.10",
+  "moonbitlang/async@0.22.10/fs",
+  "moonbitlang/async@0.22.10/process",
   "moonbitlang/core/env",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/encoding/hex",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "moonbitlang/x@0.5.5/crypto",
+  "moonbitlang/x@0.5.8/crypto",
 }
 ----
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Fixture {
   case_id : String
   category : String
@@ -21,24 +22,44 @@ struct Fixture {
   stdin_hex : String?
   file_text : String?
   file_hex : String?
+  file_as_exe : Bool?
   stdout_text : String?
+  stdout_hex : String?
   stdout_file : String?
   stdout_closed : Bool?
   stderr_text : String?
+  stderr_hex : String?
   stderr_file : String?
   exit_code : Int32
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+enum ExpectedError {
+  Template(String)
+  Raw(Bytes)
+}
+
+///|
+fn Fixture::input_filename(self : Fixture) -> String {
+  if self.file_as_exe.unwrap_or(false) {
+    "missing.bin.exe"
+  } else {
+    "input.bin"
+  }
+}
+
+///|
+#derive(@json.FromJson, ToJson)
 struct Suite {
   schema_version : Int32
   validation_kind : String
   source : Array[String]
   profile : String
   cases : Array[Fixture]
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(ToJson)
 struct Observation {
   case_id : String
   backend : String
@@ -64,7 +85,7 @@ struct Observation {
   stderr_path : String
   stderr_length : Int32
   stderr_sha256 : String
-} derive(ToJson)
+}
 
 ///|
 fn digest(data : Bytes) -> String {
@@ -183,12 +204,13 @@ async fn record(
   output : String,
   deadline : Int32,
   expected_stdout : Bytes,
-  expected_stderr_text : String,
+  stderr_oracle : ExpectedError,
 ) -> Observation {
   let base = fixture.case_id + "/" + backend
   let directory = output + "/" + base
   @fs.mkdir(directory)
-  let input = output + "/" + fixture.case_id + "/input.bin"
+  let input_path = fixture.case_id + "/" + fixture.input_filename()
+  let input = output + "/" + input_path
   let missing = output + "/" + fixture.case_id + "/missing.bin"
   let args = leading + fixture.argv.map(arg => replace(arg, input, missing))
   let stdout_path = base + "/stdout.bin"
@@ -197,12 +219,9 @@ async fn record(
   let stdin_bytes = @fs.read_file(output + "/" + stdin_path).binary()
   let input_bytes = @fs.read_file(input).binary()
   let extra_env = {
+    "CYGPATH_ROOT": "",
     "HOME": directory + "/unrelated-home",
-    "MSYSTEM": if backend == "wasm" {
-      "CLANG64"
-    } else {
-      "MINGW64"
-    },
+    "MSYSTEM": "CLANG64",
     "LC_ALL": "C",
   }
   let start_unix_ms = @env.now()
@@ -261,9 +280,10 @@ async fn record(
   }
   let stdout = @fs.read_file(output + "/" + stdout_path).binary()
   let stderr = @fs.read_file(output + "/" + stderr_path).binary()
-  let expected_stderr = @utf8.encode(
-    replace(expected_stderr_text, input, missing),
-  )
+  let expected_stderr = match stderr_oracle {
+    Template(text) => @utf8.encode(replace(text, input, missing))
+    Raw(bytes) => bytes
+  }
   @fs.write_file(
     directory + "/expected.stdout.bin",
     expected_stdout,
@@ -301,7 +321,7 @@ async fn record(
     stdin_path,
     stdin_length: stdin_bytes.length(),
     stdin_sha256: digest(stdin_bytes),
-    input_path: fixture.case_id + "/input.bin",
+    input_path,
     input_length: input_bytes.length(),
     input_sha256: digest(input_bytes),
     stdout_path,
@@ -324,9 +344,7 @@ async fn save_summary(
   output : String,
   suite : Suite,
   observations : Array[Observation],
-  comparisons : Array[Json],
   counts : Map[String, Int32],
-  backend_nonpass : Int32,
   complete : Bool,
 ) -> Unit {
   let seen : Map[String, Bool] = Map([])
@@ -335,24 +353,20 @@ async fn save_summary(
   }
   let unexecuted : Array[String] = []
   for fixture in suite.cases {
-    for backend in ["wasm", "native"] {
-      let id = fixture.case_id + "/" + backend
-      if !seen.contains(id) {
-        unexecuted.push(id)
-      }
+    let id = fixture.case_id + "/wasm"
+    if !seen.contains(id) {
+      unexecuted.push(id)
     }
   }
   let summary : Json = {
-    "schema_version": 1,
+    "schema_version": 2,
     "complete": Json(complete),
-    "planned": Json(suite.cases.length() * 2),
+    "planned": Json(suite.cases.length()),
     "executed": Json(observations.length()),
     "counts": Json(counts),
     "unexecuted": Json(unexecuted),
     "official_comparison": "not performed",
     "observations": Json(observations),
-    "backend_comparisons": Json(comparisons),
-    "backend_nonpass": Json(backend_nonpass),
     "manifest_sha256": digest(@fs.read_file(output + "/manifest.json").binary()),
   }
   // This is a progress checkpoint owned by this new run, never an oracle.
@@ -365,9 +379,9 @@ async fn main {
   let options : Map[String, String] = Map([])
   for i = 1; i < argv.length(); {
     let key = argv[i]
-    guard [
-      "--wasm", "--native", "--out", "--moonrun", "--fixtures", "--deadline-ms",
-    ].contains(key) else {
+    guard ["--wasm", "--out", "--moonrun", "--fixtures", "--deadline-ms"].contains(
+      key,
+    ) else {
       fail("unknown collector option: " + key)
     }
     guard i + 1 < argv.length() else { fail("missing value for " + key) }
@@ -378,11 +392,10 @@ async fn main {
     continue i + 2
   }
   let wasm = options.get("--wasm").unwrap_or("")
-  let native = options.get("--native").unwrap_or("")
   let output = options.get("--out").unwrap_or("")
-  guard wasm != "" && native != "" && output != "" else {
+  guard wasm != "" && output != "" else {
     fail(
-      "usage: moon run scripts/check_cli.mbtx --wasm <absolute artifact> --native <absolute artifact> --out <new absolute directory> [--moonrun <program>] [--fixtures <JSON>] [--deadline-ms 10000]",
+      "usage: moon run scripts/check_cli.mbtx --wasm <absolute artifact> --out <new absolute directory> [--moonrun <program>] [--fixtures <JSON>] [--deadline-ms 10000]",
     )
   }
   let deadline = @string.parse_int(
@@ -401,7 +414,7 @@ async fn main {
   guard suite.cases.length() > 0 else { fail("empty fixture suite") }
   let ids : Map[String, Bool] = Map([])
   let expected_outputs : Map[String, Bytes] = Map([])
-  let expected_errors : Map[String, String] = Map([])
+  let expected_errors : Map[String, ExpectedError] = Map([])
   for fixture in suite.cases {
     guard fixture.case_id != "" &&
       fixture.case_id
@@ -415,24 +428,28 @@ async fn main {
     ids[fixture.case_id] = true
     let _ = payload(fixture.stdin_text, fixture.stdin_hex)
     let _ = payload(fixture.file_text, fixture.file_hex)
-    guard (fixture.stdout_text is Some(_)) != (fixture.stdout_file is Some(_)) else {
-      fail("fixture requires exactly one stdout oracle")
+    expected_outputs[fixture.case_id] = match
+      (fixture.stdout_text, fixture.stdout_hex, fixture.stdout_file) {
+      (Some(text), None, None) => @utf8.encode(text)
+      (None, Some(hex), None) => @hex.decode(hex)
+      (None, None, Some(path)) => @fs.read_file(path).binary()
+      _ => fail("fixture requires exactly one stdout oracle")
     }
-    expected_outputs[fixture.case_id] = match fixture.stdout_text {
-      Some(text) => @utf8.encode(text)
-      None => @fs.read_file(fixture.stdout_file.unwrap()).binary()
-    }
-    guard (fixture.stderr_text is Some(_)) != (fixture.stderr_file is Some(_)) else {
-      fail("fixture requires exactly one stderr oracle")
-    }
-    expected_errors[fixture.case_id] = match fixture.stderr_text {
-      Some(text) => text
-      None => @utf8.decode(@fs.read_file(fixture.stderr_file.unwrap()).binary())
+    expected_errors[fixture.case_id] = match
+      (fixture.stderr_text, fixture.stderr_hex, fixture.stderr_file) {
+      (Some(text), None, None) => Template(text)
+      (None, Some(hex), None) => Raw(@hex.decode(hex))
+      (None, None, Some(path)) => {
+        let bytes = @fs.read_file(path).binary()
+        Template(@utf8.decode(bytes)) catch {
+          _ => Raw(bytes)
+        }
+      }
+      _ => fail("fixture requires exactly one stderr oracle")
     }
   }
   // Realpath requires existing artifacts and avoids cwd-dependent execution.
   let wasm = @fs.realpath(wasm)
-  let native = @fs.realpath(native)
   guard !@fs.exists(output) else { fail("output directory already exists") }
   @fs.mkdir(output)
   let output = @fs.realpath(output)
@@ -508,7 +525,7 @@ async fn main {
     status_code == Some(0) &&
     head_state != "unresolved"
   let manifest : Json = {
-    "schema_version": 1,
+    "schema_version": 2,
     "validation_kind": "portable-contract",
     "platform": match @async.platform {
       Linux => "linux"
@@ -518,10 +535,6 @@ async fn main {
     "start_unix_ms": Json(@env.now()),
     "fixture_sha256": digest(fixture_data),
     "wasm": { "path": wasm, "sha256": digest(@fs.read_file(wasm).binary()) },
-    "native": {
-      "path": native,
-      "sha256": digest(@fs.read_file(native).binary()),
-    },
     "deadline_ms": Json(deadline),
     "metadata_complete": Json(metadata_complete),
     "toolchain": { "moon": moon_metadata, "moonrun": moonrun_metadata },
@@ -537,7 +550,7 @@ async fn main {
       },
       "git_probes": Json(git_probes),
     },
-    "environment_policy": "inherit environment; override HOME, MSYSTEM, LC_ALL as recorded per process; distinct cwd per backend",
+    "environment_policy": "offline conversion; clear CYGPATH_ROOT; override HOME, MSYSTEM, LC_ALL as recorded per process",
     "comparison": "exact bytes and integer exit code; no trimming or diagnostic normalization",
   }
   @fs.write_file(
@@ -546,7 +559,6 @@ async fn main {
     create_mode=CreateNew,
   )
   let observations : Array[Observation] = []
-  let backend_comparisons : Array[Json] = []
   let counts : Map[String, Int32] = {
     "pass": 0,
     "fail": 0,
@@ -554,10 +566,7 @@ async fn main {
     "timeout": 0,
     "skip": 0,
   }
-  let mut backend_failures = 0
-  save_summary(
-    output, suite, observations, backend_comparisons, counts, backend_failures, false,
-  )
+  save_summary(output, suite, observations, counts, false)
   guard metadata_complete else {
     fail(
       "provenance metadata collection failed; inspect metadata bytes and manifest.json",
@@ -572,7 +581,7 @@ async fn main {
       create_mode=CreateNew,
     )
     @fs.write_file(
-      directory + "/input.bin",
+      directory + "/" + fixture.input_filename(),
       payload(fixture.file_text, fixture.file_hex),
       create_mode=CreateNew,
     )
@@ -588,58 +597,14 @@ async fn main {
       expected_stdout,
       expected_stderr,
     )
-    let native_result = record(
-      fixture,
-      "native",
-      native,
-      [],
-      output,
-      deadline,
-      expected_stdout,
-      expected_stderr,
-    )
-    for observation in [wasm_result, native_result] {
-      observations.push(observation)
-      counts[observation.status] = counts[observation.status] + 1
-      println(
-        "\{observation.case_id} \{observation.backend}: \{observation.status}",
-      )
-    }
-    let completed = (
-        wasm_result.status == "pass" || wasm_result.status == "fail"
-      ) &&
-      (native_result.status == "pass" || native_result.status == "fail")
-    let same = completed &&
-      wasm_result.exit_code == native_result.exit_code &&
-      @fs.read_file(output + "/" + wasm_result.stdout_path).binary() ==
-      @fs.read_file(output + "/" + native_result.stdout_path).binary() &&
-      @fs.read_file(output + "/" + wasm_result.stderr_path).binary() ==
-      @fs.read_file(output + "/" + native_result.stderr_path).binary()
-    if !same {
-      backend_failures += 1
-    }
-    backend_comparisons.push({
-      "case_id": fixture.case_id,
-      "status": if !completed {
-        "error"
-      } else if same {
-        "pass"
-      } else {
-        "fail"
-      },
-      "wasm": @json.to_json(wasm_result),
-      "native": @json.to_json(native_result),
-    })
-    save_summary(
-      output, suite, observations, backend_comparisons, counts, backend_failures,
-      false,
-    )
+    observations.push(wasm_result)
+    counts[wasm_result.status] = counts[wasm_result.status] + 1
+    println("\{fixture.case_id} wasm: \{wasm_result.status}")
+    save_summary(output, suite, observations, counts, false)
   }
-  save_summary(
-    output, suite, observations, backend_comparisons, counts, backend_failures, true,
-  )
+  save_summary(output, suite, observations, counts, true)
   println("Evidence: " + output + "/summary.json")
-  guard counts["pass"] == suite.cases.length() * 2 && backend_failures == 0 else {
+  guard counts["pass"] == suite.cases.length() else {
     fail("CLI acceptance failed; inspect raw evidence and summary.json")
   }
 }

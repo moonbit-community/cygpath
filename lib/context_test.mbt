@@ -10,6 +10,33 @@ fn context_error(
 }
 
 ///|
+test "bind mapping selects the source mount before native normalization" {
+  let context = @lib.Context::new(mounts=[
+    @lib.Mount::new("/", "C:/"),
+    @lib.Mount::new("/src", "D:/nested/tree"),
+  ])
+  assert_eq(
+    context.resolve_bind_source("/src/../out"),
+    ("D:\\nested\\out", Some(1)),
+  )
+  assert_eq(
+    context.resolve_bind_source("//server/share"),
+    ("\\\\server\\share", None),
+  )
+  assert_eq(context.resolve_bind_source("/cygdrive/z"), ("Z:\\", None))
+  let at_limit = "/" + "é".repeat(128)
+  assert_eq(context.resolve_bind_source(at_limit).0, "C:\\" + "é".repeat(128))
+  assert_true(
+    context_error(() => ignore(context.resolve_bind_source(at_limit + "x")))
+    is PathTooLong(_),
+  )
+  assert_true(
+    context_error(() => ignore(context.resolve_bind_source("relative")))
+    is InvalidOptions(_),
+  )
+}
+
+///|
 test "root mappings require explicit aliases and mounts override cygdrive fallback" {
   let root = @lib.Mount::new("/", "C:\\cygwin64")
   let context = @lib.Context::new(mounts=[root])
@@ -95,7 +122,16 @@ test "reverse aliases retain declaration order while longer targets still win" {
 }
 
 ///|
-test "mount comparison policies fold only ASCII and preserve remaining case" {
+test "eight installed system aliases use the Cygwin runtime's pivot on a native-name tie" {
+  let mounts = Array::makei(8, i => {
+    @lib.Mount::new("/m\{i}", "D:/same", system=true)
+  })
+  let context = @lib.Context::new(mounts~)
+  assert_eq(context.convert("D:/same/leaf", from=Windows, to=Posix), "/m4/leaf")
+}
+
+///|
+test "sensitive and ASCII-insensitive mount policies preserve remaining case" {
   let sensitive = @lib.Context::new(mounts=[
     @lib.Mount::new("/work", "C:\\Work"),
   ])
@@ -126,6 +162,51 @@ test "mount comparison policies fold only ASCII and preserve remaining case" {
 }
 
 ///|
+test "Windows mount case matches UTF-16 units at a UTF-8 prefix boundary" {
+  for profile in [@lib.Cygwin, @lib.Msys2] {
+    let context = @lib.Context::new(profile~, drive_prefix="/vol", mounts=[
+      @lib.Mount::new("/ÄΣ", "D:/ÄΣ", case=WindowsInsensitive),
+      @lib.Mount::new("/wide", "//Ɐ/share/ɐ", case=WindowsInsensitive),
+      @lib.Mount::new("/short", "E:/ɐ", case=WindowsInsensitive),
+      @lib.Mount::new("/deseret", "F:/𐐀", case=WindowsInsensitive),
+    ])
+    assert_eq(
+      context.convert("/äσ/MiXeD", from=Posix, to=Mixed),
+      "D:/ÄΣ/MiXeD",
+    )
+    assert_eq(
+      context.convert("D:/äσ/File", from=Windows, to=Posix),
+      "/ÄΣ/File",
+    )
+    for input in ["äς", "äσx", "A\u{308}σ"] {
+      assert_eq(
+        context.convert("D:/" + input, from=Windows, to=Posix),
+        "/vol/d/" + input,
+      )
+    }
+    assert_eq(
+      context.convert("E:/Ɐ/File", from=Windows, to=Posix),
+      "/vol/e/Ɐ/File",
+    )
+    assert_eq(
+      context.convert("//ɐ/share/Ɐ/File", from=Windows, to=Posix),
+      "/wide/File",
+    )
+    assert_eq(
+      context.convert("F:/𐐨/File", from=Windows, to=Posix),
+      "/vol/f/𐐨/File",
+    )
+  }
+  let context = @lib.Context::new(mounts=[
+    @lib.Mount::new("/alias1", "D:/é", case=WindowsInsensitive),
+    @lib.Mount::new("/alias2", "D:/É", case=WindowsInsensitive),
+    @lib.Mount::new("/deep", "D:/é/nested", case=WindowsInsensitive),
+  ])
+  assert_eq(context.convert("D:/É", from=Windows, to=Posix), "/alias1")
+  assert_eq(context.convert("D:/É/NESTED", from=Windows, to=Posix), "/deep")
+}
+
+///|
 test "UNC mounts match server share and component boundaries under their policy" {
   let context = @lib.Context::new(mounts=[
     @lib.Mount::new(
@@ -153,6 +234,71 @@ test "UNC mounts match server share and component boundaries under their policy"
 }
 
 ///|
+test "proc cygdrive follows the configured prefix before parent traversal" {
+  let mounts = [
+    @lib.Mount::new("/", "C:/root"),
+    @lib.Mount::new("/media", "D:/data", text_mode=true),
+  ]
+  let context = @lib.Context::new(
+    drive_prefix="/media/drives",
+    mounts~,
+    posix_cwd="/proc",
+  )
+  for path in ["/media/drives", "/proc/cygdrive", "cygdrive"] {
+    assert_eq(context.convert(path, from=Posix, to=Mixed), "D:/data/drives")
+    assert_true(
+      context.mode_candidate(path, from=Posix) is Virtual(directory=true),
+    )
+  }
+  assert_eq(
+    context.convert("/proc/cygdrive/.", from=Posix, to=Mixed),
+    "D:/data/drives/",
+  )
+  assert_eq(
+    context.convert("/proc/cygdrive/", from=Posix, to=Mixed, absolute=true),
+    "D:/data/drives",
+  )
+  assert_eq(
+    context.convert("/proc/cygdrive/../sibling", from=Posix, to=Mixed),
+    "D:/data/sibling",
+  )
+  assert_eq(
+    context.convert("/proc/cygdrive/d/archive", from=Posix, to=Mixed),
+    "D:/archive",
+  )
+  assert_eq(
+    context.convert("/proc/cygdrive/d", from=Windows, to=Posix),
+    "/proc/cygdrive/d",
+  )
+  assert_true(
+    conversion_error(() => {
+      context.convert("/proc/cygdrive/bad/../d", from=Posix, to=Mixed)
+    })
+    is @lib.InvalidDrivePrefix,
+  )
+  let root_prefix = @lib.Context::new(drive_prefix="/", mounts~)
+  assert_eq(
+    root_prefix.convert("/proc/cygdrive/media/file", from=Posix, to=Mixed),
+    "D:/data/file",
+  )
+  assert_eq(
+    root_prefix.convert("/proc/cygdrive/proc/version", from=Posix, to=Windows),
+    "/proc/version",
+  )
+  let links = "/proc/cygdrive".repeat(10)
+  assert_eq(
+    root_prefix.convert(links + "/leaf", from=Posix, to=Mixed),
+    "C:/root/leaf",
+  )
+  assert_true(
+    conversion_error(() => {
+      root_prefix.convert(links + "/proc/cygdrive", from=Posix, to=Windows)
+    })
+    is @lib.TooManyLinks,
+  )
+}
+
+///|
 test "profiles and custom drive prefixes are explicit" {
   let cygwin = @lib.Context::new()
   let msys = @lib.Context::new(profile=Msys2)
@@ -172,19 +318,23 @@ test "profiles and custom drive prefixes are explicit" {
       is @lib.MissingContext(field="root or mount"),
     )
   }
-  for path in ["/cygdrive", "/cygdrive/cc/a"] {
-    assert_true(
-      conversion_error(() => cygwin.convert(path, from=Posix, to=Windows))
-      is @lib.InvalidDrivePrefix,
-    )
-  }
+  assert_true(
+    conversion_error(() => cygwin.convert("/cygdrive", from=Posix, to=Windows))
+    is @lib.MissingContext(field="root or mount"),
+  )
+  assert_true(
+    conversion_error(() => {
+      cygwin.convert("/cygdrive/cc/a", from=Posix, to=Windows)
+    })
+    is @lib.InvalidDrivePrefix,
+  )
 }
 
 ///|
 test "invalid mount paths and virtual namespaces are rejected at construction" {
   for
     posix in [
-      "relative", "/a/./b", "/a/../b", "/dev", "/dev/null", "/proc/cygdrive/c",
+      "relative", "/a/./b", "/a/../b", "/dev/null", "/dev/disk/by-id", "/proc/cygdrive/c",
     ] {
     assert_true(
       context_error(() => ignore(@lib.Mount::new(posix, "C:\\root")))
@@ -210,10 +360,59 @@ test "invalid mount paths and virtual namespaces are rejected at construction" {
 }
 
 ///|
+test "physical dev entries follow mounts and preserve exact device name boundaries" {
+  let ctx = @lib.Context::new(posix_cwd="/dev/local", mounts=[
+    @lib.Mount::new("/", "C:/install"),
+    @lib.Mount::new("/dev/local", "D:/files"),
+  ])
+  assert_eq(
+    ctx.convert("leaf", from=Posix, to=Mixed, absolute=true),
+    "D:/files/leaf",
+  )
+  for
+    name in [
+      "shm2", "diskette", "ttyS128", "ttyS00", "com0", "com17", "pty01", "st128",
+      "fd16", "sr16", "scd16", "sddy", "sddx64", "sdz0", "sda01", "NULL", "ttyS１",
+    ] {
+    assert_eq(
+      ctx.convert("/dev/" + name, from=Posix, to=Mixed),
+      "C:/install/dev/" + name,
+    )
+  }
+  for
+    name in [
+      "disk/by-id", "ttyS0", "ttyS127", "cons127", "com1", "com16", "pty127", "nst127",
+      "fd0", "sr15", "scd15", "sda", "sdz9", "sdcz63", "sddx63", "stdin",
+    ] {
+    assert_true(
+      context_error(() => {
+        ignore(ctx.convert("/dev/" + name + "/../local", from=Posix, to=Mixed))
+      })
+      is @lib.UnsupportedNamespace(_),
+    )
+  }
+}
+
+///|
 test "invalid prefixes duplicate mounts and drive-subtree overlaps are rejected" {
+  let user = @lib.Mount::new("/same", "D:/user", system=false)
+  let system = @lib.Mount::new("/same", "S:/sys", system=true)
+  let plain = @lib.Mount::new("/same", "C:/explicit")
+  for
+    mounts in [
+      [user, user],
+      [plain, system],
+      [system, plain],
+      [user, system, user],
+    ] {
+    assert_true(
+      context_error(() => ignore(@lib.Context::new(mounts~)))
+      is InvalidContext(_),
+    )
+  }
   for
     prefix in [
-      "relative", "/a/../b", "/a/./b", "/dev", "/proc", "/proc/cygdrive",
+      "relative", "/a/../b", "/a/./b", "/dev/disk", "/proc", "/proc/cygdrive",
     ] {
     assert_true(
       context_error(() => ignore(@lib.Context::new(drive_prefix=prefix)))
@@ -339,4 +538,65 @@ test "adding an unrelated mount does not change unmatched conversions" {
       extended.convert(path, from=Windows, to=Posix),
     )
   }
+}
+
+///|
+test "text mount flags follow the selected path spelling, not a reverse alias" {
+  let context = @lib.Context::new(
+    mounts=[
+      @lib.Mount::new("/", "C:/cygwin"),
+      @lib.Mount::new("/txt", "D:/work", text_mode=true),
+    ],
+    drive_text_mode=true,
+  )
+  assert_true(
+    context.mode_candidate("/txt/file", from=Posix)
+    is Filesystem(_, text_mode=true),
+  )
+  assert_true(
+    context.mode_candidate("D:/work/file", from=Windows)
+    is Filesystem(_, text_mode=false),
+  )
+  assert_true(
+    context.mode_candidate("/cygdrive/e/file", from=Posix)
+    is Filesystem(_, text_mode=true),
+  )
+  assert_true(
+    context.mode_candidate("//files/share/a", from=Windows)
+    is Filesystem(_, text_mode=true),
+  )
+  assert_true(
+    context.mode_candidate("/file", from=Posix)
+    is Filesystem(_, text_mode=false),
+  )
+}
+
+///|
+test "native cwd comparison respects drive and UNC roots and the byte boundary" {
+  let drive = @lib.Context::new(windows_cwd="D:/É/Σ")
+  assert_eq(
+    drive.relative_windows_name("/cygdrive/d/é/σ/TaIl", from=Posix),
+    Some("TaIl"),
+  )
+  assert_eq(
+    drive.relative_windows_name("/cygdrive/d/é/ς/TaIl", from=Posix),
+    None,
+  )
+  assert_eq(
+    drive.relative_windows_name("/cygdrive/e/É/Σ/TaIl", from=Posix),
+    None,
+  )
+  let sensitive = @lib.Context::new(windows_cwd="D:/É", drive_case=Sensitive)
+  assert_eq(sensitive.relative_windows_name("/cygdrive/d/é", from=Posix), None)
+  let unc = @lib.Context::new(windows_cwd="//SERVER/Share/Dir")
+  assert_eq(
+    unc.relative_windows_name("//server/share/dir/Keep", from=Windows),
+    Some("Keep"),
+  )
+  assert_eq(
+    unc.relative_windows_name("//server/shared/dir/Keep", from=Windows),
+    None,
+  )
+  let width = @lib.Context::new(windows_cwd="D:/Ɐ")
+  assert_eq(width.relative_windows_name("/cygdrive/d/ɐ/x", from=Posix), None)
 }

@@ -44,17 +44,30 @@ fn parse_path(
   path : String,
   syntax : InputSyntax,
 ) -> ParsedPath raise ConversionError {
-  guard !path.is_empty() else { raise EmptyPath }
   validate_text(path)
+  parse_validated_path(path, syntax, operand=false)
+}
+
+///|
+fn parse_validated_path(
+  path : String,
+  syntax : InputSyntax,
+  operand~ : Bool = true,
+) -> ParsedPath raise ConversionError {
+  guard !path.is_empty() else { raise EmptyPath }
   if syntax == Windows {
     let text = path.replace_all(old="\\", new="/")
     if text.has_prefix("//?/") || text.has_prefix("/??/") {
       let ordinary = text[4:].to_owned()
       if ordinary.length() >= 2 && ordinary[1] == ':' {
-        return parse_path(ordinary, Windows)
+        return parse_validated_path(ordinary, Windows, operand~)
       }
       if ordinary.has_prefix("UNC/") {
-        return parse_path("//" + ordinary[4:].to_owned(), Windows)
+        return parse_validated_path(
+          "//" + ordinary[4:].to_owned(),
+          Windows,
+          operand~,
+        )
       }
       raise UnsupportedNamespace("extended device")
     }
@@ -78,24 +91,39 @@ fn parse_path(
     Windows => path.replace_all(old="\\", new="/")
     Posix => path
   }
-  let (root, components) = if text.has_prefix("//") {
-    // Empty authority fields are errors, not redundant tail separators.
-    let parts = text[2:].split("/").to_array()
-    guard parts.length() >= 2 &&
-      !parts[0].is_empty() &&
-      !parts[1].is_empty() &&
-      parts[0] != "." &&
-      parts[0] != ".." &&
-      parts[1] != "." &&
-      parts[1] != ".." else {
+  let (root, components) = if operand &&
+    syntax == Posix &&
+    text.has_prefix("///") {
+    (PosixRoot, path_components(text))
+  } else if operand && text.has_prefix("//") && !text.has_prefix("///") {
+    // A parent can remove either authority field. Classify the server and
+    // share after resolving the components against the network root.
+    return {
+      root: NetworkRoot,
+      components: path_components(text),
+      trailing: text.has_suffix("/") ||
+      text.has_suffix("/.") ||
+      text.has_suffix("/.."),
+    }
+  } else if text.has_prefix("//") {
+    let authority = text[2:]
+    let (server, rest) = authority.split_once("/").unwrap_or((authority, ""))
+    guard !(server is ("" | "." | "..")) else {
       raise UnsupportedNamespace("incomplete UNC")
     }
-    let server = parts[0].to_owned()
-    let share = parts[1].to_owned()
-    validate_windows_component(server, device_names=false)
-    validate_windows_component(share, device_names=false)
-    let tail = parts[2:]
-      .iter()
+    let parts = rest.split("/")
+    let share = match parts.next() {
+      Some(share) if !(share is ("" | "." | "..")) => share
+      _ => raise UnsupportedNamespace("incomplete UNC")
+    }
+    let server = server.to_owned()
+    let share = share.to_owned()
+    validate_windows_component(
+      @filename.native_name(server),
+      device_names=false,
+    )
+    validate_windows_component(@filename.native_name(share), device_names=false)
+    let tail = parts
       .filter(s => !s.is_empty())
       .map(s => s.to_owned())
       .to_array()

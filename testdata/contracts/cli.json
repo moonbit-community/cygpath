@@ -9,6 +9,83 @@
   "profile": "cygwin unless --profile explicitly selects msys2",
   "cases": [
     {
+      "case_id": "windows-unc-parent-traversal",
+      "category": "context",
+      "argv": ["-of-"],
+      "stdin_text": "-m \\\\discard\\..\\host\n-wp \\\\discard\\share\\..\\..\\host\\docs\\leaf:\\\\host\\data\\..\n-M \\\\discard\\..\\..\n-m //../../..\n",
+      "stdout_text": "//host\n\\\\host\\docs\\leaf;\\\\host\\\n\\\\discard\\..\\..: binary\n//\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "offline-cancelled-server-needs-presence",
+      "category": "context",
+      "argv": ["--root=C:/offline", "-m", "//host/../other"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: network server presence required for \"host\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "bare-network-server-operands",
+      "category": "context",
+      "argv": ["-of-"],
+      "stdin_text": "-wp //absent.invalid://localhost/\n-M //tsclient\n-wr //SERVER\n-m //localhost@SSL@443/.\n-am //wsl$\n-m //files/.//./docs/a\n",
+      "stdout_text": "\\\\absent.invalid;\\\\localhost\\\n//tsclient: binary\n\\\\?\\UNC\\SERVER\n//localhost@SSL@443/\n//wsl$\n//files/docs/a\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "offline-absolute-server-directory",
+      "category": "context",
+      "argv": ["--root=C:/offline", "-am", "//host/"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: network server presence required for \"host\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "posix-leading-slashes-and-network-root",
+      "category": "context",
+      "argv": ["--root", "C:/root", "-of", "-"],
+      "stdin_text": "-mp //:////:////usr//bin:////proc/version://host///share/leaf\n-w //\n-M //\n-u ///etc//names\n",
+      "stdout_text": "//;C:/root;C:/root/usr/bin;/proc/version;//host/share/leaf\n\\\\\n//: binary\n///etc//names\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "offline-null-requires-observed-device",
+      "category": "context",
+      "argv": ["--root", "C:/offline", "-w", "/dev/null"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: missing-context: \"nt_null\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "physical-dev-mount-and-drive",
+      "category": "context",
+      "argv": ["--root", "C:/install", "--mount", "/dev/local", "D:/files", "--drive-prefix", "/dev/drives", "-of", "-"],
+      "stdin_text": "-mp /dev/local/leaf:/dev/shm2:/dev/ttyS128:/dev/drives/z/x\n-u D:/files/names\n",
+      "stdout_text": "D:/files/leaf;C:/install/dev/shm2;C:/install/dev/ttyS128;Z:/x\n/dev/local/names\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "mode-needs-installation",
+      "category": "context",
+      "argv": ["-M", "/file"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: installation context: -M requires a selected Cygwin installation\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "mode-error-then-conversion",
+      "category": "input",
+      "argv": ["-o", "-f", "-"],
+      "stdin_text": "-Mi \n-u C:/one\n",
+      "stdout_text": "/cygdrive/c/one\n",
+      "stderr_text": "cygpath: file '' - No such file or directory\n",
+      "exit_code": 0
+    },
+    {
       "case_id": "help",
       "category": "control",
       "argv": [
@@ -143,6 +220,64 @@
       "exit_code": 0
     },
     {
+      "case_id": "filename-bytes-in-arguments",
+      "category": "conversion",
+      "argv": ["-uC1252", "--mount", "/\uf0ff", "D:/é", "D:/\uf0c3\uf0a9/\uf0ff", "C:/\uf0ef\uf083\uf0bf"],
+      "stdout_hex": "2fef83bf2fff0a2f63796764726976652f632fef83bf0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "filename-bytes-in-lists-and-records",
+      "category": "conversion",
+      "argv": ["--windows-cwd", "D:/work", "-of-"],
+      "stdin_text": "-pu ;C:/\uf0ff;;//host/share/\uf0c3\uf0a9\n-u ab😀xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+      "stdout_hex": "2f63796764726976652f632fff3a2f2f686f73742f73686172652fc3a90a2f63796764726976652f642fedb8807878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878780a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "wide-single-and-list-records",
+      "category": "conversion",
+      "argv": ["--windows-cwd", "D:/work", "-of-"],
+      "stdin_text": "-u abc界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界\n-pu abc界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界;C:/end\n-u \\\\?\\GLOBALROOT\\Device\\Null\n-u \\\\?\\C:name\n",
+      "stdout_text": "/cygdrive/d/界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界\nabc界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界:/cygdrive/c/end\n/cygdrive/d/BALROOT/Device/Null\n/cygdrive/c/name\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "extended-drive-relative-narrow-errors",
+      "category": "conversion",
+      "argv": ["-u", "C:/ok", "\\??\\C:name"],
+      "stdout_text": "/cygdrive/c/ok\n",
+      "stderr_text": "cygpath: error converting \"\\??\\C:name\" - Invalid argument\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "extended-drive-relative-list-errors",
+      "category": "conversion",
+      "argv": ["-pu", "C:/ok;\\\\?\\C:name"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: error converting \"C:/ok;\\\\?\\C:name\" - Unknown error -1\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "network-mount-and-original-spelling",
+      "category": "context",
+      "argv": ["-u", "--mount", "/net", "//server/share", "\\\\server", "\\\\.\\COM1", "//server/old/../share/path", "//server/share/path/.", "//server/share/.", "//server/old/../other", "\\\\?\\UNC\\server\\other", "\\??\\UNC\\server\\other"],
+      "stdout_text": "//server\n//./COM1\n/net/path\n/net/path/\n/net\n//server/old/../other\n//server/other\n/??/UNC/server/other\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "network-list-mount-and-extended-spelling",
+      "category": "context",
+      "argv": ["-pu", "--mount", "/net", "//server/share", "\\\\?\\UNC\\server\\other;;//server/old/../share/one;\\\\.\\COM1"],
+      "stdout_text": "//?/UNC/server/other:/net/one://./COM1\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
       "case_id": "msys2",
       "category": "context",
       "argv": [
@@ -165,6 +300,73 @@
         "D:\\work"
       ],
       "stdout_text": "/drives/d/work\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "custom-proc-cygdrive",
+      "category": "context",
+      "argv": ["-of-", "--root=C:/root", "--drive-prefix=/media/drives", "--mount", "/media", "D:/data"],
+      "stdin_text": "-m /proc/cygdrive\n-mp /proc/cygdrive/e/one:/proc/cygdrive/../two\n-M /media/drives\n-aw /proc/cygdrive/\n-u /proc/cygdrive/e\n-m /proc/cygdrive/bad\n",
+      "stdout_text": "D:/data/drives\nE:/one;D:/data/two\n/media/drives: binary\nD:\\data\\drives\n/proc/cygdrive/e\n",
+      "stderr_text": "cygpath: error converting \"/proc/cygdrive/bad\" - No such file or directory\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "msys-root-proc-cygdrive",
+      "category": "context",
+      "argv": ["--profile=msys2", "--root=C:/msys", "-mp", "/proc/cygdrive:/proc/cygdrive/etc/file:/proc/cygdrive/d/item"],
+      "stdout_text": "C:/msys/;C:/msys/etc/file;D:/item\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "proc-file-records",
+      "category": "conversion",
+      "argv": ["-of-"],
+      "stdin_text": "-w /proc/version\n-mp /proc/meminfo:/proc/net/\n-w /proc/.\n-aw /proc/.\n-M /proc/absent\n-M /proc/uptime\n-w /proc/version/\n",
+      "stdout_text": "/proc/version\n/proc/meminfo;/proc/net/\n/proc\\\n/proc\n/proc/uptime: binary\n",
+      "stderr_text": "cygpath: file '/proc/absent' - No such file or directory\ncygpath: error converting \"/proc/version/\" - Not a directory\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "proc-list-missing-child",
+      "category": "conversion",
+      "argv": ["-wp", "/proc/uptime:/proc/version/child"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: error converting \"/proc/uptime:/proc/version/child\" - Unknown error -1\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "terminal-file-records",
+      "category": "conversion",
+      "argv": ["-of-", "--posix-cwd=/dev"],
+      "stdin_text": "-w tty\n-aw /dev/./ptmx\n-wp /dev/tty:/dev/ptmx\n-M /dev/tty\n-w /dev/ptmx/.\n",
+      "stdout_text": "/dev/tty\n/dev/ptmx\n/dev/tty;/dev/ptmx\n/dev/tty: binary\n",
+      "stderr_text": "cygpath: error converting \"/dev/ptmx/.\" - Not a directory\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "terminal-list-invalid-directory",
+      "category": "conversion",
+      "argv": ["-mp", "/dev/tty:/dev/ptmx/child"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: error converting \"/dev/tty:/dev/ptmx/child\" - Unknown error -1\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "terminal-mixed-ebcdic",
+      "category": "conversion",
+      "argv": ["-mC37", "/dev/tty"],
+      "stdout_hex": "618485a561a3a3a80a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "physical-dev-directories",
+      "category": "context",
+      "argv": ["-m", "--root", "C:/cygwin", "--mount", "/dev/shm", "D:/shared", "/dev", "/dev/shm/entry", "/dev/mqueue/entry"],
+      "stdout_text": "C:/cygwin/dev\nD:/shared/entry\nC:/cygwin/dev/mqueue/entry\n",
       "stderr_text": "",
       "exit_code": 0
     },
@@ -534,14 +736,28 @@
       "exit_code": 0
     },
     {
-      "case_id": "dos-unsupported",
-      "category": "unsupported",
-      "argv": [
-        "-tdos",
-        "/cygdrive/c/work"
-      ],
+      "case_id": "dos-current-directory",
+      "category": "conversion",
+      "argv": ["-tdos", "."],
+      "stdout_text": ".\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "dos-mode-and-records",
+      "category": "options",
+      "argv": ["-dMof-"],
+      "stdin_text": "/dev/tty\n-d .\n-w ordinary\n",
+      "stdout_text": "/dev/tty: binary\n.\nordinary\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "dos-missing-input-file",
+      "category": "input",
+      "argv": ["-df", "{missing}"],
       "stdout_text": "",
-      "stderr_text": "cygpath: unsupported-capability: \"short names require Windows filesystem queries\"\n",
+      "stderr_text": "cygpath: No such file or directory\n",
       "exit_code": 1
     },
     {
@@ -559,11 +775,11 @@
       "case_id": "unsupported-codepage",
       "category": "unsupported",
       "argv": [
-        "-wC0",
+        "-wC29001",
         "/cygdrive/c/work"
       ],
       "stdout_text": "",
-      "stderr_text": "cygpath: unsupported-capability: \"code page 0 is not supported by the pure encoder\"\n",
+      "stderr_text": "cygpath: unsupported-capability: \"code page 29001 is not supported by the pure encoder\"\n",
       "exit_code": 1
     },
     {
@@ -626,6 +842,24 @@
       "stderr_file": "testdata/contracts/usage-error.txt"
     },
     {
+      "case_id": "suffixed-input-file",
+      "category": "input",
+      "argv": ["-uf", "{missing}"],
+      "file_as_exe": true,
+      "file_text": "C:/one\r\nC:/two\n",
+      "stdout_text": "/cygdrive/c/one\n/cygdrive/c/two\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "directory-input",
+      "category": "input",
+      "argv": ["-uf", "."],
+      "stdout_text": "",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
       "case_id": "file-read-error",
       "category": "io",
       "argv": [
@@ -635,6 +869,69 @@
       ],
       "stdout_text": "",
       "stderr_text": "cygpath: No such file or directory\n",
+      "exit_code": 1
+    },
+    {
+      "category": "encoding",
+      "case_id": "byte-filename-windows",
+      "argv": [
+        "-wf-"
+      ],
+      "stdin_hex": "ff0a",
+      "stdout_hex": "ef83bf0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "category": "encoding",
+      "case_id": "byte-filename-option-records",
+      "argv": [
+        "-of",
+        "{input}",
+        "--root",
+        "C:/root",
+        "--mount",
+        "/",
+        "D:/literal"
+      ],
+      "file_hex": "2d6d202fff2f780a2d6d70202fef83bf3a2fff0a2d774331323532202f800a2d7520433a2f6f6b0aff0a",
+      "stdout_hex": "433a2f726f6f742fef83bf2f780a443a2f6c69746572616c3b433a2f726f6f742fef83bf0a433a5c726f6f745c3f0a2f63796764726976652f632f6f6b0a",
+      "stderr_text": "cygpath: invalid-encoding: invalid UTF-8 in {input_quoted} at line 5\n",
+      "exit_code": 1
+    },
+    {
+      "category": "encoding",
+      "case_id": "byte-filename-errno",
+      "argv": [
+        "-wf-",
+        "--drive-prefix=/vol"
+      ],
+      "stdin_hex": "2f766f6c2fff0a",
+      "stdout_text": "",
+      "stderr_hex": "637967706174683a206572726f7220636f6e76657274696e6720222f766f6c2fff22202d204e6f20737563682066696c65206f72206469726563746f72790a",
+      "exit_code": 1
+    },
+    {
+      "case_id": "cesu-pair-option-records",
+      "category": "encoding",
+      "argv": [
+        "--drive-prefix=/vol",
+        "-of-"
+      ],
+      "stdin_hex": "2d6d202f766f6c2f632feda0bdedb8800a2d707520433a2feda0bdedb8803b72656c61746976650a2d774331323532202f766f6c2f642feda0bdedb8800a2d7520433a2feda0bdedb880ff0a",
+      "stdout_hex": "433a2ff09f98800a2f766f6c2f632ff09f98803a72656c61746976650a443a5c3f3f0a",
+      "stderr_text": "cygpath: invalid-encoding: invalid UTF-8 in \"stdin\" at line 4\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "cesu-pair-error-original-operand",
+      "category": "encoding",
+      "argv": [
+        "-puf-"
+      ],
+      "stdin_hex": "5c5c3f5c433aeda0bdedb8800a",
+      "stdout_text": "",
+      "stderr_hex": "637967706174683a206572726f7220636f6e76657274696e6720225c5c3f5c433aeda0bdedb88022202d20556e6b6e6f776e206572726f72202d310a",
       "exit_code": 1
     },
     {
@@ -672,6 +969,179 @@
       ],
       "stdin_hex": "6100620a",
       "stdout_text": "a\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "windows-mount-case",
+      "category": "context",
+      "argv": ["-u", "--mount-case", "/ÄΣ", "windows-insensitive", "--mount", "/ÄΣ", "D:/ÄΣ", "D:/äσ/Keep", "D:/äς/Keep"],
+      "stdout_text": "/ÄΣ/Keep\n/cygdrive/d/äς/Keep\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "long-name-invalid-multibyte-input",
+      "category": "encoding",
+      "argv": ["-wlC1252", "/cygdrive/c/é"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: unsupported-capability: \"long-name input is invalid in the UTF-8 locale\"\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "utf7-shifts-and-mixed-paths",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC65000 /cygdrive/c/é+中/😀\n-mC65000 /cygdrive/c/日本\n-wpC65000 /cygdrive/c/é:/cygdrive/d/中\n-wrC65000 /cygdrive/c/é\n",
+      "stdout_text": "C:+AFwA6Q-+-+Ti0AXNg93gA-\nC:+AFxl5Wcs-\nC:+AFwA6QA7-D:+AFxOLQ-\n\\\\?\\C:+AFwA6Q-\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "symbol-encoded-output-and-partial-failure",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC42 \uf020\uf05c\uf0ff\n-mC42 \uf020\uf05c\uf0ff\n-uC42 C:/x\n-wC42 regular\n",
+      "stdout_hex": "205cff0a202fff0a2f63796764726976652f632f780a",
+      "stderr_text": "cygpath: path cannot be encoded in code page 42\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "null-and-pseudo-handle-options",
+      "category": "options",
+      "argv": ["--close", " +0x00rest", "-of-"],
+      "stdin_text": "-uc-1 C:/one\nc:/two\n-mcfffffffffffffffe /cygdrive/d/three\n--close=0 /cygdrive/d/four\n",
+      "stdout_text": "/cygdrive/c/one\n/cygdrive/c/two\nD:/three\n/cygdrive/d/four\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "no-path-shell-folders-with-csidl-flags",
+      "category": "options",
+      "argv": ["-of-"],
+      "stdin_text": "-wF0x3d\n-wF0x403d\n-wF0x1011\n-m /cygdrive/c/after\n",
+      "stdout_text": "C:/after\n",
+      "stderr_text": "cygpath: failed to retrieve special folder path\ncygpath: failed to retrieve special folder path\ncygpath: failed to retrieve special folder path\n",
+      "exit_code": 0
+    },
+    {
+      "case_id": "extended-prefix-created-by-codepage-best-fit",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC1252 ＼＼？＼Ｃ：＼ｘ\n-mC1252 ＼＼？＼ＵＮＣ＼ｓ＼ｘ\n-wrC1252 ＼＼？＼Ｃ：＼ｘ\n-wpC1252 ＼＼？＼Ｃ：＼ｘ\n",
+      "stdout_text": "C:\\x\n//s/x\n\\\\?\\C:\\x\n\\\\?\\C:\\x\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "root-local-ebcdic-prefix",
+      "category": "encoding",
+      "argv": ["-wrC37", "/cygdrive/c/A"],
+      "stdout_hex": "5c5c3f5cc37ae0c10a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "codepage-zero-restores-default",
+      "category": "encoding",
+      "argv": ["-wC1252", "-C0", "/cygdrive/c/é中"],
+      "stdout_text": "C:\\é中\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "windows-best-fit-punctuation-and-kana",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC1252 /cygdrive/c/a\u202fb\u2012c\n-wC437 /cygdrive/c/a\u2007b\n-wC932 /cygdrive/c/か\u3099は\u309a\n",
+      "stdout_hex": "433a5c61a0622d630a433a5c61ff620a433a5c82a9814a82cd814b0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "virtual-folder-and-following-file-records",
+      "category": "options",
+      "argv": ["-of-"],
+      "stdin_text": "-wiF0x11\nC:/after\n-F012\n-m /cygdrive/d/final\n",
+      "stdout_text": "C:\\after\nD:/final\n",
+      "stderr_text": "cygpath: failed to retrieve special folder path\ncygpath: failed to retrieve special folder path\n",
+      "exit_code": 0
+    },
+    {
+      "case_id": "folder-id-invalid-octal",
+      "category": "options",
+      "argv": ["-i", "-F", "08"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: syntax error in special folder ID 08\n",
+      "exit_code": 1
+    },
+    {
+      "case_id": "last-folder-selector-wins",
+      "category": "options",
+      "argv": ["-Fbad", "-AD", "--folder=+017", "-F", "  0X11"],
+      "stdout_text": "",
+      "stderr_text": "cygpath: failed to retrieve special folder path\n",
+      "exit_code": 0
+    },
+    {
+      "case_id": "file-input-supersedes-folder-lookup",
+      "category": "options",
+      "argv": ["-mW", "-Fbad", "-f-"],
+      "stdin_text": "/cygdrive/e/abc\n",
+      "stdout_text": "E:/abc\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "japanese-iso2022-kana-and-mixed-separators",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC50220 /cygdrive/c/ｶﾞ髙①\n-wC50221 /cygdrive/c/日ｶ本\n-mC50222 /cygdrive/c/日ｶ本\n-wpC50222 /cygdrive/c/日ｶ本:/cygdrive/d/ｶ\n",
+      "stdout_hex": "433a5c1b2442252b212b7c622d211b28420a433a5c1b2442467c1b2849361b24424b5c1b28420a433a2f1b2442467c0e360f4b2f1b28420a433a5c1b2442467c0e360f4b5c1b28423b443a5c0e360f0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "stateful-korean-and-chinese-records",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC50225 /cygdrive/c/한글 한\n-mC52936 /cygdrive/c/中文~文\n-wC0 ~\n",
+      "stdout_hex": "433a5c1b2429430e4751315b0f200e47510f0a433a2f7e7b56504e447e7d7e7e7e7b4e447e7d0a7e0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "windows-nls-aliases",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC38598 /cygdrive/c/אב·é😀\n-mC51949 /cygdrive/c/한글₩힣\u0081😀\n",
+      "stdout_hex": "433a5ce0e1b7653f3f0a433a2fc7d1b1db2f3f813f3f0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "east-asian-windows-codepages",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC20932 /cygdrive/c/日ｶ丂髙\n-mC20932 /cygdrive/c/伙\n-wC20936 /cygdrive/c/中∥\n-mC20949 /cygdrive/c/한글₩힣\n",
+      "stdout_hex": "433a5cc6fc8eb6b021f4290a433a2fb02f0a433a5cd6d0a1ce0a433a2fc7d1b1db2f3f0a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "gb18030-absolute-windows",
+      "category": "encoding",
+      "argv": ["-w", "-C54936", "/cygdrive/c/中文/€/𐀀"],
+      "stdout_hex": "433a5cd6d0cec45ca2e35c903081300a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "mixed-codepage-byte-separators",
+      "category": "encoding",
+      "argv": ["-mo", "-f-"],
+      "stdin_text": "-mC932 /cygdrive/c/ソ\n-mC54936 /cygdrive/c/乗\n-mC37 /cygdrive/c/A\n",
+      "stdout_hex": "433a2f832f0a433a2f812f0ac37ae0c10a",
       "stderr_text": "",
       "exit_code": 0
     },

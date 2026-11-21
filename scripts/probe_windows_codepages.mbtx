@@ -1,12 +1,12 @@
 ----
 import {
-  "moonbitlang/async@0.22.4",
-  "moonbitlang/async@0.22.4/fs",
-  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/async@0.22.10",
+  "moonbitlang/async@0.22.10/fs",
+  "moonbitlang/async@0.22.10/process",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
-  "moonbitlang/x@0.5.5/crypto",
+  "moonbitlang/x@0.5.8/crypto",
 }
 ----
 
@@ -41,6 +41,19 @@ let probe =
   #|    [Out] byte[] output, int outputLength, IntPtr defaultChar, IntPtr usedDefault);
   #|  static string Hex(byte[] bytes, int count) {
   #|    return count == 0 ? "" : BitConverter.ToString(bytes, 0, count).Replace("-", "");
+  #|  }
+  #|  public static void WriteScalarSamples(uint page, string directory) {
+  #|    if (!IsValidCodePage(page)) return;
+  #|    using (var file = System.IO.File.Create(System.IO.Path.Combine(directory, "bmp-" + page + ".bin"))) {
+  #|      byte[] output = new byte[64];
+  #|      for (int i = 0; i <= 0xffff; ++i) {
+  #|        if (i >= 0xd800 && i <= 0xdfff) continue;
+  #|        int n = WideCharToMultiByte(page, 0, ((char)i).ToString(), -1, output, output.Length, IntPtr.Zero, IntPtr.Zero);
+  #|        if (n == 0 && Marshal.GetLastWin32Error() == 122) throw new InvalidOperationException("Scalar buffer too small");
+  #|        file.WriteByte((byte)n);
+  #|        file.Write(output, 0, n);
+  #|      }
+  #|    }
   #|  }
   #|  public static Dictionary<string, object> Capture(uint codepage, string input) {
   #|    bool valid = IsValidCodePage(codepage);
@@ -94,6 +107,33 @@ let probe =
   #|    }
   #|  }
   #|}
+  #|# Retain the native bytes needed to distinguish 5022x from CP932 and from
+  #|# each other, including entry/exit state and the NUL appended by Win32.
+  #|$jis = foreach ($cp in @(50220, 50221, 50222)) {
+  #|  foreach ($text in @('AｶﾞﾊﾟA', '日ｶ本', '丂髙①', '¥‾\~', '～〜', 'A😀B', '本/日', "$([char]0xe000)$([char]0xe3ac)")) {
+  #|    ,([CygpathCodepageProbe]::Capture($cp, $text))
+  #|  }
+  #|}
+  #|$chineseKorean = foreach ($cp in @(50225, 50227, 50229, 52936)) {
+  #|  foreach ($text in @('ASCII~', 'A中文~中文B', '한글/한', '繁體/丂', '₩€😀')) {
+  #|    ,([CygpathCodepageProbe]::Capture($cp, $text))
+  #|  }
+  #|}
+  #|# GSM's zero-valued alphabet entry and escape-prefixed letters matter
+  #|# for cygpath, which prints the converted buffer as a C string.
+  #|$gsm = foreach ($cp in @(55000, 55001, 55002, 55003, 55004)) {
+  #|  foreach ($text in @('A@B', 'A^{}\[]~|€', 'ÁãĞış', 'ΆΈΩω', 'A😀B')) {
+  #|    ,([CygpathCodepageProbe]::Capture($cp, $text))
+  #|  }
+  #|}
+  #|$symbols = @(
+  #|  [CygpathCodepageProbe]::Capture(42, "$([char]0x1f)$([char]0xf020)$([char]0xf05c)$([char]0xf0ff)")
+  #|  [CygpathCodepageProbe]::Capture(42, "$([char]0xf041)X")
+  #|)
+  #|if ($symbols[0].output_hex -ne '1F205CFF00' -or $symbols[1].conversion_result -ne 0 -or
+  #|    $symbols[1].conversion_last_error -ne 1113) {
+  #|  $failures += 'CP_SYMBOL did not match the documented repertoire or unmappable-character error.'
+  #|}
   #|$report = [ordered]@{
   #|  schema_version = 1
   #|  purpose = 'Direct Win32 oracle diagnosis; never used by the cygpath product'
@@ -104,9 +144,17 @@ let probe =
   #|  kernel32_version = [Diagnostics.FileVersionInfo]::GetVersionInfo([IO.Path]::Combine([Environment]::SystemDirectory, 'kernel32.dll')).FileVersion
   #|  parameters = [ordered]@{ flags = 0; input_length = -1; default_character = 'NULL'; used_default = 'NULL' }
   #|  observations = $rows
+  #|  japanese_iso2022_observations = $jis
+  #|  chinese_korean_stateful_observations = $chineseKorean
+  #|  gsm_observations = $gsm
+  #|  symbol_observations = $symbols
+  #|  scalar_file_format = 'bmp-CP.bin: one record per BMP scalar in order, excluding surrogates. One length byte followed by exactly the returned bytes, including the terminating NUL. A zero length means the Win32 call failed.'
   #|  assertions_passed = ($failures.Count -eq 0)
   #|  failures = $failures
   #|  last_error_note = 'Last-error values are captured immediately. Interpret them according to each Win32 API contract; a successful call does not necessarily assign an error.'
+  #|}
+  #|foreach ($cp in @(50220,50221,50222,50225,50227,50229,52936,55000,55001,55002,55003,55004,57002)) {
+  #|  [CygpathCodepageProbe]::WriteScalarSamples($cp, $env:CYGPATH_CODEPAGE_OUTPUT)
   #|}
   #|[Console]::WriteLine(($report | ConvertTo-Json -Depth 12 -Compress))
   #|if ($failures.Count -ne 0) { exit 1 }
@@ -142,6 +190,7 @@ async fn main {
     }
   }
   let argv = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", probe]
+  environment["CYGPATH_CODEPAGE_OUTPUT"] = output
   @fs.write_file(output + "/empty.bin", b"", create_mode=CreateNew)
   let start = @async.now()
   let exit_code = @async.with_timeout_opt(30000, () => {

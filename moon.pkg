@@ -1,10 +1,10 @@
 import {
+  "moonbitlang/core/encoding/utf8",
+  "ZSeanYves/cygpath/lib",
   "ZSeanYves/cygpath/internal/cli",
-  "ZSeanYves/cygpath/internal/encoding",
   "ZSeanYves/cygpath/internal/host",
-  "moonbitlang/async",
 }
 
 pkgtype(kind: "executable")
 
-supported_targets = "+wasm+native"
+supported_targets = "wasm"

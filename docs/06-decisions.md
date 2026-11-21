@@ -56,7 +56,7 @@ The cost is maintaining a support matrix and difference records. The benefit is 
 
 The first Windows subset retained 23 reviewed profile/case differences as historical discovery evidence. The current P3 gate does not consult those approvals: supported-domain cases require exact raw stdout/stderr and integer status, complete coverage, and Wasm/Native plus collect/replay consistency. The earlier differences were resolved or classified as source-backed undefined/unavailable input domains with independently checked project rejection. In particular, Cygwin and MSYS2 root separators now follow separate implemented profile rules.
 
-Malformed UTF-8 exposes unchecked upstream conversion/allocation behavior; CP29001 conversion failed in a direct Win32 probe on the recorded host while CP1252 controls succeeded. Actual upstream bytes remain evidence, but neither boundary is counted as an exact conversion match or simulated using uninitialized-buffer observations. These conclusions do not attest the source commit used to build a distribution binary.
+The Unix-output wide helper has no defined result when multibyte decoding fails. Windows-output filename bytes use a separate runtime conversion. In the frozen matrix, CP29001 conversion failed in a direct Win32 probe on the recorded host while CP1252 controls succeeded. Actual upstream bytes remain evidence, but neither boundary is counted as an exact conversion match or simulated using uninitialized-buffer observations. These conclusions do not attest the source commit used to build a distribution binary.
 
 ## ADR-006: Separate individual paths from path lists
 

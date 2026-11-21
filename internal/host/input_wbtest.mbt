@@ -1,6 +1,29 @@
 ///|
+fn decode_record(
+  bytes : Bytes,
+  terminated~ : Bool,
+  source~ : String,
+  line~ : Int32,
+) -> String? raise HostError {
+  visible_record(bytes, terminated~).map(record => {
+    utf8_record(record, source, line)
+  })
+}
+
+///|
+async fn stream_reader_until(
+  reader : &@io.BinaryReader,
+  source : String,
+  consume : async (String) -> Bool,
+) -> Int32 {
+  stream_record_bytes(reader, source, (record, line) => {
+    consume(utf8_record(record, source, line))
+  })
+}
+
+///|
 async fn stream_reader(
-  reader : &@io.Reader,
+  reader : &@io.BinaryReader,
   source : String,
   consume : async (String) -> Unit,
 ) -> Int32 {
@@ -230,7 +253,7 @@ async test "reader failures receive a stable host category" {
 ///|
 async test "missing input files use the official portable errno diagnostic" {
   let directory = @fs.tmpdir(prefix="cygpath-host-")
-  defer @fs.rmdir(directory, recursive=true)
+  defer @fs.remove(directory, recursive=true)
   try stream_file(directory + "/absent", _ => ()) catch {
     FileNotFound as error => {
       assert_eq(error.diagnostic(), "cygpath: No such file or directory")
@@ -240,4 +263,48 @@ async test "missing input files use the official portable errno diagnostic" {
   } noraise {
     _ => fail("missing file was accepted")
   }
+}
+
+///|
+async test "file input reads the exact entry before probing a final .exe" {
+  let dir = @fs.tmpdir(prefix="cygpath-records-")
+  defer @fs.remove(dir, recursive=true)
+  let base = dir + "/records.txt"
+  @fs.write_text(base + ".exe", "from suffix\r\n")
+  let file = @fs.open(base + ".exe", mode=ReadOnly)
+  defer file.close()
+  check_link_header(base + ".exe", file)
+  assert_eq(file.read_all(), b"from suffix\r\n")
+  let seen : Array[String] = []
+  let consume : async (String) -> Unit = line => seen.push(line)
+  assert_eq(stream_file(base, consume), 1)
+  @fs.write_text(base, "exact\n")
+  assert_eq(stream_file(base, consume), 1)
+  assert_eq(seen, ["from suffix", "exact"])
+  @fs.mkdir(dir + "/folder.exe")
+  assert_eq(stream_file(dir + "/folder.exe", consume), 0)
+  @fs.write_text(dir + "/other.exe.exe", "unexpected\n")
+  @fs.write_text(dir + "/other.lnk.exe", "unexpected\n")
+  @fs.write_text(dir + "/broken.exe", "unexpected\n")
+  @fs.write_text(dir + "/target", "temporary\n")
+  @fs.symlink(dir + "/broken", target=dir + "/target")
+  @fs.remove(dir + "/target")
+  @fs.remove(base)
+  for name in ["folder", "other.exe", "other.lnk", "broken"] {
+    try stream_file(dir + "/" + name, consume) catch {
+      FileNotFound => ()
+      err => raise err
+    } noraise {
+      _ => fail("unexpected input for " + name)
+    }
+  }
+  for name in [base + "/", base + "/."] {
+    try stream_file(name, consume) catch {
+      FileNotDirectory => ()
+      err => raise err
+    } noraise {
+      _ => fail("ordinary suffixed file accepted as a directory")
+    }
+  }
+  assert_eq(seen, ["from suffix", "exact"])
 }

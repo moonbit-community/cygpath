@@ -1,7 +1,7 @@
 # newlib sorting attribution
 
-The private `msys_mount_qsort`, median selection, swap, and insertion helpers in
-`lib/msys_mount.mbt` adapt the BSD-3-Clause sorting implementation from
+The private `mount_qsort`, median selection, swap, and insertion helpers in
+`lib/mount_order.mbt` adapt the BSD-3-Clause sorting implementation from
 [newlib `qsort.c`](https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/newlib/libc/search/qsort.c).
 The copyright notice, conditions, and disclaimer are retained in
 [LICENSE.txt](LICENSE.txt) and must accompany binary distributions.
@@ -17,7 +17,9 @@ total order. No upstream C code is compiled or linked into the product.
 
 The mount comparison rules are independently implemented from the behavior in
 [the same pinned runtime's `mount.cc`](https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/cygwin/mount.cc).
-An explicit context does not recreate unavailable user/system flags or original
-host insertion order. Equal native aliases therefore use their supplied context
-order as a deterministic tie break; actual official-process comparison remains
-the acceptance gate for measured contexts.
+Both pinned runtimes use the same newlib sorter. An installation snapshot
+starts with fstab insertion order and uses the ownership comparison when names
+tie. Cygwin sorts by descending byte length and then byte spelling in each
+direction. MSYS2 applies its own directional comparisons. Explicit mounts
+without ownership retain their declared priority on exact ties.
+[Cygwin comparison functions](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1372-L1454)

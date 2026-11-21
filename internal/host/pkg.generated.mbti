@@ -1,16 +1,40 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "ZSeanYves/cygpath/internal/host"
 
+import {
+  "ZSeanYves/cygpath/lib",
+}
+
 // Values
 pub fn args() -> Array[String]
 
+pub async fn convert_installed(@lib.Context, String, @lib.InputSyntax, Bool) -> Result[String, String]
+
 pub fn exit(Int32) -> Unit
+
+pub async fn installation_context(@lib.Profile) -> @lib.Context?
+
+pub async fn long_name(String) -> String
+
+pub async fn network_server_exists(String) -> Bool
+
+pub async fn nt_null_presence() -> Bool?
+
+pub async fn report_mode(String, @lib.Context, installed~ : Bool, server_lookup? : async (String) -> Bool) -> Unit
+
+pub async fn short_name(String) -> String?
 
 pub async fn stream_file(String, async (String) -> Unit) -> Int32
 
-pub async fn stream_file_until(String, async (String) -> Bool) -> Int32
+pub async fn stream_file_bytes_until(String, async (Bytes, Int32) -> Bool, installation? : @lib.Context, virtual_context? : @lib.Context) -> Int32
+
+pub async fn stream_file_until(String, async (String) -> Bool, installation? : @lib.Context) -> Int32
+
+pub async fn system_folder(String) -> String?
 
 pub async fn write_stderr(String) -> Unit
+
+pub async fn write_stderr_bytes(Bytes) -> Unit
 
 pub async fn write_stdout(String) -> Unit
 
@@ -21,9 +45,14 @@ pub(all) suberror HostError {
   FileNotFound
   FileAccessDenied
   FileNotDirectory
+  NoSuchDeviceOrAddress
+  FileLinkLoop
+  FileNameTooLong
   ReadError(source~ : String)
   WriteError(stream~ : String)
   InvalidEncoding(source~ : String, line~ : Int32)
+  InstallationError(String)
+  NameLookupUnavailable(String)
 }
 pub fn HostError::diagnostic(Self) -> String
 pub fn HostError::exit_code(Self) -> Int32

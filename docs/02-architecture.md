@@ -16,7 +16,17 @@ Product code must not introduce C/C++ stubs, project-defined foreign imports, na
 
 Validation tooling may launch official programs and independent diagnostic probes. In particular, the Windows code-page probe uses PowerShell/.NET interop only to observe Win32 behavior and retains its raw evidence. That code is not imported or called by the product. No upstream C implementation is compiled or linked into the product.
 
-Wasm is the default delivery target. Native is a same-source consistency target and an optional development artifact. Root and `internal/host` declare Wasm/Native support because their I/O runtime supports those targets. The library, CLI, and encoder are pure packages checked on all standard targets; that does not imply JavaScript or Wasm GC command-line I/O support. Raw bytes, exit status, argv, and file behavior still require real backend/host verification.
+The only executable target is linear-memory Wasm, as accepted by `moonx`. The pure library, CLI parser and encoder can be checked independently on other targets. Raw bytes, exit status, argv and filesystem behavior still require executing the Wasm artifact on each supported host.
+
+The November 2026 audit verified directory enumeration, `kind` and `realpath` through `core/async/fs` on linear-memory Wasm. On macOS the runner identified a dangling symlink and resolved a live symlink to its target. [Registered imports in moonrun 738607b](https://github.com/moonbitlang/moon/blob/738607b/crates/moonrun/src/async_api/registry.rs).
+
+`x/fs.identity` merged into upstream on 2026-11-20. In the macOS Wasm probe a file, its hardlink and a followed symlink had equal identities. Querying the symlink with `follow_symlink=false` returned a distinct identity. On 2026-11-21 the latest Mooncakes version was `0.5.8`, which predates the API. Adoption in cygpath waits for the coordinated `x` release that exports it. [Upstream PR](https://github.com/moonbitlang/x/pull/373) · [Mooncakes](https://mooncakes.io/docs/moonbitlang/x) · [Adoption issue](https://github.com/moonbit-community/cygpath/issues/10).
+
+On Windows the upstream API supports identity comparisons on NTFS. A missing identity returns `None`, a failed lookup raises `IOError`, and other filesystems including ReFS can return a non-unique identifier. The post-release Windows test therefore needs to record the fixture's filesystem before using identity equality. [Merged API contract](https://github.com/moonbitlang/x/blob/822f3a7fa84873735955688e09f57e0bbeb685a8/fs/stat.mbt#L183-L209).
+
+The host adapter resolves the NT `SystemRoot` link through `core/async/fs.realpath` for POSIX system-directory output. The CLI converts the resulting path through its current mount context. An explicit Windows test compares both directory selectors and their numeric equivalents with Cygwin. Raw API spelling, registered shell-folder locations, alternate 8.3 names, active Windows code pages and Cygwin session mounts still require separate queries. [Folder behavior and evidence](04-api-and-cli.md#5-options-and-precedence).
+
+`raw_fd` takes a runtime-owned descriptor. Cygwin's `-M` follows links and asks the resolved path for its binmode. [Cygwin implementation](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/external.cc#L403-L415).
 
 ## 3. Structure by Responsibility
 
@@ -32,7 +42,7 @@ cygpath/
 │   ├── types.mbt, error.mbt          Public types and checked errors
 │   ├── context.mbt                  Immutable validated Context
 │   ├── parse.mbt, normalize.mbt     Grammar and lexical resolution
-│   ├── mount.mbt, msys_mount.mbt     Profile-specific mount ordering/mapping
+│   ├── mount.mbt, mount_order.mbt     Profile-specific mount ordering/mapping
 │   ├── filename_encoding.mbt        Filename private-use-area mapping
 │   ├── convert.mbt, render.mbt      Conversion and output spelling
 │   ├── path_list.mbt                Directional lists
@@ -46,7 +56,7 @@ cygpath/
 │   ├── contracts/                   Independent portable process contracts
 │   └── oracle/                      Immutable inputs and frozen P3 scope
 ├── scripts/                         .mbtx automation only
-│   ├── check_cli.mbtx               Portable processes/backend comparison
+│   ├── check_cli.mbtx               Portable Wasm process contracts
 │   ├── check_consumer.mbtx          External public-library consumer
 │   ├── oracle.mbtx                  Official collection/replay/fault drills
 │   ├── ci_oracle.mbtx               Measured Windows contexts and strict gate
@@ -74,6 +84,7 @@ flowchart TD
     Main --> Host[internal/host: standard I/O]
     CLI --> Core
     CLI --> Encoder
+    Host --> Core
     Host --> Runtime[Verified MoonBit runtime APIs]
     Core --> Std[Pure MoonBit core facilities]
     Encoder --> Std
@@ -82,12 +93,12 @@ flowchart TD
 - `lib/` imports no environment, filesystem, process, CLI, or host facilities.
 - `internal/cli` parses already-tokenized argv, validates supported code pages, and operates on explicit values. It performs no I/O.
 - `internal/encoding` maps text to bytes without consulting the locale, filesystem, or operating-system codec.
-- `internal/host` performs argv, file/stream, and exit operations. It does not interpret drives, mounts, or cygdrive and does not depend on CLI or library business types.
+- `internal/host` owns argv, streams, exit and optional Windows installation discovery. It reads fstab into a library `Context`; the library never calls the host.
 - Root composes those packages. No lower package depends on the executable root.
 
-`moonbitlang/async@0.22.4` supplies the async runtime and general file/stream facilities; `moonbitlang/x@0.5.5` supplies process exit. Both declare Apache-2.0. Test scripts additionally use process APIs and SHA-256. Their backend internals are runtime implementation details, not project-owned conversion FFI. Product conversion launches no subprocesses.
+The Wasm executable uses the toolchain's experimental `moonbitlang/core/async` for files and streams and `moonbitlang/core/env` for process context and exit. External `async` and `x/crypto` are standalone tooling dependencies only. Product conversion launches no subprocesses.
 
-The 111 archived table identities retain separate Unicode/Microsoft notices; 110 legacy numeric pages are enabled plus UTF-8. The MSYS2 sorting helpers adapt BSD-3-Clause newlib code with its full notice retained. These permissions do not relicense GPL/LGPL Cygwin runtime implementation. See [provenance](01-upstream-and-scope.md#3-licensing-and-implementation-provenance).
+The encoder uses 110 tables from the original archive and three Windows mappings from Unicode ICU data. The ISO-2022-JP, ISO-2022-KR and HZ encoders reuse the Shift-JIS, Korean and Chinese tables respectively. UTF-8, UTF-7 and GB18030-2000 have separate encoders. The MSYS2 sorting helpers adapt BSD-3-Clause newlib code with its full notice retained. [Data and implementation provenance](01-upstream-and-scope.md#3-licensing-and-implementation-provenance).
 
 ## 5. Data Flow and State Ownership
 
@@ -102,7 +113,7 @@ Context stores the profile, drive prefix, ordered mount snapshots, and optional 
 
 Converter owns mutable per-file option state separately from Context. With `-o`, a record beginning with a hyphen is divided at its first whitespace into an option token and the remaining argument. Parsing such a record resets conversion flags while retaining the prepared Context; following plain records reuse the new flags. There is no shell quoting or arbitrary argv tokenization. A help/version/control stop prevents later records from being decoded or executed.
 
-Input follows the measured text-mode file loop: CRLF translation, retained BOM content, final unterminated records, C-string NUL interpretation, and chunks bounded by the official 8192-byte record buffer. Invalid UTF-8 is rejected deterministically before conversion; undefined upstream memory contents are not simulated. An empty stream succeeds with no output. Chapter 04 defines the exact empty-record, `-i`, and diagnostic behavior.
+The host passes each record's bytes and line number to the CLI after CRLF translation, truncation at the first NUL and the 8192-byte record limit. BOM content and final unterminated records survive. The CLI selects filename decoding after applying per-record options. An empty stream succeeds with no output. Chapter 04 defines the empty-record, `-i` and diagnostic behavior.
 
 A single library call returns a complete result or an error. A list is atomic within its call. A batch/file can already have emitted earlier successful records when a later record fails; those bytes remain. A write failure stops processing and must not cause a batch retry that duplicates output.
 
@@ -110,11 +121,38 @@ A single library call returns a complete result or an error. A list is atomic wi
 
 An unmatched Windows drive path needs only the selected profile and prefix to become a POSIX drive path. A POSIX-rooted input outside that prefix needs a matching root or mount for Windows output. Ordinary relative paths and current-drive-rooted paths use the relevant explicitly supplied cwd when resolution requires it. Missing necessary context reports `MissingContext`; the build host's cwd is never substituted.
 
-`--root` declares the root mount; repeatable `--mount POSIX WINDOWS` uses two values to avoid drive-colon ambiguity. `--mount-case` selects sensitive or ASCII-insensitive matching for an explicit mount. Context construction rejects invalid/duplicate mappings and drive-prefix collisions. Per-drive cwd metadata is validated without changing the drive-root conversion rule.
+`--root` declares the root mount; repeatable `--mount POSIX WINDOWS` uses two values to avoid drive-colon ambiguity. `--mount-case` selects sensitive, ASCII-insensitive, or Windows-insensitive comparison for an explicit mount. Context construction rejects invalid/duplicate mappings and drive-prefix collisions. Per-drive cwd metadata is validated without changing the drive-root conversion rule.
 
-Cygwin and MSYS2 are separate semantic profiles, including mount ordering and mapped-root trailing separators as well as default drive prefixes. The MSYS2 implementation preserves the sorting behavior required by the measured explicit contexts; a generic stable longest-prefix sort is not equivalent. Context does not represent arbitrary runtime user/system provenance or recover hidden insertion history. New environment combinations require their own evidence.
+Cygwin and MSYS2 have separate mount ordering, mapped-root trailing separators
+and default drive prefixes. An installation snapshot preserves the insertion
+slot and user/system ownership of each entry. A user entry can coexist with
+a later system entry at the same name. Replacing an entry of the same
+ownership keeps its slot. The shared runtime table has 64 slots, including
+the root and automatic mounts. An insertion that exceeds capacity stops
+the current fstab file. The next file can still update existing entries.
+[Cygwin mount insertion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1504-L1555) · [Table size](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/local_includes/mount.h#L160-L173).
 
-No product parser reads fstab, registry entries, `HOME`, or `MSYSTEM` to guess context. The independent Windows harness measures the installed environment and transcribes a documented equivalent Context; this separation makes the same request reproducible across backends.
+With an explicitly selected Windows Cygwin installation (`CYGPATH_ROOT`), the host reads system fstab and optionally `fstab.d/<CYGPATH_USER>`, then maps the physical cwd. The mount initialization order and fstab field semantics are based on [Cygwin mount.cc](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc). Explicit CLI mount/cwd/prefix options bypass installation I/O. Nothing infers a root from `HOME`, `MSYSTEM` or the build host. The snapshot excludes in-memory session mounts. Ordinary absolute `bind` sources are resolved against preceding entries only; an otherwise unmodified bind inherits its source flags, not its immutability. Bind resolution is lexical, not `realpath`. The Windows oracle includes a disposable, separate Cygwin installation for bind comparisons; portable fixtures do not establish Windows parity.
+
+For a `usertemp` mount both runtimes call `GetTempPathW`. The adapter qualifies
+the first nonempty value of `TMP`, `TEMP`, or `USERPROFILE` against the Windows
+process cwd. Parent traversal stops at the drive root or UNC share. On another
+drive, a relative name uses that drive’s saved directory when present and
+its root otherwise. The temporary directory can be missing and a symlink retains its name.
+The Windows-directory fallback when all three variables are absent still
+requires a host query. The disposable Windows comparison exercises four
+path spellings per runtime, plus a drive-relative name when a second drive
+is available.
+[Cygwin mount reader](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1258-L1273) · [Windows temp lookup](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettemppathw) · [Windows path normalization](https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#apply-the-current-directory).
+
+With `--profile=msys2`, the same host adapter checks for
+`usr/bin/msys-2.0.dll`. The runtime initially uses `/cygdrive`. The standard
+MSYS2 fstab sets it to `/`. After the system fstab, MSYS2 supplies a missing
+`/bin` mount pointing to `usr/bin` under the effective root. A two-column
+MSYS2 fstab record that ends immediately after the target creates a
+case-insensitive system mount, including in the per-user file. Live mounts
+created after startup are outside this file-based snapshot.
+[Runtime initialization](https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/cygwin/mount.cc#L545-L588) · [Two-field records](https://github.com/msys2/msys2-runtime/blob/c770e1b9fa537fff9287c1fd40ebc84ac498fcb6/winsup/cygwin/mount.cc#L1212-L1232) · [Distributed fstab](https://github.com/msys2/MSYS2-packages/blob/master/filesystem/fstab).
 
 ## 7. Algorithms and Resource Policy
 
@@ -130,6 +168,6 @@ Do not add tries, caches, parallel conversion, resident services, or plugin syst
 
 The implemented P1/P2 architecture is exercised by portable contracts and real processes on Linux, macOS, and Windows. The completed P3 gate covers the frozen explicit-context matrix with separate Cygwin/MSYS2 default/custom environments, both backends, collection/replay, coverage audits, and real Windows fault drills. Supported-domain comparisons must be exact. Malformed UTF-8 and unavailable CP29001 retain raw observations but pass only their separate deterministic rejection contracts.
 
-Source, tests, generated interfaces, documentation, and evidence must describe the same behavior. Historical discovery approvals do not waive new supported-domain differences. Feasible unimplemented algorithms such as stateful encodings or GB18030 remain extensions outside this freeze; 8.3 and system-directory queries additionally need unavailable equivalent host facilities. Neither category authorizes product FFI or command fallbacks.
+Source, tests, generated interfaces, documentation, and evidence must describe the same behavior. Historical discovery approvals do not waive new supported-domain differences. Feasible unimplemented algorithms such as stateful encodings remain extensions outside this freeze; 8.3 and system-directory queries additionally need unavailable equivalent host facilities. Neither category authorizes product FFI or command fallbacks.
 
 Release is separate: the repository owner chooses and publishes the version. Preserve root `main.mbt`, all required third-party notices, and the root command coordinate. Exact-version `moonx` retrieval and execution remain post-publication acceptance, not a consequence of green repository CI.

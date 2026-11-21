@@ -1,26 +1,27 @@
 ----
 import {
-  "moonbitlang/async@0.22.4",
-  "moonbitlang/async@0.22.4/fs",
-  "moonbitlang/async@0.22.4/process",
-  "moonbitlang/async@0.22.4/stdio",
+  "moonbitlang/async@0.22.10",
+  "moonbitlang/async@0.22.10/fs",
+  "moonbitlang/async@0.22.10/process",
+  "moonbitlang/async@0.22.10/stdio",
   "moonbitlang/core/env",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/encoding/hex",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "moonbitlang/x@0.5.5/crypto",
-  "moonbitlang/x@0.5.5/sys",
+  "moonbitlang/x@0.5.8/crypto",
 }
 ----
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Artifact {
   path : String
   sha256 : String
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Upstream {
   executable : Artifact
   runtime_library : Artifact
@@ -31,9 +32,10 @@ struct Upstream {
   version_stdout_sha256 : String
   version_stderr_sha256 : String
   version_exit_code : Int32
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Project {
   artifact : Artifact
   launcher : Artifact
@@ -43,9 +45,10 @@ struct Project {
   module_version : String
   moon_version : String
   build_mode : String
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct HostSnapshot {
   os : String
   os_version : String
@@ -67,16 +70,18 @@ struct HostSnapshot {
   test_volume : String
   actual_short_names : String
   symlinks_junctions : String
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Mount {
   posix : String
   windows : String
   case_policy : String
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct CoreContext {
   profile : String
   drive_prefix : String
@@ -84,9 +89,10 @@ struct CoreContext {
   posix_cwd : String?
   windows_cwd : String?
   drive_cwds : Map[String, String]
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Manifest {
   schema_version : Int32
   profile : String
@@ -100,9 +106,10 @@ struct Manifest {
   context_mapping_evidence : String
   capabilities : Array[String]
   deadline_ms : Int32
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Fixture {
   case_id : String
   category : String
@@ -120,9 +127,10 @@ struct Fixture {
   boundary_stderr : String?
   boundary_exit : Int32?
   known_difference_id : String?
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Suite {
   schema_version : Int32
   validation_kind : String
@@ -130,16 +138,18 @@ struct Suite {
   source_url : String
   source_revision : String
   cases : Array[Fixture]
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Blob {
   path : String
   length : Int32
   sha256 : String
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Observation {
   execution_status : String
   reason : String?
@@ -156,9 +166,10 @@ struct Observation {
   stdin : Blob
   stdout : Blob
   stderr : Blob
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct CaseResult {
   case_id : String
   status : String
@@ -166,9 +177,10 @@ struct CaseResult {
   known_difference_id : String?
   oracle : Observation?
   project : Observation?
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
+#derive(@json.FromJson, ToJson)
 struct Run {
   schema_version : Int32
   mode : String
@@ -185,7 +197,7 @@ struct Run {
   complete : Bool
   integrity_verified : Bool
   cases : Array[CaseResult]
-} derive(@json.FromJson, ToJson)
+}
 
 ///|
 fn require(value : Bool, reason : String) -> Unit raise {
@@ -410,7 +422,8 @@ fn validate_manifest(manifest : Manifest) -> Unit raise {
   for mount in manifest.context.mounts {
     require(
       mount.case_policy == "sensitive" ||
-      mount.case_policy == "ascii-insensitive",
+      mount.case_policy == "ascii-insensitive" ||
+      mount.case_policy == "windows-insensitive",
       "unknown explicit mount case policy",
     )
     require(
@@ -1733,7 +1746,7 @@ async fn main {
       @stdio.stderr.write("oracle: " + error.to_string() + "\n") catch {
         _ => ()
       }
-      @sys.exit(1)
+      @env.exit(1)
     }
   }
 }

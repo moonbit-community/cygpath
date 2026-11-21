@@ -1,4 +1,17 @@
 import {
+  "ZSeanYves/cygpath/internal/filename",
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/encoding/utf8",
   "ZSeanYves/cygpath/lib",
   "ZSeanYves/cygpath/internal/encoding",
 }
+
+import {
+  "moonbitlang/core/async",
+} for "test"
+
+supported_targets = "wasm"
+
+options(
+  "allow-experimental-packages": true,
+)

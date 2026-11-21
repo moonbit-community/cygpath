@@ -52,11 +52,11 @@ The pure encoding tables retain their source/license provenance. Unsupported cod
 
 ### Host and executable
 
-The thin root `main.mbt` composes the pure request/engine with official MoonBit runtime argv, files, streams, and process exit. It does not discover conversion context.
+The thin root `main.mbt` composes the pure request/engine with runtime argv, files, streams and process exit. It asks the host for a mount snapshot only for eligible Cygwin requests; explicit context remains offline.
 
 Tests exercise UTF-8 input, retained BOM content, CRLF translation, final records, empty streams and records, NUL visibility, fixed input-buffer boundaries, malformed UTF-8, immutable file input, per-record options, missing files, and closed stdout. Output is raw bytes in the selected encoding with LF record separators. Earlier successful records survive a later failure; lists retain their documented atomicity.
 
-The 57 portable process fixtures run against actual Wasm/Native artifacts. The collector varies irrelevant cwd/HOME/MSYSTEM state, checks expected bytes and integer exits, then compares the backends separately. These contracts are independently specified; they are not official-tool recordings.
+The portable process fixtures run against the Wasm artifact. The collector isolates cwd/HOME/MSYSTEM and disables installation selection, then checks expected bytes and integer exits. These contracts are independently specified; they are not official-tool recordings.
 
 ## Official Windows comparison
 
@@ -93,9 +93,9 @@ Five real Windows fault drills pass per job: partial-output timeout with termina
 
 ## Host, backend, and public API gates
 
-The root executable and host adapter support Wasm and Native. All-target checking of the pure packages does not imply executable support for JavaScript or Wasm GC.
+The root executable and host adapter target linear-memory Wasm only. All-target checking of the pure packages does not expand executable support.
 
-The current three-host Check run passed 99 MoonBit tests per backend, 57 portable fixtures per backend, 57 backend comparisons per host, public-interface checks, and a separate public API consumer for both backends. The consumer uses the local workspace dependency; it does not prove registry retrieval.
+The historical three-host Check run at `b32dd74` passed 99 MoonBit tests per backend, 57 portable fixtures per backend, 57 backend comparisons per host, public-interface checks, and a separate public API consumer for both backends. The consumer uses the local workspace dependency; it does not prove registry retrieval.
 
 Retain the dependency direction: public `lib` owns its types and has no host/CLI/root dependencies; CLI depends on `lib`; the executable composes CLI, encoding, and host adapters. Native must not privately expand conversion capabilities.
 
@@ -104,14 +104,12 @@ Run Moon commands sequentially:
 ```text
 moon check --target all --deny-warn
 moon test --target wasm --deny-warn
-moon test --target native --deny-warn
 moon run --deny-warn scripts/oracle.mbtx self-test
 moon run --deny-warn scripts/ci_oracle.mbtx self-test
 moon test --deny-warn scripts/check_cli.mbtx
 moon run --deny-warn scripts/check_consumer.mbtx _build/consumer-new
 moon build --target wasm --release --deny-warn
-moon build --target native --release --deny-warn
-moon run scripts/check_cli.mbtx --wasm <absolute-wasm-artifact> --native <absolute-native-artifact> --out <new-directory>
+moon run scripts/check_cli.mbtx --wasm <absolute-wasm-artifact> --out <new-directory>
 moon info --target all
 moon fmt
 ```

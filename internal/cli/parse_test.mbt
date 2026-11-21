@@ -114,28 +114,77 @@ test "identical output formats repeat and conflicting formats fail" {
 ///|
 test "every unavailable option is recognized" {
   for
-    option in [
-      "-d", "-s", "-l", "-M", "-D", "-H", "-O", "-P", "-S", "-W", "--dos", "--short-name",
-      "--long-name", "--mode", "--desktop", "--homeroot", "--mydocs", "--smprograms",
-      "--sysdir", "--windir",
-    ] {
-    assert_true(parse_failure(["-w", option, "x"]) is UnsupportedCapability(_))
-  }
-  for
     args in [
-      ["-t", "dos", "x"],
-      ["--type=dos", "x"],
-      ["-F", "1"],
-      ["--folder=1"],
+      ["-D"],
+      ["-H"],
+      ["-O"],
+      ["-P"],
+      ["--folder=5"],
       ["-c", "1"],
       ["--close=1"],
       ["-wC", "ANSI", "x"],
-      ["-w", "--codepage=0", "x"],
     ] {
     assert_true(parse_failure(args) is UnsupportedCapability(_))
   }
   assert_true(parse_failure(["--unknown"]) is UnknownOption("--unknown"))
   assert_true(parse_failure(["-z"]) is UnknownOption("-z"))
+}
+
+///|
+test "close uses the hexadecimal prefix and preserves ordinary actions for null and pseudo handles" {
+  for
+    value in [
+      "", "xyz", "0x", " \t+0X00trail", "-0", "-1", "-2", "fffffffffffffffe!", "10000000000000000",
+    ] {
+    assert_eq(
+      request(["--close", value, "-u", "C:/x"]).prepare().convert("C:/x"),
+      "/cygdrive/c/x",
+    )
+  }
+  for value in ["0x10tail", "bad", "ffffffff", "-3"] {
+    assert_true(
+      parse_failure(["-c", value, "-c0", "-h"]) is UnsupportedCapability(_),
+    )
+  }
+  assert_true(@cli.parse_args(["-c0", "-h"]) is Help)
+  assert_true(parse_failure(["-c0"]) is MissingInput)
+  assert_true(@cli.parse_args(["-ic0"]) is ExitSuccess)
+}
+
+///|
+test "system folders parse the final selector, validating operands before its ID" {
+  for id in ["36", "044", "0x24", "  +0X24", "4294967332"] {
+    assert_true(request(["-F", id]).input() is Folder(FixedShellDirectory("")))
+  }
+  assert_true(request(["-Fbad", "-S"]).input() is Folder(SystemDirectory))
+  assert_true(request(["-Fbad", "-f-"]).input() is File("-"))
+  for id in ["", "0x", "08", "00x11", "0b10", "-1", "36 ", "2_4", "+"] {
+    assert_true(
+      parse_failure(["-iF", id]) is InvalidFolderId(value) && value == id,
+    )
+  }
+  assert_true(parse_failure(["-Fbad", "name"]) is Usage)
+  assert_true(@cli.parse_args(["-iW", "name"]) is ExitSuccess)
+  assert_true(request(["-D", "-A", "-F021"]).input() is Folder(VirtualFolder))
+  for id in ["0x4029", "0x8029", "0x3028"] {
+    assert_true(parse_failure(["-F", id]) is UnsupportedCapability(_))
+  }
+}
+
+///|
+test "installation selection keeps the requested profile and yields to explicit mounts" {
+  assert_true(request(["-w", "/bin"]).installation_profile() is Some(Cygwin))
+  assert_true(
+    request(["--profile=msys2", "-w", "/bin"]).installation_profile()
+    is Some(Msys2),
+  )
+  assert_true(
+    request(["--profile=msys2", "--root=C:/r", "-w", "/bin"]).installation_profile()
+    is None,
+  )
+  assert_true(
+    request(["--profile=msys2", "-F17"]).installation_profile() is None,
+  )
 }
 
 ///|
@@ -187,7 +236,13 @@ test "numeric code pages use the official decimal unsigned grammar" {
     assert_true(parse_failure(["-w", "-C", value, "name"]) is Usage)
     assert_true(@cli.parse_args(["-i", "-C", value, "name"]) is ExitSuccess)
   }
-  for value in ["", "-1", "4294967296", "18446744073709551616"] {
+  for value in ["0", "", "-0", "4294967296"] {
+    assert_eq(
+      request(["-wC1252", "-C", value, "name"]).prepare().codepage(),
+      65001,
+    )
+  }
+  for value in ["-1", "18446744073709551616"] {
     assert_eq(request(["-u", "-C", value, "C:/a"]).prepare().codepage(), 65001)
     assert_true(
       parse_failure(["-w", "-C", value, "name"]) is UnsupportedCapability(_),
@@ -196,7 +251,7 @@ test "numeric code pages use the official decimal unsigned grammar" {
 }
 
 ///|
-test "file and NAME are mutually exclusive and ignore suppresses empty operands" {
+async test "file and NAME are mutually exclusive and ignore suppresses empty operands" {
   assert_true(parse_failure([]) is MissingInput)
   assert_true(@cli.parse_args(["-i"]) is ExitSuccess)
   assert_true(@cli.parse_args(["-iuw", "x"]) is ExitSuccess)

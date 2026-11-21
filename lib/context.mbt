@@ -15,8 +15,12 @@ fn has_dot_components(path : ParsedPath) -> Bool {
 }
 
 ///|
-fn is_virtual_root(parts : Array[String]) -> Bool {
-  parts.get(0) is Some("dev" | "proc")
+fn is_reserved_posix_path(parts : Array[String]) -> Bool {
+  match parts {
+    ["dev", name, ..] => runtime_device_name(name)
+    ["proc", ..] => true
+    _ => false
+  }
 }
 
 ///|
@@ -26,11 +30,15 @@ pub fn Mount::new(
   posix : String,
   windows : String,
   case~ : MountCase = Sensitive,
+  text_mode~ : Bool = false,
+  system? : Bool,
 ) -> Mount raise ConversionError {
   let posix = context_path(posix, Posix, "mount.posix")
+  // Installed declarations participate in reverse lookup even when the
+  // runtime dispatches their POSIX spelling to a device before scanning mounts.
   guard posix.root == PosixRoot &&
     !has_dot_components(posix) &&
-    !is_virtual_root(posix.components) else {
+    (system is Some(_) || !is_reserved_posix_path(posix.components)) else {
     raise InvalidContext(
       field="mount.posix",
       reason="expected a non-virtual, dot-free absolute POSIX path",
@@ -43,7 +51,7 @@ pub fn Mount::new(
       reason="expected a dot-free drive-absolute or UNC path",
     )
   }
-  { posix, windows, case, }
+  { posix, windows, case, text_mode, system, }
 }
 
 ///|
@@ -51,6 +59,8 @@ fn parse_cwd(
   value : String?,
   syntax : InputSyntax,
   field : String,
+  drive_prefix? : Array[String],
+  nt_null? : Bool,
 ) -> ParsedPath? raise ConversionError {
   match value {
     None => None
@@ -62,8 +72,10 @@ fn parse_cwd(
           reason="working directory must be absolute",
         )
       }
-      let path = path.normalize()
-      if syntax == Posix {
+      let (path, _) = path.normalize(drive_prefix?, nt_null?) catch {
+        error => raise InvalidContext(field~, reason="\{Repr(error)}")
+      }
+      if syntax == Posix && !(virtual_node(path.components) is Some(Directory)) {
         validate_posix_namespace(path) catch {
           error => raise InvalidContext(field~, reason="\{Repr(error)}")
         }
@@ -74,7 +86,7 @@ fn parse_cwd(
 }
 
 ///|
-fn ordered_mounts(mounts : Array[Mount], windows~ : Bool) -> Array[Mount] {
+fn ordered_mounts(mounts : Array[Mount], windows~ : Bool) -> Array[Int32] {
   // Include the declaration index explicitly: sorting stability is not an API
   // dependency, and equal-length aliases must keep their declared priority.
   let indexed = mounts.mapi((i, mount) => (i, mount))
@@ -88,12 +100,14 @@ fn ordered_mounts(mounts : Array[Mount], windows~ : Bool) -> Array[Mount] {
       order
     }
   })
-  indexed.map(pair => pair.1)
+  indexed.map(pair => pair.0)
 }
 
 ///|
 /// Builds an immutable context. Collections are copied; the host cwd, mounts,
 /// environment variables and file system are never consulted.
+/// Supply `nt_null` for an observed present or absent NT null device. Omit
+/// it when the Windows host state is unknown.
 ///
 /// Cygwin defaults to `/cygdrive`, MSYS2 to `/`. Per-drive cwd keys are single
 /// ASCII letters, and each value must be absolute on that same drive.
@@ -101,7 +115,10 @@ fn ordered_mounts(mounts : Array[Mount], windows~ : Bool) -> Array[Mount] {
 /// cygpath's drive-root rule instead of the Win32 per-drive working directory.
 pub fn Context::new(
   profile~ : Profile = Cygwin,
+  nt_null? : Bool,
   drive_prefix? : String,
+  drive_text_mode~ : Bool = false,
+  drive_case~ : MountCase = WindowsInsensitive,
   mounts~ : Array[Mount] = [],
   posix_cwd? : String,
   windows_cwd? : String,
@@ -114,28 +131,36 @@ pub fn Context::new(
   let prefix = context_path(prefix, Posix, "drive_prefix")
   guard prefix.root == PosixRoot &&
     !has_dot_components(prefix) &&
-    !is_virtual_root(prefix.components) else {
+    !is_reserved_posix_path(prefix.components) else {
     raise InvalidContext(
       field="drive_prefix",
       reason="expected a non-virtual, dot-free absolute POSIX prefix",
     )
   }
-  let seen : Map[String, Unit] = Map([])
+  // An unscoped declaration occupies the name exclusively. A measured table
+  // can contain one user and one system entry at the same destination.
+  let seen : Map[String, Bool?] = Map([])
   for index, mount in mounts {
     let name = "/" + mount.posix.components.join("/")
-    if seen.contains(name) {
-      raise InvalidContext(
-        field="mounts[\{index}]",
-        reason="duplicate POSIX mount point",
-      )
+    if seen.get(name) is Some(previous) {
+      guard previous is Some(owner) && mount.system == Some(!owner) else {
+        raise InvalidContext(
+          field="mounts[\{index}]",
+          reason="duplicate POSIX mount point",
+        )
+      }
+      seen[name] = None
+    } else {
+      seen[name] = mount.system
     }
-    seen[name] = ()
     let conflicts = if prefix.components.is_empty() {
       mount.posix.components.get(0) is Some(drive) && is_drive(drive)
     } else {
       components_match(prefix.components, mount.posix.components, mount.case)
     }
-    if conflicts {
+    // An installed entry below the drive prefix is shadowed for POSIX input.
+    // Its native source still participates in Windows-to-POSIX lookup.
+    if conflicts && mount.system is None {
       raise InvalidContext(
         field="mounts[\{index}]",
         reason="mount overlaps reserved drive prefix",
@@ -164,22 +189,48 @@ pub fn Context::new(
         reason="cwd must be absolute on the keyed drive",
       )
     }
-    drive_paths[drive] = path.normalize()
+    drive_paths[drive] = path.normalize().0
   }
+  let use_runtime_order = profile == Msys2 ||
+    mounts.any(m => m.system is Some(_))
   {
     profile,
+    nt_null,
+    network_servers: {},
     drive_prefix: prefix.components,
-    posix_mounts: if profile == Msys2 {
-      msys_ordered_mounts(mounts, windows=false)
+    drive_text_mode,
+    drive_case,
+    mounts: mounts.copy(),
+    posix_mounts: if use_runtime_order {
+      runtime_mount_order(mounts, profile, windows=false)
     } else {
       ordered_mounts(mounts, windows=false)
     },
-    windows_mounts: if profile == Msys2 {
-      msys_ordered_mounts(mounts, windows=true)
+    windows_mounts: if use_runtime_order {
+      runtime_mount_order(mounts, profile, windows=true)
     } else {
       ordered_mounts(mounts, windows=true)
     },
-    posix_cwd: parse_cwd(posix_cwd, Posix, "posix_cwd"),
+    posix_cwd: parse_cwd(
+      posix_cwd,
+      Posix,
+      "posix_cwd",
+      drive_prefix=prefix.components,
+      nt_null?,
+    ),
     windows_cwd: parse_cwd(windows_cwd, Windows, "windows_cwd"),
   }
+}
+
+///|
+/// Record whether the Windows network-directory handler recognizes this
+/// server spelling, for POSIX parent traversal and absolute directory output.
+pub fn Context::with_network_server(
+  self : Context,
+  server : String,
+  present~ : Bool,
+) -> Context {
+  let network_servers = self.network_servers.copy()
+  network_servers[server] = present
+  { ..self, network_servers, }
 }

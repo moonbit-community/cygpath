@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ZSeanYves/cygpath/internal/filename"
+
+// Values
+pub fn contains_unpaired_surrogate(BytesView) -> Bool
+
+pub fn decode(BytesView) -> String
+
+pub fn encode(String) -> Bytes
+
+pub fn native_name(String) -> String
+
+pub fn wide_name(String) -> String?
+
+pub fn write_byte(StringBuilder, Int32) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

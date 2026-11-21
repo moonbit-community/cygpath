@@ -8,14 +8,22 @@ pub fn help_text() -> String {
   let text =
     #|Usage: cygpath [OPTION]... NAME...
     #|       cygpath [OPTION]... -f FILE
+    #|       cygpath [OPTION]... {-W|-S|-F ID}
     #|Convert Windows and POSIX paths using explicit, portable context.
     #|
     #|Output and input:
     #|  -u, --unix                 POSIX output (default)
     #|  -w, --windows              Windows output with backslashes
     #|  -m, --mixed                Windows output with forward slashes
-    #|  -t, --type TYPE            unix, windows, or mixed
+    #|  -M, --mode                 Report text/binary mode using a selected installation
+    #|  -W, --windir               Output the Windows directory as a POSIX path
+    #|  -S, --sysdir               Output the system directory as a POSIX path
+    #|  -F, --folder ID            Query a supported Windows shell folder ID
+    #|  -t, --type TYPE            unix, windows, mixed, or dos
     #|  -p, --path                 Convert each NAME as a path list
+    #|  -l, --long-name            Expand ordinary short names on a Windows host
+    #|  -d, -s, --short-name       Query DOS names (dot operands and drive roots supported)
+    #|  -c, --close HANDLE         Accept null and current process/thread pseudo handles
     #|  -a, --absolute             Resolve relative paths using supplied cwd
     #|  -U, --proc-cygdrive        Use /proc/cygdrive for drive fallback
     #|  -r                        Prefix single Windows paths with \\\\?\\
@@ -31,11 +39,13 @@ pub fn help_text() -> String {
     #|      --profile cygwin|msys2 Select drive-prefix profile
     #|      --root WINDOWS        Mount / at an absolute Windows path
     #|      --mount POSIX WINDOWS Add an explicit mount (repeatable)
-    #|      --mount-case POSIX POLICY sensitive or ascii-insensitive
+    #|      --mount-case POSIX POLICY sensitive, ascii-insensitive, or windows-insensitive
     #|      --drive-prefix POSIX  Override the drive-prefix profile
     #|      --posix-cwd POSIX      Supply an absolute POSIX cwd
     #|      --windows-cwd WINDOWS Supply an absolute Windows cwd
     #|      --drive-cwd DRIVE WIN Validate per-drive cwd metadata (repeatable)
+    #|On Windows, CYGPATH_ROOT selects an installation for the requested profile.
+    #|Explicit mounts, prefix or cwd take precedence. CYGPATH_USER selects the user fstab.
     #|
     #|Options may follow NAME arguments. -- ends parsing. Short options may
     #|be combined; option values may be attached. No cwd or root is guessed.
@@ -44,17 +54,17 @@ pub fn help_text() -> String {
     #|Single paths with a drive prefix or backslashes are recognized as Windows.
     #|Absolute/POSIX conversion anchors C:name at C:/; drive-cwd does not alter it.
     #|Output uses LF records. -C affects Windows output; POSIX stays UTF-8.
-    #|Numeric pages use the generated Microsoft mapping catalog (95 enabled
-    #|Windows pages plus 15 Unicode pages and UTF-8/65001); unsupported or
-    #|unavailable pages (including 29001) are errors.
+    #|Numeric pages include 115 table-based pages, Symbol (42), ISO-2022-JP
+    #|(50220-50222), ISO-2022-KR (50225), HZ (52936), GB18030-2000 (54936),
+    #|UTF-7 (65000), and UTF-8 (65001). -C 0 restores the default UTF-8 output.
+    #|Unavailable pages (including 29001) are errors.
     #|-f cannot be combined with NAME. No shell quoting is applied to records.
     #|
     #|Recognized but unsupported:
-    #|  -d/--dos, -s/--short-name, -l/--long-name,
-    #|  -M/--mode, -c/--close HANDLE, ANSI/OEM host code-page selection in
-    #|  Windows output,
+    #|  Windows 8.3 alias records, closing real inherited handles,
+    #|  ANSI/OEM host code-page selection in Windows output,
     #|  -D/--desktop, -H/--homeroot, -O/--mydocs, -P/--smprograms,
-    #|  -S/--sysdir, -W/--windir, -F/--folder ID.
+    #|  Windows/mixed system-directory spelling and other shell folder lookups.
     #|-A/--allusers has no effect on ordinary path conversion.
     #|The upstream --root-local long spelling is rejected; use -r.
     #|

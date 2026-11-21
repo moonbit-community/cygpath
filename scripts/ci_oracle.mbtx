@@ -1,19 +1,19 @@
 ----
 import {
-  "moonbitlang/async@0.22.4",
-  "moonbitlang/async@0.22.4/fs",
-  "moonbitlang/async@0.22.4/process",
-  "moonbitlang/async@0.22.4/stdio",
+  "moonbitlang/async@0.22.10",
+  "moonbitlang/async@0.22.10/fs",
+  "moonbitlang/async@0.22.10/process",
+  "moonbitlang/async@0.22.10/stdio",
   "moonbitlang/core/env",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "moonbitlang/x@0.5.5/crypto",
-  "moonbitlang/x@0.5.5/sys",
+  "moonbitlang/x@0.5.8/crypto",
 }
 ----
 
 ///|
+#derive(ToJson)
 struct Probe {
   program : String
   argv : Array[String]
@@ -30,9 +30,10 @@ struct Probe {
   start_unix_ms : UInt64
   elapsed_ms : Int64
   deadline_ms : Int32
-} derive(ToJson)
+}
 
 ///|
+#derive(ToJson)
 struct GateCase {
   profile : String
   suite : String
@@ -49,7 +50,7 @@ struct GateCase {
   project_stdout_sha256 : String?
   project_stderr_sha256 : String?
   project_exit_code : Int32?
-} derive(ToJson)
+}
 
 ///|
 fn require(condition : Bool, message : String) -> Unit raise {
@@ -334,8 +335,13 @@ fn mounted_context(raw : String, prefix : String) -> Array[Json] {
         let posix = trimmed(tail[0].to_owned())
         let windows = path_text(trimmed(sides[0].to_owned()))
         let ordinary = posix.has_prefix("/") &&
-          posix != "/dev" &&
-          !posix.has_prefix("/dev/") &&
+          (
+            !posix.has_prefix("/dev/") ||
+            posix == "/dev/shm" ||
+            posix.has_prefix("/dev/shm/") ||
+            posix == "/dev/mqueue" ||
+            posix.has_prefix("/dev/mqueue/")
+          ) &&
           posix != "/proc" &&
           !posix.has_prefix("/proc/") &&
           !drive_mount(posix, prefix)
@@ -347,7 +353,7 @@ fn mounted_context(raw : String, prefix : String) -> Array[Json] {
             "posix": posix,
             "windows": windows,
             "case_policy": if tail[1].contains("posix=0") {
-              "ascii-insensitive"
+              "windows-insensitive"
             } else {
               "sensitive"
             },
@@ -536,7 +542,7 @@ async fn validate_run(
           if domain == "malformed-utf8" {
             gate_status = "input-domain-boundary"
             reason = Some(
-              "malformed UTF-8 is outside upstream defined conversion; raw oracle observation retained and strict project rejection verified independently",
+              "Unix-output wide conversion has no defined result for this record; raw oracle observation retained and project rejection verified independently",
             )
           } else {
             gate_status = "capability-boundary"
@@ -593,8 +599,8 @@ async fn validate_run(
 fn parse_options(args : ArrayView[String]) -> Map[String, String] raise {
   let options : Map[String, String] = Map([])
   let valid = [
-    "--profile", "--root", "--wasm", "--native", "--moon", "--moonrun", "--out",
-    "--source-revision", "--context-variant",
+    "--profile", "--root", "--wasm", "--moon", "--moonrun", "--out", "--source-revision",
+    "--context-variant",
   ]
   for index = 0; index < args.length(); {
     let name = args[index]
@@ -606,7 +612,7 @@ fn parse_options(args : ArrayView[String]) -> Map[String, String] raise {
     options[name] = args[index + 1]
     continue index + 2
   }
-  for name in valid[:7] {
+  for name in valid[:6] {
     require(options.contains(name), "required option absent: " + name)
   }
   options
@@ -670,14 +676,14 @@ async fn audit_scope(
         result.suite == suite && result.case_id == case_id
       })
       let identities : Map[String, Bool] = Map([])
-      let verified = matching.length() == 4 &&
+      let verified = matching.length() == 2 &&
         matching.all(result => {
           let key = result.mode + "/" + result.backend
           let unique = !identities.contains(key)
           identities[key] = true
           unique &&
           ["collect", "replay"].contains(result.mode) &&
-          ["wasm", "native"].contains(result.backend) &&
+          result.backend == "wasm" &&
           result.validation_domain == domain &&
           (if domain == "supported" {
             result.gate_status == "pass"
@@ -717,7 +723,7 @@ async fn audit_scope(
     "profile": profile,
     "context_variant": variant,
     "planned_cases": planned_cases,
-    "planned_comparisons": planned_cases * 4,
+    "planned_comparisons": planned_cases * 2,
     "out_of_variant_rows": @json.to_json(excluded),
     "scope_sha256": digest(bytes),
     "complete": complete,
@@ -725,6 +731,770 @@ async fn audit_scope(
     "unmapped_observations": @json.to_json(unmapped),
   })
   complete
+}
+
+///|
+async fn check_mount_owners(
+  output : String,
+  profile : String,
+  bin : String,
+  wasm : String,
+  moonrun : String,
+  cwd : String,
+  environment : Map[String, String],
+) -> Unit {
+  let tmp = @fs.tmpdir(prefix="cygpath-owners-")
+  defer @fs.rmdir(tmp, recursive=true)
+  let base = path_text(@fs.realpath(tmp))
+  let root = base + "/install"
+  let user_dir = base + "/long-user-path"
+  let sys_dir = base + "/s"
+  let (runtime_bin, dll) = if profile == "cygwin" {
+    (root + "/bin", "cygwin1.dll")
+  } else {
+    (root + "/usr/bin", "msys-2.0.dll")
+  }
+  for
+    dir in [
+      runtime_bin,
+      root + "/etc",
+      user_dir + "/child",
+      sys_dir + "/child",
+      base + "/normalized",
+    ] {
+    @fs.mkdir(dir, recursive=true)
+  }
+  for file in [dll, "cygpath.exe"] {
+    @fs.write_file(
+      runtime_bin + "/" + file,
+      @fs.read_file(bin + "/" + file),
+      create_mode=CreateNew,
+    )
+  }
+  for dir in [user_dir, sys_dir] {
+    @fs.write_file(dir + "/child/file", b"sample", create_mode=CreateNew)
+  }
+  @fs.write_file(base + "/normalized/leaf", b"sample", create_mode=CreateNew)
+  let escaped = base.replace_all(old=" ", new="\\040")
+  let fstab = user_dir.replace_all(old=" ", new="\\040") +
+    " /dual ntfs user,text\n" +
+    sys_dir.replace_all(old=" ", new="\\040") +
+    " /dual ntfs binary,posix=0\n" +
+    "/dual/child /copied none bind\n" +
+    escaped +
+    "/physical-alias /cygdrive/c/owner-probe ntfs text\n" +
+    "relative /invalid ntfs binary\n" +
+    escaped +
+    "/normalized /etc/fstab/../skipped-file ntfs binary\n" +
+    escaped +
+    "/normalized /missing/../skipped-missing ntfs binary\n" +
+    escaped +
+    "/ghost/../normalized /etc/../picked ntfs binary\n"
+  @fs.write_file(root + "/etc/fstab", fstab)
+  @fs.write_file(output + "/mount-owners.fstab", fstab)
+  let records = root + "/etc/records"
+  @fs.write_file(
+    records,
+    "-m /dual/file\n-m /DUAL/file\n-u " +
+    user_dir +
+    "/file\n-u " +
+    sys_dir +
+    "/file\n-m /copied/file\n-M /copied/file\n-m /cygdrive/c/owner-probe/file\n-u " +
+    base +
+    "/physical-alias/file\n-m /picked/leaf\n-m /skipped-file/leaf\n-m /skipped-missing/leaf\n-u " +
+    base +
+    "/normalized/leaf\n",
+  )
+  let (winner, mode) = if profile == "cygwin" {
+    (user_dir, "text")
+  } else {
+    (sys_dir, "binary")
+  }
+  let expected = [
+      winner + "/file",
+      sys_dir + "/file",
+      "/dual/file",
+      "/dual/file",
+      winner + "/child/file",
+      "/copied/file: " + mode,
+      "C:/owner-probe/file",
+      "/cygdrive/c/owner-probe/file",
+      base + "/normalized/leaf",
+      root + "/skipped-file/leaf",
+      root + "/skipped-missing/leaf",
+      "/picked/leaf",
+    ].join("\n") +
+    "\n"
+  let installed = environment.copy()
+  installed["CYGPATH_ROOT"] = root
+  let reference = probe(
+    output,
+    "mount-owners-oracle",
+    runtime_bin + "/cygpath.exe",
+    ["-of", records],
+    cwd,
+    environment,
+  )
+  let project = probe(
+    output,
+    "mount-owners-wasm",
+    moonrun,
+    [wasm, "--", "--profile", profile, "-of", records],
+    cwd,
+    installed,
+  )
+  require(
+    reference.status == "completed" &&
+    reference.exit_code == Some(0) &&
+    reference.stderr_length == 0 &&
+    reference.stdout_sha256 == digest(@utf8.encode(expected)) &&
+    project.status == "completed" &&
+    project.exit_code == reference.exit_code &&
+    project.stdout_sha256 == reference.stdout_sha256 &&
+    project.stderr_sha256 == reference.stderr_sha256,
+    "isolated fstab conversion differs in " + profile,
+  )
+  let temp_table = "none /temporary usertemp binary\n"
+  @fs.write_file(root + "/etc/fstab", temp_table)
+  @fs.write_file(output + "/usertemp.fstab", temp_table)
+  let temp_cases = [
+    ("relative", "..\\missing", base + "/missing"),
+    ("drive", root[:2].to_owned(), root),
+    (
+      "current-root",
+      "\\cygpath-temp-probe",
+      root[:2].to_owned() + "/cygpath-temp-probe",
+    ),
+    ("absolute", base + "/absent/../new", base + "/new"),
+  ]
+  // probe() starts the child with only the supplied environment, so there
+  // is no saved current directory on an alternate drive.
+  for drive in ["C:", "D:"] {
+    if !root[:2].equal_ignore_ascii_case(drive) && @fs.exists(drive + "/") {
+      temp_cases.push(
+        (
+          "other-drive",
+          drive + "cygpath-temp-probe",
+          drive + "/cygpath-temp-probe",
+        ),
+      )
+      break
+    }
+  }
+  for (name, value, expected) in temp_cases {
+    let vars = environment.copy()
+    vars["TMP"] = value
+    let argv = ["-am", "/temporary/file"]
+    let oracle = probe(
+      output,
+      "usertemp-" + name + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      argv,
+      root,
+      vars,
+    )
+    vars["CYGPATH_ROOT"] = root
+    let port = probe(
+      output,
+      "usertemp-" + name + "-wasm",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..argv],
+      root,
+      vars,
+    )
+    require(
+      oracle.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      oracle.stderr_length == 0 &&
+      oracle.stdout_sha256 == digest(@utf8.encode(expected + "/file\n")) &&
+      port.status == "completed" &&
+      port.exit_code == oracle.exit_code &&
+      port.stdout_sha256 == oracle.stdout_sha256 &&
+      port.stderr_sha256 == oracle.stderr_sha256,
+      "usertemp " + name + " differs in " + profile,
+    )
+  }
+}
+
+///|
+async fn check_installed_bind(
+  output : String,
+  bin : String,
+  wasm : String,
+  moonrun : String,
+  cwd : String,
+  environment : Map[String, String],
+) -> Unit {
+  let tmp = @fs.tmpdir(prefix="cygpath-bind-")
+  defer @fs.rmdir(tmp, recursive=true)
+  let root = path_text(@fs.realpath(tmp))
+  for
+    subdir in [
+      "/bin", "/etc", "/physical", "/physical/data", "/target", "/work", "/devfiles",
+      "/shadow",
+    ] {
+    @fs.mkdir(root + subdir)
+  }
+  for name in ["cygwin1.dll", "cygpath.exe"] {
+    @fs.write_file(
+      root + "/bin/" + name,
+      @fs.read_file(bin + "/" + name),
+      create_mode=CreateNew,
+    )
+  }
+  @fs.write_file(
+    root + "/cygdrive",
+    "physical-name-must-not-be-read\n",
+    create_mode=CreateNew,
+  )
+  let fstab = "/source/data /early none bind\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/physical /source ntfs posix=0,text\n" +
+    "/SOURCE/data /alias none bind\n/ALIAS/nested /chain none bind\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/target /text-target ntfs text\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/WORK /fold-work ntfs posix=0\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/é /filename-\uF0FF ntfs binary\n" +
+    "//localhost/cygpath-oracle-share /net-share ntfs binary\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/devfiles /dev/local ntfs text\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/shadow /dev/tty ntfs text\n" +
+    "/dev/tty /ignored-device none bind\n/dev/tty/sub /bound-device-child none bind\n"
+  @fs.write_file(root + "/etc/fstab", fstab)
+  @fs.write_file(output + "/bind-fstab.txt", fstab)
+  save_json(output + "/bind-installation.json", {
+    "root": root,
+    "official": artifact(root + "/bin/cygpath.exe"),
+    "runtime": artifact(root + "/bin/cygwin1.dll"),
+    "wasm": artifact(wasm),
+    "launcher": artifact(moonrun),
+    "fstab_sha256": digest(@utf8.encode(fstab)),
+  })
+  let installed = environment.copy()
+  installed["CYGPATH_ROOT"] = root
+  @fs.write_file(root + "/physical/data/known", b"abc")
+  @fs.write_file(root + "/devfiles/names", b"C:/file\n")
+  @fs.symlink(root + "/bin/mode-link", target=root + "/target")
+  @fs.write_file(root + "/target/known", b"child")
+  @fs.symlink(root + "/bin/CaseLink", target=root + "/target/known")
+  @fs.write_file(root + "/bin/exact", b"plain")
+  let shortcut_setup = probe(
+    output,
+    "explorer-shortcut-setup",
+    locate_tool("pwsh.exe"),
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      (
+        #|$ErrorActionPreference='Stop'
+        #|$path = [IO.Path]::Combine((Get-Location).Path, 'Explorer.lnk')
+        #|$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($path)
+        #|$shortcut.TargetPath = (Get-Item -LiteralPath 'exact').FullName
+        #|$shortcut.Description = 'ordinary Windows shell link'
+        #|$shortcut.Save()
+        #|[Console]::WriteLine([Convert]::ToHexString([IO.File]::ReadAllBytes($path)[0..75]))
+      ),
+    ],
+    root + "/bin",
+    environment,
+  )
+  ignore(successful_text(output, shortcut_setup))
+  @fs.write_file(root + "/bin/exact.exe", b"suffix")
+  @fs.write_file(root + "/bin/tool.conf.exe", b"suffix")
+  @fs.write_file(root + "/bin/names.lst.exe", b"C:/one\r\nC:/two\n")
+  @fs.symlink(root + "/bin/list-link", target=root + "/bin/names.lst.exe")
+  @fs.mkdir(root + "/bin/dir-only.exe")
+  @fs.write_file(root + "/work/tool.conf.exe", b"suffix")
+  @fs.mkdir(root + "/work/dir-only.exe")
+  let parent = "a".repeat(125) + "/" + "b".repeat(125)
+  @fs.mkdir(root + "/bin/" + "a".repeat(125))
+  @fs.mkdir(root + "/bin/" + parent)
+  for name in ["abc.exe", "abcd.exe"] {
+    @fs.write_file(root + "/bin/" + parent + "/" + name, b"suffix")
+  }
+  @fs.symlink(
+    root + "/bin/" + parent + "/longlink",
+    target=root + "/target/known",
+  )
+  let long_dir = "Directory for long names"
+  let long_file = long_dir + "\\Document with spaces.txt"
+  let hard_link = long_dir + "\\Second hard link.txt"
+  @fs.mkdir(root + "/bin/" + long_dir)
+  @fs.write_file(root + "/bin/" + path_text(long_file), b"long name")
+  let hard_setup = probe(
+    output,
+    "long-hardlink-setup",
+    locate_tool("pwsh.exe"),
+    [
+      "-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; New-Item -ItemType HardLink -Path 'Directory for long names/Second hard link.txt' -Target (Get-Item -LiteralPath 'Directory for long names/Document with spaces.txt').FullName | Out-Null",
+    ],
+    root + "/bin",
+    environment,
+  )
+  ignore(successful_text(output, hard_setup))
+  async fn short_spelling(label : String, name : String) -> String {
+    successful_text(
+      output,
+      probe(
+        output,
+        "long-" + label + "-short-name",
+        root + "/bin/cygpath.exe",
+        ["-ws", name],
+        root + "/bin",
+        environment,
+      ),
+    )
+  }
+  let short_file = short_spelling("file", long_file)
+  let short_hard_link = short_spelling("hardlink", hard_link)
+  save_json(output + "/long-name-fixture.json", {
+    "file": long_file,
+    "short_file": short_file,
+    "hard_link": hard_link,
+    "short_hard_link": short_hard_link,
+    "observed_distinct_file_alias": short_file != long_file,
+    "observed_distinct_hardlink_alias": short_hard_link != hard_link,
+  })
+  @fs.write_file(root + "/bin/Case.TXT", b"case")
+  let short_parent = short_file.rev_split_once("\\").unwrap().0.to_owned()
+  let missing = short_parent + "\\absent.txt"
+  let records = root + "/etc/mode-records"
+  @fs.write_file(root + "/etc/parent-records", b"/usr/bin/cygpath.exe\n")
+  for
+    (label, args, stdout, stderr, code) in [
+      (
+        "explorer-shortcut",
+        ["-m", "/bin/Explorer.lnk", "/bin/Explorer"],
+        root + "/bin/Explorer.lnk\n" + root + "/bin/Explorer\n",
+        "",
+        0,
+      ),
+      (
+        "implicit-explorer-shortcut-input",
+        ["-uf", "/bin/Explorer"],
+        "",
+        "cygpath: No such file or directory\n",
+        1,
+      ),
+      (
+        "physical-dev-input",
+        ["-uf", "/dev/local/names"],
+        "/cygdrive/c/file\n",
+        "",
+        0,
+      ),
+      (
+        "reverse-device-mount",
+        ["-u", root + "/shadow/file"],
+        "/dev/tty/file\n",
+        "",
+        0,
+      ),
+      (
+        "filename-utf8-mount",
+        ["-u", root + "/\uF0C3\uF0A9/tail"],
+        "/filename-\uF0FF/tail\n",
+        "",
+        0,
+      ),
+      (
+        "invalid-nt-drive-relative",
+        ["-u", "\\??\\C:name"],
+        "",
+        "cygpath: error converting \"\\??\\C:name\" - Invalid argument\n",
+        1,
+      ),
+      (
+        "invalid-list-drive-relative",
+        ["-pu", "C:/ok;\\\\?\\C:name"],
+        "",
+        "cygpath: error converting \"C:/ok;\\\\?\\C:name\" - Unknown error -1\n",
+        1,
+      ),
+      (
+        "network-mount-traversal",
+        [
+          "-u", "//localhost/other/../cygpath-oracle-share/file", "//localhost//cygpath-oracle-share/sub/.",
+          "//localhost/cygpath-oracle-share/.",
+        ],
+        "/net-share/file\n/net-share/sub/\n/net-share\n",
+        "",
+        0,
+      ),
+      ("dos-dot", ["-d", "."], ".\n", "", 0),
+      (
+        "dos-existing-drive-root",
+        ["-d", root[:3].to_owned()],
+        root[:2].to_owned() + "\\\n",
+        "",
+        0,
+      ),
+      (
+        "dos-missing",
+        ["-ws", "absent83.txt"],
+        "",
+        "cygpath: cannot create short name of absent83.txt\n",
+        2,
+      ),
+      (
+        "dos-missing-list",
+        ["-msp", ".:absent83.txt:later"],
+        "",
+        "cygpath: cannot create short name of absent83.txt\n",
+        2,
+      ),
+      (
+        "dos-stream-prefix",
+        ["-tdos", ".", "absent83.txt"],
+        ".\n",
+        "cygpath: cannot create short name of absent83.txt\n",
+        2,
+      ),
+      ("long-observed-alias", ["-wl", short_file], long_file + "\n", "", 0),
+      ("long-hardlink-alias", ["-wl", short_hard_link], hard_link + "\n", "", 0),
+      ("long-missing", ["-wl", missing], missing + "\n", "", 0),
+      ("long-short-case", ["-wl", "cASE.txt"], "Case.TXT\n", "", 0),
+      ("long-link-case", ["-wl", "cASElINK"], "CaseLink\n", "", 0),
+      (
+        "long-preserves-case",
+        ["-wl", long_dir + "\\document WITH spaces.txt"],
+        long_dir + "\\document WITH spaces.txt\n",
+        "",
+        0,
+      ),
+      (
+        "long-list",
+        ["-mlp", short_file + ":" + missing],
+        path_text(long_file) + ";" + path_text(missing) + "\n",
+        "",
+        0,
+      ),
+      (
+        "long-link-child",
+        ["-ml", "mode-link/known"],
+        "mode-link/known\n",
+        "",
+        0,
+      ),
+      (
+        "executable",
+        ["-m", "/usr/bin/cygpath"],
+        root + "/bin/cygpath.exe\n",
+        "",
+        0,
+      ),
+      ("relative-executable", ["-w", "cygpath"], "cygpath.exe\n", "", 0),
+      (
+        "cwd-fold-suffix",
+        ["-m", "../fold-work/tool.conf"],
+        "tool.conf.exe\n",
+        "",
+        0,
+      ),
+      (
+        "cwd-fold-directory",
+        ["-w", "../fold-work/dir-only.exe/"],
+        "dir-only.exe\\\n",
+        "",
+        0,
+      ),
+      ("cwd-fold-self", ["-w", "../fold-work/."], ".\\\n", "", 0),
+      (
+        "cwd-fold-absolute",
+        ["-am", "../fold-work/tool.conf"],
+        root + "/WORK/tool.conf.exe\n",
+        "",
+        0,
+      ),
+      ("exact-name", ["-m", "/bin/exact"], root + "/bin/exact\n", "", 0),
+      (
+        "relative-259-suffix",
+        ["-m", parent + "/abc"],
+        parent + "/abc.exe\n",
+        "",
+        0,
+      ),
+      (
+        "relative-260-suffix",
+        ["-m", parent + "/abcd"],
+        "//?/" + root + "/bin/" + parent + "/abcd\n",
+        "",
+        0,
+      ),
+      (
+        "relative-260-explicit-absolute",
+        ["-am", parent + "/abcd"],
+        "//?/" + root + "/bin/" + parent + "/abcd.exe\n",
+        "",
+        0,
+      ),
+      (
+        "relative-260-link",
+        ["-m", parent + "/longlink"],
+        root + "/target/known\n",
+        "",
+        0,
+      ),
+      ("drive-directory-input", ["-mf", "/proc/cygdrive"], "", "", 0),
+      (
+        "file-input-suffix",
+        ["-uf", "/bin/names.lst"],
+        "/cygdrive/c/one\n/cygdrive/c/two\n",
+        "",
+        0,
+      ),
+      (
+        "file-input-relative-suffix",
+        ["-uf", "names.lst"],
+        "/cygdrive/c/one\n/cygdrive/c/two\n",
+        "",
+        0,
+      ),
+      (
+        "file-input-link",
+        ["-uf", "list-link"],
+        "/cygdrive/c/one\n/cygdrive/c/two\n",
+        "",
+        0,
+      ),
+      ("file-input-exact", ["-wf", "exact"], "plain\n", "", 0),
+      ("file-input-directory", ["-uf", "/bin/dir-only.exe"], "", "", 0),
+      (
+        "file-input-suffix-directory",
+        ["-uf", "dir-only"],
+        "",
+        "cygpath: No such file or directory\n",
+        1,
+      ),
+      (
+        "file-input-suffix-trailing",
+        ["-uf", "names.lst/"],
+        "",
+        "cygpath: Not a directory\n",
+        1,
+      ),
+      (
+        "proc-file-directory",
+        ["-w", "/proc/version/"],
+        "",
+        "cygpath: error converting \"/proc/version/\" - Not a directory\n",
+        1,
+      ),
+      (
+        "proc-absent",
+        ["-w", "/proc/cygpath-absent"],
+        "",
+        "cygpath: error converting \"/proc/cygpath-absent\" - No such file or directory\n",
+        1,
+      ),
+      (
+        "proc-file-child",
+        ["-w", "/proc/version/child"],
+        "",
+        "cygpath: error converting \"/proc/version/child\" - No such file or directory\n",
+        1,
+      ),
+      (
+        "suffix-list",
+        ["-mp", "/bin/tool.conf:/bin/dir-only"],
+        root + "/bin/tool.conf.exe;" + root + "/bin/dir-only\n",
+        "",
+        0,
+      ),
+      ("link-leaf", ["-m", "/bin/mode-link"], root + "/bin/mode-link\n", "", 0),
+      (
+        "link-existing-child",
+        ["-m", "/bin/mode-link/known"],
+        root + "/bin/mode-link/known\n",
+        "",
+        0,
+      ),
+      (
+        "link-missing-child",
+        ["-m", "/bin/mode-link/missing"],
+        root + "/target/missing\n",
+        "",
+        0,
+      ),
+      (
+        "link",
+        ["-m", "/bin/mode-link/../etc/parent-records"],
+        root + "/etc/parent-records\n",
+        "",
+        0,
+      ),
+      (
+        "relative",
+        ["-m", "mode-link/../etc/missing"],
+        root + "/etc/missing\n",
+        "",
+        0,
+      ),
+      (
+        "list",
+        ["-mp", "/bin/mode-link/../etc/first:/bin/cygpath.exe"],
+        root + "/etc/first;" + root + "/bin/cygpath.exe\n",
+        "",
+        0,
+      ),
+      (
+        "input",
+        ["-m", "-f", "/bin/mode-link/../etc/parent-records"],
+        root + "/bin/cygpath.exe\n",
+        "",
+        0,
+      ),
+      (
+        "absent",
+        ["-m", "/absent/../etc"],
+        "",
+        "cygpath: error converting \"/absent/../etc\" - No such file or directory\n",
+        1,
+      ),
+      (
+        "file",
+        ["-m", "/bin/cygpath.exe/../etc"],
+        "",
+        "cygpath: error converting \"/bin/cygpath.exe/../etc\" - Not a directory\n",
+        1,
+      ),
+    ] {
+    let test_cwd = root +
+      (if label.has_prefix("cwd-fold-") { "/work" } else { "/bin" })
+    let official = probe(
+      output,
+      "parent-" + label + "-oracle",
+      root + "/bin/cygpath.exe",
+      args,
+      test_cwd,
+      environment,
+    )
+    let project = probe(
+      output,
+      "parent-" + label + "-wasm",
+      moonrun,
+      [wasm, "--", ..args],
+      test_cwd,
+      installed,
+    )
+    require(
+      official.status == "completed" &&
+      official.exit_code == Some(code) &&
+      official.stdout_sha256 == digest(@utf8.encode(stdout)) &&
+      official.stderr_sha256 == digest(@utf8.encode(stderr)) &&
+      project.status == "completed" &&
+      project.exit_code == official.exit_code &&
+      project.stdout_sha256 == official.stdout_sha256 &&
+      project.stderr_sha256 == official.stderr_sha256,
+      "installed Windows-output conversion differs: " + label,
+    )
+  }
+  @fs.write_file(
+    records, "-M /alias/known\n/bin/mode-link/missing\n\n/source/data/known/child\n/bin/cygpath.exe\n",
+  )
+  for
+    (label, args, stdout, stderr) in [
+      (
+        "argv",
+        ["-M", "/source/data/known", "/alias/missing", "/bin/cygpath.exe"],
+        "/source/data/known: text\n/alias/missing: text\n/bin/cygpath.exe: binary\n",
+        "",
+      ),
+      (
+        "records",
+        ["-o", "-f", records],
+        "/alias/known: text\n/bin/mode-link/missing: text\n/bin/cygpath.exe: binary\n",
+        "cygpath: file '' - No such file or directory\ncygpath: file '/source/data/known/child' - Not a directory\n",
+      ),
+    ] {
+    let official = probe(
+      output,
+      "mode-" + label + "-oracle",
+      root + "/bin/cygpath.exe",
+      args,
+      cwd,
+      environment,
+    )
+    let project = probe(
+      output,
+      "mode-" + label + "-wasm",
+      moonrun,
+      [wasm, "--", ..args],
+      cwd,
+      installed,
+    )
+    require(
+      official.status == "completed" &&
+      official.exit_code == Some(0) &&
+      official.stdout_sha256 == digest(@utf8.encode(stdout)) &&
+      official.stderr_sha256 == digest(@utf8.encode(stderr)) &&
+      project.status == "completed" &&
+      project.exit_code == official.exit_code &&
+      project.stdout_sha256 == official.stdout_sha256 &&
+      project.stderr_sha256 == official.stderr_sha256,
+      "installed Cygwin file modes differ: " + label,
+    )
+  }
+  for
+    (name, path, suffix) in [
+      ("origin", "/early/file", "/source/data/file"),
+      ("case", "/ALIAS/file", "/physical/data/file"),
+      ("chain", "/chain/file", "/physical/data/nested/file"),
+      ("ignored-device", "/ignored-device", "/ignored-device"),
+      ("bound-device-child", "/bound-device-child/file", "/shadow/sub/file"),
+    ] {
+    let args = ["-m", path]
+    let official = probe(
+      output,
+      "bind-" + name + "-oracle",
+      root + "/bin/cygpath.exe",
+      args,
+      cwd,
+      environment,
+    )
+    let project = probe(
+      output,
+      "bind-" + name + "-wasm",
+      moonrun,
+      [wasm, "--", ..args],
+      cwd,
+      installed,
+    )
+    require(
+      successful_text(output, official) == root + suffix &&
+      project.status == "completed" &&
+      project.exit_code == official.exit_code &&
+      project.stdout_sha256 == official.stdout_sha256 &&
+      project.stderr_sha256 == official.stderr_sha256,
+      "isolated Cygwin fstab bind differs: " + name,
+    )
+  }
+}
+
+///|
+fn explicit_mount_args(
+  wasm : String,
+  profile : String,
+  prefix : String,
+  raw : String,
+) -> Array[String] raise {
+  let args = [wasm, "--", "--profile", profile, "--drive-prefix", prefix]
+  for mount in mounted_context(raw, prefix) {
+    let key = text_field(mount, "posix")
+    args.append([
+      "--mount",
+      key,
+      text_field(mount, "windows"),
+      "--mount-case",
+      key,
+      text_field(mount, "case_policy"),
+    ])
+  }
+  args
 }
 
 ///|
@@ -752,7 +1522,6 @@ async fn run(options : Map[String, String]) -> Unit {
   let moon = path_text(@fs.realpath(options.get("--moon").unwrap()))
   let moonrun = path_text(@fs.realpath(options.get("--moonrun").unwrap()))
   let wasm = path_text(@fs.realpath(options.get("--wasm").unwrap()))
-  let native = path_text(@fs.realpath(options.get("--native").unwrap()))
   let repository = path_text(@fs.realpath("."))
   @fs.mkdir(options.get("--out").unwrap())
   let output = path_text(@fs.realpath(options.get("--out").unwrap()))
@@ -787,6 +1556,467 @@ async fn run(options : Map[String, String]) -> Unit {
   environment["SystemRoot"] = system_root
   save_json(output + "/environment.json", @json.to_json(environment))
   let powershell = locate_tool("pwsh.exe")
+  let codepage_probe = probe(
+    output,
+    "windows-codepage-api",
+    moon,
+    [
+      "run",
+      "--deny-warn",
+      repository + "/scripts/probe_windows_codepages.mbtx",
+      output + "/codepage-api-probe",
+      powershell,
+    ],
+    repository,
+    environment,
+    deadline=120000,
+  )
+  ignore(successful_text(output, codepage_probe))
+  let codepage_result = @json.parse(
+    @fs.read_file(output + "/codepage-api-probe/result.json").text(),
+  )
+  require(
+    bool_field(codepage_result, "assertions_passed"),
+    "CP29001 capability boundary requires successful independent Windows API diagnosis",
+  )
+  if variant == "default" {
+    check_mount_owners(output, profile, bin, wasm, moonrun, cwd, environment)
+    let installed = environment.copy()
+    installed["CYGPATH_ROOT"] = root
+    let cases : Array[(String, Array[String], Bytes, Bytes)] = [
+      (
+        "nt-null-mode",
+        ["-M", "/dev/null", "/dev/zero", "/dev/null/"],
+        b"/dev/null: binary\n/dev/zero: binary\n",
+        b"cygpath: file '/dev/null/' - Not a directory\n",
+      ),
+      ("nt-null-input", ["-wf", "/dev/null"], b"", b""),
+      (
+        "nt-null-ibm037",
+        ["-mC37", "/dev/null"],
+        b"\xe0\xe0\x4b\xe0\xc7\xd3\xd6\xc2\xc1\xd3\xd9\xd6\xd6\xe3\xe0\xc4\x85\xa5\x89\x83\x85\xe0\xd5\xa4\x93\x93\n",
+        b"",
+      ),
+      ("network-root-windows", ["-w", "//"], b"\\\\\n", b""),
+      ("network-root-input", ["-wf", "//"], b"", b""),
+      ("network-root-mode", ["-M", "//"], b"//: binary\n", b""),
+      (
+        "network-server-output",
+        ["-wp", "//absent.invalid://tsclient/://wsl$"],
+        b"\\\\absent.invalid;\\\\tsclient\\;\\\\wsl$\n",
+        b"",
+      ),
+      (
+        "network-server-absolute",
+        ["-am", "//localhost/", "//localhost@SSL@443/.", "\\\\127.0.0.1\\"],
+        b"//localhost\n//localhost@SSL@443\n//127.0.0.1\n",
+        b"",
+      ),
+      (
+        "network-server-mode",
+        ["-M", "//localhost", "//absent.invalid/"],
+        b"//localhost: binary\n//absent.invalid/: binary\n",
+        b"",
+      ),
+      ("network-server-input", ["-wf", "//localhost/"], b"", b""),
+      ("network-server-absent-input", ["-wf", "//absent.invalid/"], b"", b""),
+      (
+        "network-parent-windows",
+        [
+          "-m", "\\\\discard.invalid\\share\\..\\..\\localhost", "\\\\localhost\\data\\..",
+          "\\\\discard.invalid\\..\\..",
+        ],
+        b"//localhost\n//localhost/\n//\n",
+        b"",
+      ),
+      (
+        "network-parent-posix",
+        ["-m", "//127.0.0.1/../localhost", "//127.0.0.1/../..", "//../../.."],
+        b"//localhost\n//\n//\n",
+        b"",
+      ),
+      (
+        "network-parent-mode",
+        ["-M", "//127.0.0.1/.."],
+        b"//127.0.0.1/..: binary\n",
+        b"",
+      ),
+      ("network-parent-input", ["-wf", "//127.0.0.1/../localhost/"], b"", b""),
+      (
+        "leading-slashes",
+        ["-mp", "//:////proc/version:////dev/tty"],
+        b"//;/proc/version;/dev/tty\n",
+        b"",
+      ),
+    ]
+    let share = "//localhost/" + output[:1].to_owned() + "$"
+    let directory = share + output[2:].to_owned()
+    let accessible = output[1:].has_prefix(":/") &&
+      (try
+        @fs.read_file(directory + "/environment.json").binary() ==
+        @fs.read_file(output + "/environment.json").binary()
+      catch {
+        _ => false
+      })
+    save_json(output + "/network-share-fixture.json", {
+      "path": Json(directory),
+      "accessible": Json(accessible),
+    })
+    if accessible {
+      let operand = directory + "/observations/../empty.bin"
+      cases.push(
+        ("network-share-root", ["-m", share], @utf8.encode(share + "\n"), b""),
+      )
+      cases.push(
+        (
+          "network-share-parent-output",
+          ["-m", operand],
+          @utf8.encode(directory + "/empty.bin\n"),
+          b"",
+        ),
+      )
+      cases.push(("network-share-parent-input", ["-wf", operand], b"", b""))
+      for
+        (child, reason) in [
+          ("empty.bin", "Not a directory"),
+          ("absent-entry", "No such file or directory"),
+        ] {
+        let name = directory + "/" + child + "/.."
+        cases.push(
+          (
+            "network-parent-mode-" + child,
+            ["-M", name],
+            b"",
+            @utf8.encode("cygpath: file '" + name + "' - " + reason + "\n"),
+          ),
+        )
+      }
+    }
+    for (name, args, stdout, stderr) in cases {
+      let reference = probe(
+        output,
+        name + "-oracle",
+        cygpath,
+        args,
+        cwd,
+        environment,
+      )
+      require(
+        reference.status == "completed" &&
+        reference.exit_code == Some(0) &&
+        reference.stdout_sha256 == digest(stdout) &&
+        reference.stderr_sha256 == digest(stderr),
+        "unexpected official " + name + " in " + profile,
+      )
+      for
+        (selection, env) in [
+          ("implicit", environment),
+          ("installed", installed),
+        ] {
+        let actual = probe(
+          output,
+          name + "-" + selection,
+          moonrun,
+          [wasm, "--", "--profile", profile, ..args],
+          cwd,
+          env,
+        )
+        require(
+          actual.status == "completed" &&
+          actual.exit_code == reference.exit_code &&
+          actual.stdout_sha256 == reference.stdout_sha256 &&
+          actual.stderr_sha256 == reference.stderr_sha256,
+          "Wasm " + name + " differs in " + selection + " " + profile,
+        )
+      }
+    }
+  }
+  if profile == "msys2" && variant == "default" {
+    let installed = environment.copy()
+    installed["CYGPATH_ROOT"] = root
+    for
+      (name, args) in [
+        ("bin", ["-m", "/bin"]),
+        ("suffix", ["-w", "/bin/sh"]),
+        (
+          "local-leading-slashes",
+          ["-m", "///bin/sh", "////usr/bin/../bin/sh.exe"],
+        ),
+        ("reverse", ["-u", root + "/usr/bin/cygpath.exe"]),
+        ("drives", ["-u", "C:/"]),
+        ("cwd", ["-au", "."]),
+        ("mode", ["-M", "/bin/cygpath.exe"]),
+      ] {
+      let official = probe(
+        output,
+        "msys-install-" + name + "-oracle",
+        cygpath,
+        args,
+        cwd,
+        environment,
+      )
+      let project = probe(
+        output,
+        "msys-install-" + name + "-wasm",
+        moonrun,
+        [wasm, "--", "--profile=msys2", ..args],
+        cwd,
+        installed,
+      )
+      require(
+        official.status == "completed" &&
+        official.exit_code == Some(0) &&
+        official.stdout_length > 0 &&
+        project.status == "completed" &&
+        project.exit_code == official.exit_code &&
+        project.stdout_sha256 == official.stdout_sha256 &&
+        project.stderr_sha256 == official.stderr_sha256,
+        "MSYS2 installation differs from cygpath: " + name,
+      )
+    }
+  }
+  if profile == "cygwin" && variant == "default" {
+    check_installed_bind(output, bin, wasm, moonrun, cwd, environment)
+    let installed = environment.copy()
+    installed["CYGPATH_ROOT"] = root
+    // Keep the official device spellings and exit status for this session.
+    for device in ["null", "console"] {
+      ignore(
+        probe(
+          output,
+          "device-" + device,
+          cygpath,
+          ["-w", "/dev/" + device],
+          cwd,
+          environment,
+        ),
+      )
+    }
+    // Keep the native API spellings as evidence. For POSIX output Cygwin
+    // separately asks the filesystem for the directory's stored name.
+    for option in ["-wW", "-wS", "-wF0x24", "-wF0x25"] {
+      let raw = probe(
+        output,
+        "folder-raw" + option,
+        cygpath,
+        [option],
+        cwd,
+        environment,
+      )
+      let path = successful_text(output, raw)
+      require(!path.is_empty(), "empty official Windows folder: " + option)
+    }
+    let input = output + "/installed-input.txt"
+    @fs.write_file(
+      input,
+      b"/usr/bin/sh.exe\n/usr/lib/nonexistent\n",
+      create_mode=CreateNew,
+    )
+    let input_path = successful_text(
+      output,
+      probe(
+        output,
+        "installed-input-path",
+        cygpath,
+        ["-u", input],
+        cwd,
+        environment,
+      ),
+    )
+    @fs.write_file(
+      input + ".folders",
+      b"-wF1\n-F3\n-F4\n-F0xa\n-F0x11\n-F0x12\n-F0x31\n-F0x3d\n-wF0x403d\n-uF20\n-UF070\n-m /usr/bin/sh.exe\n",
+      create_mode=CreateNew,
+    )
+    @fs.write_file(
+      input + ".names",
+      @utf8.encode("-u C:/\uF0FF\n-pu C:/\uF0C3\uF0A9;;C:/\uF080\n"),
+      create_mode=CreateNew,
+    )
+    @fs.write_file(
+      input + ".narrow",
+      b"-w \xff\n-m /usr/bin/\x80\n-wp /usr/bin/\xff:/usr/lib/\xc3\xa9\n-wC1252 \xff\n",
+      create_mode=CreateNew,
+    )
+    @fs.write_file(
+      input + ".cesu-pairs",
+      b"-m /usr/bin/\xed\xa0\xbd\xed\xb8\x80\n-u C:/\xed\xa0\xbd\xed\xb8\x80\n-pu C:/\xed\xa0\xbd\xed\xb8\x80;relative\n-wC1252 /usr/lib/\xed\xa0\xbd\xed\xb8\x80\n",
+      create_mode=CreateNew,
+    )
+    // Keep the observations for isolated units independent of pair parity.
+    @fs.write_file(
+      input + ".utf16-units",
+      b"/usr/bin/\xed\xa0\xbd\n/usr/bin/\xed\xb8\x80\n",
+      create_mode=CreateNew,
+    )
+    let units = probe(
+      output,
+      "filename-utf16-units",
+      cygpath,
+      ["-wC65001", "-f", input_path + ".utf16-units"],
+      cwd,
+      environment,
+    )
+    require(
+      units.status == "completed",
+      "Windows UTF-16 filename observation did not finish",
+    )
+    for
+      (name, args) in [
+        ("root", ["-m", "/"]),
+        ("filename-byte-ff", ["-u", "C:/\u{f0ff}"]),
+        ("filename-byte-records", ["-of", input_path + ".names"]),
+        ("filename-narrow-records", ["-of", input_path + ".narrow"]),
+        ("filename-cesu-pairs", ["-of", input_path + ".cesu-pairs"]),
+        ("filename-byte-pair", ["-u", "C:/\u{f0c3}\u{f0a9}"]),
+        ("filename-split-surrogate", ["-u", "ab😀" + "x".repeat(255)]),
+        (
+          "filename-byte-list",
+          ["-pu", root + "/bin/\u{f0ff};;C:/\u{f0c3}\u{f0a9}"],
+        ),
+        ("windows-folder", ["-W"]),
+        ("system-folder-proc", ["-US"]),
+        ("windows-folder-octal", ["-F044"]),
+        ("system-folder-hex", ["--folder=0x25"]),
+        ("folder-final-selector", ["-Fbad", "-AW"]),
+        ("folder-records", ["-of", input_path + ".folders"]),
+        ("physical-dev", ["-w", "/dev"]),
+        (
+          "physical-dev-names",
+          ["-mp", "/dev/cygpath-local:/dev/ttyS128:/dev/sddx64"],
+        ),
+        ("proc-files", ["-w", "/proc/version", "/proc/uptime", "/proc/meminfo"]),
+        (
+          "proc-directories",
+          [
+            "-wp", "/proc/.:/proc/net/:/proc/sysvipc:/proc/registry64/hkey_current_user",
+          ],
+        ),
+        ("proc-absolute", ["-aw", "/proc/net/..", "/proc/registry/"]),
+        ("proc-mode", ["-M", "/proc/uptime", "/proc/cygpath-absent", "/proc"]),
+        ("terminals", ["-w", "/dev/tty", "/dev/ptmx"]),
+        ("terminal-list", ["-mp", "/dev/tty:/dev/ptmx"]),
+        ("terminal-mode", ["-M", "/dev/tty", "/dev/ptmx", "/dev/tty/"]),
+        ("terminal-mixed-ebcdic", ["-mC37", "/dev/tty"]),
+        ("dev-ipc-directories", ["-mp", "/dev/shm:/dev/mqueue"]),
+        ("bin", ["-w", "/usr/bin/sh.exe"]),
+        ("bin-implicit-exe", ["-w", "/usr/bin/sh"]),
+        ("lib", ["-m", "/usr/lib/new-file"]),
+        ("reverse", ["-u", root + "/bin/sh.exe"]),
+        (
+          "wide-argument-length",
+          [
+            "-u",
+            "abc" + "😀".repeat(127) + "x",
+            "abc" + "😀".repeat(127) + "xy",
+            "//server/share/" + "界".repeat(250),
+            "\\\\server\\share\\" + "界".repeat(250),
+            "\\\\?\\GLOBALROOT\\Device\\Null",
+            "\\\\?\\C:name",
+          ],
+        ),
+        ("wide-list-length", ["-pu", "abc" + "😀".repeat(127) + "xy;C:/end"]),
+        (
+          "network-fallback",
+          [
+            "-u", "\\\\server", "\\\\.\\COM1", "//server/missing/../share", "\\\\?\\UNC\\server\\share",
+            "\\??\\UNC\\server\\share",
+          ],
+        ),
+        (
+          "network-fallback-list",
+          ["-pu", "\\\\?\\UNC\\server\\other;;//server;\\\\.\\COM1"],
+        ),
+        (
+          "normalized-mount-tail",
+          [
+            "-u",
+            root + "/bin/.",
+            root + "/bin/nested/.",
+            root + "/bin/nested/child/..",
+            root + "/",
+          ],
+        ),
+        ("cwd", ["-am", "./nonexistent"]),
+        (
+          "null-and-pseudo-handles",
+          [
+            "--close", " +0x00rest", "-c-1", "-cfffffffffffffffe", "-u", "C:/test",
+          ],
+        ),
+        ("file", ["-m", "-f", input_path]),
+        (
+          "local-leading-slashes",
+          ["-m", "///usr/bin/sh", "////usr/bin/../bin/sh.exe"],
+        ),
+        ("local-leading-slashes-input", ["-m", "-f", "//" + input_path]),
+        ("symbol-windows", ["-wC42", "\u{f020}\u{f05c}\u{f0ff}"]),
+        ("symbol-mixed", ["-mC42", "\u{f041}\u{f05c}\u{f042}"]),
+        ("best-fit-drive-prefix", ["-wC1252", "＼＼？＼Ｃ：＼ｘ"]),
+        (
+          "best-fit-unc-prefix",
+          ["-mC1252", "＼＼？＼ＵＮＣ＼ｓ＼ｘ"],
+        ),
+        ("gb18030", ["-w", "-C54936", "/cygdrive/c/中€𐀀"]),
+        ("jis-20932", ["-wC20932", "/cygdrive/c/日ｶ丂髙😀"]),
+        ("jis-20932-mixed", ["-mC20932", "/cygdrive/c/伙"]),
+        ("gb2312-20936", ["-wC20936", "/cygdrive/c/中∥"]),
+        ("wansung-20949", ["-mC20949", "/cygdrive/c/한글₩힣"]),
+        ("logical-hebrew", ["-wC38598", "/cygdrive/c/אב·é😀"]),
+        ("euc-korean", ["-mC51949", "/cygdrive/c/한글₩힣\u0081😀"]),
+        ("iso2022-korean", ["-wC50225", "/cygdrive/c/한글 한/힣₩😀"]),
+        ("iso2022-jp-wide-kana", ["-wC50220", "/cygdrive/c/ｶﾞ髙①😀"]),
+        ("iso2022-jp-escape-kana", ["-wC50221", "/cygdrive/c/日ｶ本"]),
+        ("iso2022-jp-shift-kana", ["-mC50222", "/cygdrive/c/日ｶ本"]),
+        ("hz-gb2312", ["-mC52936", "/cygdrive/c/中文~文/丂€😀"]),
+        ("ansi-best-fit", ["-wC1252", "/cygdrive/c/a\u{202f}b\u{2012}c"]),
+        ("oem-best-fit", ["-wC437", "/cygdrive/c/a\u{2007}b"]),
+        (
+          "sjis-combining-kana",
+          ["-wC932", "/cygdrive/c/か\u{3099}は\u{309a}"],
+        ),
+        ("utf7", ["-wC65000", "/cygdrive/c/é+中/😀"]),
+        ("utf7-mixed", ["-mC65000", "/cygdrive/c/日本"]),
+        ("utf7-list", ["-wpC65000", "/cygdrive/c/é:/cygdrive/d/中"]),
+        ("utf7-root-local", ["-wrC65000", "/cygdrive/c/é"]),
+        ("ebcdic-root-local", ["-wrC37", "/cygdrive/c/A"]),
+        ("codepage-zero", ["-wC1252", "-C0", "/cygdrive/c/é中"]),
+        (
+          "gb18030-revision",
+          ["-w", "-C54936", "/cygdrive/c/\u{1e3f}\u{e7c7}\u{fe10}\u{e78d}"],
+        ),
+        ("gb18030-mixed", ["-m", "-C54936", "/cygdrive/c/乗"]),
+        ("sjis-mixed", ["-m", "-C932", "/cygdrive/c/ソ"]),
+        ("ebcdic-mixed", ["-m", "-C37", "/cygdrive/c/A"]),
+      ] {
+      let reference = probe(
+        output,
+        "installed-" + name + "-oracle",
+        cygpath,
+        args,
+        cwd,
+        environment,
+      )
+      let project = probe(
+        output,
+        "installed-" + name + "-wasm",
+        moonrun,
+        [wasm, "--", ..args],
+        cwd,
+        installed,
+      )
+      require(
+        reference.status == "completed" &&
+        reference.exit_code == Some(0) &&
+        reference.stdout_length > 0 &&
+        project.status == "completed" &&
+        project.exit_code == reference.exit_code &&
+        project.stdout_sha256 == reference.stdout_sha256 &&
+        project.stderr_sha256 == reference.stderr_sha256,
+        "installed context differs from cygpath: " + name,
+      )
+    }
+  }
   let probe_environment = environment.copy()
   probe_environment["CYGPATH_CI_CWD"] = cwd
   let startup = probe(
@@ -826,29 +2056,6 @@ async fn run(options : Map[String, String]) -> Unit {
     probe_environment,
   )
   let host = @json.parse(successful_text(output, host_probe))
-  let codepage_probe = probe(
-    output,
-    "windows-codepage-api",
-    moon,
-    [
-      "run",
-      "--deny-warn",
-      repository + "/scripts/probe_windows_codepages.mbtx",
-      output + "/codepage-api-probe",
-      powershell,
-    ],
-    repository,
-    environment,
-    deadline=120000,
-  )
-  ignore(successful_text(output, codepage_probe))
-  let codepage_result = @json.parse(
-    @fs.read_file(output + "/codepage-api-probe/result.json").text(),
-  )
-  require(
-    bool_field(codepage_result, "assertions_passed"),
-    "CP29001 capability boundary requires successful independent Windows API diagnosis",
-  )
   let version = probe(
     output,
     "upstream-version",
@@ -1063,6 +2270,54 @@ async fn run(options : Map[String, String]) -> Unit {
     "usr_bin": usr_bin,
     "context_mount_source": "Only declarations from the raw mount table are supplied to the project; queried path mappings do not create extra mounts.",
   })
+  let measured_context = explicit_mount_args(wasm, profile, prefix, mount_table)
+  for
+    (label, args, code) in [
+      ("folder-system-x86", ["-F", "41"], 0),
+      ("folder-system-x86-proc", ["-UF0x29"], 0),
+      ("folder-no-alias", ["-F0x1025"], 0),
+      ("folder-expanded", ["-F0x2024"], 0),
+      ("folder-no-alias-expanded", ["-F0x3025"], 0),
+      ("drive-link-directory", ["-m", "/proc/cygdrive"], 0),
+      ("drive-link-directory-slash", ["-aw", "/proc/cygdrive/"], 0),
+      ("drive-link-parent", ["-m", "/proc/cygdrive/../p3-alias-neighbor"], 0),
+      ("drive-link-drive", ["-w", "/proc/cygdrive/c/p3-alias-leaf"], 0),
+      (
+        "drive-link-non-drive",
+        ["-w", "/proc/cygdrive/p3-absent"],
+        if prefix == "/" {
+          0
+        } else {
+          1
+        },
+      ),
+    ] {
+    let official = probe(
+      output,
+      label + "-oracle",
+      cygpath,
+      args,
+      cwd,
+      environment,
+    )
+    let project = probe(
+      output,
+      label + "-wasm",
+      moonrun,
+      measured_context + args,
+      cwd,
+      environment,
+    )
+    require(
+      official.status == "completed" &&
+      official.exit_code == Some(code) &&
+      project.status == "completed" &&
+      project.exit_code == official.exit_code &&
+      project.stdout_sha256 == official.stdout_sha256 &&
+      project.stderr_sha256 == official.stderr_sha256,
+      "conversion with measured mounts differs: " + label,
+    )
+  }
   if variant == "custom" {
     require(
       prefix == "/p3-drives",
@@ -1124,7 +2379,7 @@ async fn run(options : Map[String, String]) -> Unit {
     require(
       mounted.any(mount => {
         text_field(mount, "posix") == "/P3Fold" &&
-        text_field(mount, "case_policy") == "ascii-insensitive"
+        text_field(mount, "case_policy") == "windows-insensitive"
       }),
       "official mount did not report requested posix=0 policy",
     )
@@ -1138,7 +2393,7 @@ async fn run(options : Map[String, String]) -> Unit {
       } else {
         "https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1330-L1405"
       },
-      "acceptance": "Mount declarations are checked against the configured targets. These probes retain the official selection result; they do not replace declarations with observations or accept any official/project difference. All supported custom fixtures must still match stdout, stderr, and exit status exactly in both backends and replay.",
+      "acceptance": "Mount declarations are checked against the configured targets. These probes retain the official selection result; they do not replace declarations with observations or accept any official/project difference. All supported custom fixtures must match stdout, stderr, and exit status exactly in Wasm collection and replay.",
     })
   }
   let windows_cwd = path_text(
@@ -1278,11 +2533,12 @@ async fn run(options : Map[String, String]) -> Unit {
     ],
     "deadline_ms": 10000,
   }
-  let manifests : Map[String, String] = Map([])
-  for (backend, executable) in [("wasm", wasm), ("native", native)] {
+  let backend = "wasm"
+  let manifest = output + "/manifest-wasm.json"
+  {
     let project : Json = {
-      "artifact": artifact(executable),
-      "launcher": artifact(if backend == "wasm" { moonrun } else { native }),
+      "artifact": artifact(wasm),
+      "launcher": artifact(moonrun),
       "backend": backend,
       "git_sha": git_sha,
       "dirty": git_dirty != "",
@@ -1295,9 +2551,7 @@ async fn run(options : Map[String, String]) -> Unit {
     }
     let fields = fields.copy()
     fields["project"] = project
-    let path = output + "/manifest-" + backend + ".json"
-    save_json(path, Json::object(fields))
-    manifests[backend] = path
+    save_json(manifest, Json::object(fields))
   }
   let signatures : Map[String, String] = Map([])
   let results : Array[GateCase] = []
@@ -1338,74 +2592,161 @@ async fn run(options : Map[String, String]) -> Unit {
     "files": @json.to_json(fixture_preparations),
   })
   for (suite, fixtures) in suites {
-    for backend in ["wasm", "native"] {
-      let manifest = manifests.get(backend).unwrap()
-      let collection = output + "/" + suite + "-" + backend + "-collect"
-      let replay = output + "/" + suite + "-" + backend + "-replay"
-      for
-        (mode, source, directory) in [
-          ("collect", fixtures, collection),
-          ("replay", collection, replay),
-        ] {
-        let name = suite + "-" + backend + "-" + mode
-        let execution = probe(
-          output,
-          name,
-          moon,
-          [
-            "run",
-            "--deny-warn",
-            repository + "/scripts/oracle.mbtx",
-            mode,
-            manifest,
-            source,
-            directory,
-          ],
-          repository,
-          environment,
-          deadline=600000,
+    let collection = output + "/" + suite + "-" + backend + "-collect"
+    let replay = output + "/" + suite + "-" + backend + "-replay"
+    for
+      (mode, source, directory) in [
+        ("collect", fixtures, collection),
+        ("replay", collection, replay),
+      ] {
+      let name = suite + "-" + backend + "-" + mode
+      let execution = probe(
+        output,
+        name,
+        moon,
+        [
+          "run",
+          "--deny-warn",
+          repository + "/scripts/oracle.mbtx",
+          mode,
+          manifest,
+          source,
+          directory,
+        ],
+        repository,
+        environment,
+        deadline=600000,
+      )
+      // oracle.mbtx exits 1 for raw comparison failures. The independently
+      // checked run file distinguishes those from infrastructure failures.
+      try {
+        require(
+          execution.status == "completed",
+          "collector process did not complete: " + name,
         )
-        // oracle.mbtx exits 1 for raw comparison failures. The independently
-        // checked run file distinguishes those from infrastructure failures.
-        try {
-          require(
-            execution.status == "completed",
-            "collector process did not complete: " + name,
-          )
-          if !validate_run(
-              directory,
-              profile,
-              suite,
-              mode,
-              backend,
-              manifest,
-              fixtures,
-              execution.exit_code,
-              signatures,
-              results,
-            ) {
-            accepted = false
-          }
-        } catch {
-          error => {
-            accepted = false
-            infrastructure.push({
-              "run": name,
-              "diagnostic": error.to_string(),
-              "execution": @json.to_json(execution),
-            })
-          }
+        if !validate_run(
+            directory,
+            profile,
+            suite,
+            mode,
+            backend,
+            manifest,
+            fixtures,
+            execution.exit_code,
+            signatures,
+            results,
+          ) {
+          accepted = false
         }
-        save_json(output + "/summary.json", {
-          "schema_version": 1,
-          "profile": profile,
-          "context_variant": variant,
-          "complete": false,
-          "accepted": false,
-          "raw_results_preserved": true,
-          "infrastructure_errors": @json.to_json(infrastructure),
-          "cases": @json.to_json(results),
-        })
+      } catch {
+        error => {
+          accepted = false
+          infrastructure.push({
+            "run": name,
+            "diagnostic": error.to_string(),
+            "execution": @json.to_json(execution),
+          })
+        }
+      }
+      save_json(output + "/summary.json", {
+        "schema_version": 1,
+        "profile": profile,
+        "context_variant": variant,
+        "complete": false,
+        "accepted": false,
+        "raw_results_preserved": true,
+        "infrastructure_errors": @json.to_json(infrastructure),
+        "cases": @json.to_json(results),
+      })
+    }
+  }
+  if variant == "custom" {
+    // Add this mount after recording the frozen matrix. Another declaration
+    // can change the order of equal aliases in the MSYS2 mount table.
+    let posix = "/p3-case-ÄΣ"
+    let native = cwd + "/case-ÄΣ"
+    @fs.mkdir(root + posix)
+    defer @fs.rmdir(root + posix)
+    @fs.mkdir(native)
+    defer @fs.rmdir(native)
+    ignore(
+      successful_text(
+        output,
+        probe(
+          output,
+          "set-unicode-mount",
+          bin + "/mount.exe",
+          ["-f", "-o", "posix=0", native, posix],
+          cwd,
+          environment,
+        ),
+      ),
+    )
+    defer @async.protect_from_cancel(() => {
+      ignore(
+        successful_text(
+          output,
+          probe(
+            output,
+            "unset-unicode-mount",
+            bin + "/umount.exe",
+            [posix],
+            cwd,
+            environment,
+          ),
+        ),
+      )
+    })
+    let raw = successful_text(
+      output,
+      probe(
+        output,
+        "unicode-mount-table",
+        bin + "/mount.exe",
+        [],
+        cwd,
+        environment,
+      ),
+    )
+    let explicit = explicit_mount_args(wasm, profile, prefix, raw)
+    for
+      (label, args) in [
+        ("forward", ["-m", "/p3-case-äσ/Keep"]),
+        ("reverse", ["-u", cwd + "/case-äσ/Keep"]),
+        ("final-sigma", ["-m", "/p3-case-äς/Keep"]),
+        ("component-boundary", ["-m", "/p3-case-äσx/Keep"]),
+      ] {
+      let official = probe(
+        output,
+        "mount-case-" + label + "-oracle",
+        cygpath,
+        args,
+        cwd,
+        environment,
+      )
+      let project = probe(
+        output,
+        "mount-case-" + label + "-wasm",
+        moonrun,
+        [..explicit, ..args],
+        cwd,
+        environment,
+      )
+      require(
+        official.status == "completed" &&
+        official.exit_code == Some(0) &&
+        official.stdout_length > 0 &&
+        project.status == "completed" &&
+        project.exit_code == official.exit_code &&
+        project.stdout_sha256 == official.stdout_sha256 &&
+        project.stderr_sha256 == official.stderr_sha256,
+        "Unicode mount case differs: " + label,
+      )
+      if label == "forward" {
+        require(
+          official.stdout_sha256 == digest(@utf8.encode(native + "/Keep\n")),
+          "positive control did not select the Unicode mount",
+        )
       }
     }
   }
@@ -1468,7 +2809,7 @@ async fn run(options : Map[String, String]) -> Unit {
       "--deny-warn",
       repository + "/scripts/oracle.mbtx",
       "fault-drill",
-      manifests.get("wasm").unwrap(),
+      manifest,
       output + "/profile-wasm-collect",
       output + "/fault-drills",
       powershell,
@@ -1563,7 +2904,7 @@ fn self_test() -> Unit raise {
   let folded = mounted_context(
     "C:/fold on /P3Fold type ntfs (binary,posix=0,user)", "/cygdrive",
   )
-  assert_eq(text_field(folded[0], "case_policy"), "ascii-insensitive")
+  assert_eq(text_field(folded[0], "case_policy"), "windows-insensitive")
   assert_eq(folded.length(), 1)
   let raw_msys = mounted_context(
     "C:/msys64 on / type ntfs (binary,noacl,auto)\nC:/msys64/usr/bin on /bin type ntfs (binary,noacl,auto)",
@@ -1605,7 +2946,7 @@ async fn main {
       @stdio.stderr.write("ci_oracle: " + error.to_string() + "\n") catch {
         _ => ()
       }
-      @sys.exit(1)
+      @env.exit(1)
     }
   }
 }

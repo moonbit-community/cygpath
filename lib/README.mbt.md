@@ -27,6 +27,11 @@ test "documented basic conversion" {
     context.convert("C:\\work\\demo.txt", from=Windows, to=Posix),
     "/cygdrive/c/work/demo.txt",
   )
+  assert_eq(context.windows_to_posix_bytes("C:/\uF0FF"), b"/cygdrive/c/\xff")
+  assert_eq(
+    context.convert(b"/cygdrive/c/\xff", from=Posix, to=Mixed),
+    "C:/\uF0FF",
+  )
   assert_eq(
     context.convert("/cygdrive/d/project", from=Posix, to=Mixed),
     "D:/project",
@@ -61,9 +66,10 @@ test "documented mounts and absolute paths" {
   let context = @lib.Context::new(
     mounts=[
       @lib.Mount::new("/", "C:\\cygwin64"),
-      @lib.Mount::new("/usr/bin", "C:\\cygwin64\\bin"),
+      @lib.Mount::new("/usr/bin", "C:\\cygwin64\\bin", text_mode=true),
     ],
     posix_cwd="/home/user",
+    windows_cwd="C:\\cygwin64\\home\\user",
   )
   assert_eq(
     context.convert("/usr/bin/tool", from=Posix, to=Windows),
@@ -73,21 +79,43 @@ test "documented mounts and absolute paths" {
     context.convert("../work", from=Posix, to=Mixed, absolute=true),
     "C:/cygwin64/home/work",
   )
+  assert_eq(
+    context.resolve_bind_source("/usr/bin/tools"),
+    ("C:\\cygwin64\\bin\\tools", Some(1)),
+  )
+  assert_eq(
+    context.relative_windows_name("/home/user/notes.txt", from=Posix),
+    Some("notes.txt"),
+  )
+  assert_eq(
+    context.mode_candidate("/usr/bin/tool", from=Posix),
+    Filesystem("C:\\cygwin64\\bin\\tool", text_mode=true),
+  )
 }
 ```
 
+`resolve_bind_source` returns the Windows source and the zero-based index of
+the selected declaration in `mounts`. A caller can inherit options from that
+exact entry even when a system and user mount share the POSIX name. A drive
+or UNC source returns `None` for its index.
+
 Mounts match whole component prefixes. Cygwin chooses the longest matching
-component prefix and preserves declaration priority for equal reverse aliases.
+component prefix for explicit mounts and preserves declaration priority for
+equal reverse aliases. An installation snapshot supplies `system=true` or
+`system=false` on each mount to reproduce the runtime's byte ordering and
+ownership comparisons.
 MSYS2 reproduces its pinned runtime's native-length/POSIX-prefix ordering and
 reverse length-difference ordering; nested mounts therefore need not use the
 Cygwin winner. See [mapping rules](../docs/03-path-semantics.md#4-mapping-profile-ordering-and-case)
-for the exact profile distinction. `case=AsciiInsensitive` enables ASCII-only
-comparison; the default is `Sensitive`. Context construction copies collections,
-and all fields of `Context` and `Mount` are private.
+for the exact profile distinction. Mounts default to `Sensitive`. Choose
+`AsciiInsensitive` for ASCII matching or `WindowsInsensitive` for the
+Windows UTF-16 uppercase table and UTF-8 prefix boundary. Context construction copies collections.
 
-Mount points and targets must be absolute and dot-free. Duplicate POSIX mount
-points, virtual mount points, and overlap with reserved drive branches are
-rejected. `Mount::new` accepts drive-absolute or complete UNC targets, including
+Mount points and targets must be absolute and dot-free. Ordinary explicit
+mounts require distinct POSIX names outside reserved drive branches. The
+snapshot may retain one mount of each ownership at the same POSIX name, and
+a native source can map back to an installed entry under the drive prefix.
+`Mount::new` accepts drive-absolute or complete UNC targets, including
 their supported ordinary extended spellings. A root mount does not synthesize
 `/usr/bin`, `/usr/lib`, or other aliases.
 
@@ -159,7 +187,7 @@ test "documented missing-context error" {
 }
 ```
 
-The other error constructors are `PathTooLong(original)`, `InvalidDrivePrefix`,
+The other error constructors are `PathTooLong(original)`, `InvalidDrivePrefix`, `InvalidWindowsPrefix`, `NotDirectory`, `PathNotFound`, `TooManyLinks`,
 `InvalidPath(reason~, offset~)`, `InvalidContext(field~, reason~)`,
 `UnsupportedNamespace(kind)`, `UnrepresentablePath(component~, reason~)`,
 `InvalidOptions(reason)`, and `ListEntryError(index~, cause)`. Offsets and list
@@ -169,9 +197,10 @@ codes belong to the CLI, not this library.
 
 The library performs lexical conversion. It does not follow symlinks, query
 8.3 short/long filenames, restore actual filesystem case, or infer system
-directories. Complete ordinary extended drive/UNC forms such as
-`\\?\C:\name` and `\\?\UNC\server\share\name` are supported; device and
-incomplete UNC namespaces are rejected. NUL and unpaired UTF-16 are errors.
+directories. It accepts ordinary extended drive and UNC paths. Windows-to-POSIX
+also converts a server name (`\\server` → `//server`) and slashifies DOS device
+spelling (`\\.\COM1` → `//./COM1`). UNC mount targets require a share.
+NUL and unpaired UTF-16 are errors.
 
 Windows filename rendering maps ASCII controls and `" * : < > ? |` into
 Cygwin's U+F000 private-use range. Windows-to-POSIX reverses those mappings,

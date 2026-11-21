@@ -1,8 +1,8 @@
 ----
 import {
-  "moonbitlang/async@0.22.4",
-  "moonbitlang/async@0.22.4/fs",
-  "moonbitlang/async@0.22.4/process",
+  "moonbitlang/async@0.22.10",
+  "moonbitlang/async@0.22.10/fs",
+  "moonbitlang/async@0.22.10/process",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
 }
@@ -36,44 +36,38 @@ async fn main {
     @fs.read_file("testdata/contracts/consumer.mbt.txt").binary(),
   )
   @fs.write_file(output + "/empty.bin", b"")
-  let results : Array[Json] = []
-  for target in ["wasm", "native"] {
-    let args = ["test", ".", "--target", target, "--deny-warn"]
-    let code = @async.with_timeout_opt(180000, () => {
-      @process.run(
-        "moon",
-        args,
-        cwd=consumer,
-        stdin=@process.redirect_from_file(output + "/empty.bin"),
-        stdout=@process.redirect_to_file(
-          output + "/" + target + ".stdout.bin",
-          create_mode=CreateNew,
-        ),
-        stderr=@process.redirect_to_file(
-          output + "/" + target + ".stderr.bin",
-          create_mode=CreateNew,
-        ),
-        cancel_handler=@process.hard_cancel(),
-      )
-    })
-    results.push({
-      "backend": target,
-      "command": Json(["moon", ..args]),
-      "exit_code": Json(code),
-    })
-    @fs.write_file(
-      output + "/summary.json",
-      (
-        {
-          "validation_kind": "external-public-api-consumer",
-          "source": repository,
-          "results": Json(results),
-        } : Json).stringify(indent=2) +
-      "\n",
+  let args = ["test", ".", "--target", "wasm", "--deny-warn"]
+  let code = @async.with_timeout_opt(180000, () => {
+    @process.run(
+      "moon",
+      args,
+      cwd=consumer,
+      stdin=@process.redirect_from_file(output + "/empty.bin"),
+      stdout=@process.redirect_to_file(
+        output + "/wasm.stdout.bin",
+        create_mode=CreateNew,
+      ),
+      stderr=@process.redirect_to_file(
+        output + "/wasm.stderr.bin",
+        create_mode=CreateNew,
+      ),
+      cancel_handler=@process.hard_cancel(),
     )
-    guard code == Some(0) else {
-      fail("external consumer failed: " + target + "; inspect " + output)
-    }
+  })
+  let summary : Json = {
+    "validation_kind": "external-public-api-consumer",
+    "source": repository,
+    "results": [
+      {
+        "backend": "wasm",
+        "command": Json(["moon", ..args]),
+        "exit_code": Json(code),
+      },
+    ],
   }
-  println("External public API consumer passed Wasm and Native: " + output)
+  @fs.write_file(output + "/summary.json", summary.stringify(indent=2) + "\n")
+  guard code == Some(0) else {
+    fail("external Wasm consumer failed: " + output)
+  }
+  println("External Wasm public API consumer passed: " + output)
 }

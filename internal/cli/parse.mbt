@@ -244,44 +244,84 @@ fn mount_case_key(posix : String) -> String {
 }
 
 ///|
-fn option_usage(ignore : Bool) -> Unit raise CliError {
+fn usage_error(ignore : Bool) -> CliError {
   if ignore {
-    raise IgnoredUsage
+    IgnoredUsage
   } else {
-    raise Usage
+    Usage
   }
 }
 
 ///|
-/// Match the decimal strtoul grammar used by the official CLI, including its
-/// unsigned-long saturation and subsequent conversion to a 32-bit code page.
-fn numeric_codepage(text : String, ignore : Bool) -> Int32 raise CliError {
-  if text.is_empty() {
-    return 0
-  }
-  let value = text.trim_start(chars=" \t\r\n\u000B\u000C")
-  let negative = value.has_prefix("-")
-  let digits = if negative || value.has_prefix("+") { value[1:] } else { value }
-  if digits.is_empty() {
-    option_usage(ignore)
-  }
+fn scan_magnitude(
+  digits : StringView,
+  radix : UInt64,
+  limit : UInt64,
+  prefix~ : Bool = false,
+) -> (UInt64, Bool)? {
+  guard !digits.is_empty() else { return None }
   let mut number = 0UL
   let mut overflow = false
-  for digit in digits.code_units() {
-    if !(digit is ('0'..<='9')) {
-      option_usage(ignore)
+  for unit in digits.code_units() {
+    let digit = match unit {
+      '0'..<='9' => unit.to_int() - 48
+      'a'..<='f' => unit.to_int() - 97 + 10
+      'A'..<='F' => unit.to_int() - 65 + 10
+      _ => 16
     }
-    let digit = (digit.to_int() - 48).to_uint64()
+    let digit = digit.to_uint64()
+    if digit >= radix {
+      if prefix {
+        break
+      }
+      return None
+    }
     if !overflow {
-      if number > (18446744073709551615UL - digit) / 10UL {
-        number = 18446744073709551615UL
+      if number > (limit - digit) / radix {
+        number = limit
         overflow = true
       } else {
-        number = number * 10UL + digit
+        number = number * radix + digit
       }
     }
   }
-  (if negative && !overflow { 0UL - number } else { number }).to_int()
+  Some((number, overflow))
+}
+
+///|
+/// The two strtoul callers differ in radix and whether they inspect endptr.
+fn option_ulong(text : String, hexadecimal~ : Bool) -> UInt64? {
+  let value = text.trim_start(chars=" \t\r\n\u000B\u000C")
+  let negative = value.has_prefix("-")
+  let digits = if negative || value.has_prefix("+") { value[1:] } else { value }
+  let digits = if hexadecimal &&
+    (digits.has_prefix("0x") || digits.has_prefix("0X")) {
+    digits[2:]
+  } else {
+    digits
+  }
+  guard scan_magnitude(
+      digits,
+      if hexadecimal {
+        16UL
+      } else {
+        10UL
+      },
+      0xffffffffffffffffUL,
+      prefix=hexadecimal,
+    )
+    is Some((number, overflow)) else {
+    return if hexadecimal || text.is_empty() { Some(0UL) } else { None }
+  }
+  Some(if negative && !overflow { 0UL - number } else { number })
+}
+
+///|
+fn numeric_codepage(text : String, ignore : Bool) -> Int32 raise CliError {
+  guard option_ulong(text, hexadecimal=false) is Some(number) else {
+    raise usage_error(ignore)
+  }
+  number.to_int()
 }
 
 ///|
@@ -293,6 +333,7 @@ fn parse_args_inner(
   let mut unix = false
   let mut windows = false
   let mut mixed = false
+  let mut mode = false
   let mut from : String? = None
   let mut profile : String? = None
   let mut root : String? = None
@@ -300,6 +341,8 @@ fn parse_args_inner(
   let mut posix_cwd : String? = None
   let mut windows_cwd : String? = None
   let mut file : String? = None
+  let mut folder_option : String? = None
+  let mut folder_id = ""
   let mounts : Array[(String, String)] = []
   let mount_cases : Map[String, @lib.MountCase] = Map([])
   let drive_cwds : Map[String, String] = Map([])
@@ -313,7 +356,6 @@ fn parse_args_inner(
   let mut codepage = 65001
   let mut unavailable_codepage : String? = None
   let mut file_options = false
-  let unsupported : Array[String] = []
   for token in options {
     let (option, values) = match token {
       Found(option, values) => (option, values)
@@ -340,7 +382,6 @@ fn parse_args_inner(
         if value == "dos" {
           windows = true
           short = true
-          unsupported.push("short names require Windows filesystem queries")
         } else if value is ("unix" | "windows" | "mixed") {
           if value == "unix" {
             unix = true
@@ -351,22 +392,15 @@ fn parse_args_inner(
             mixed = true
           }
         } else {
-          option_usage(ignore)
+          raise usage_error(ignore)
         }
       }
       "--dos" => {
         windows = true
         short = true
-        unsupported.push("short names require Windows filesystem queries")
       }
-      "--short-name" => {
-        short = true
-        unsupported.push("short names require Windows filesystem queries")
-      }
-      "--long-name" => {
-        long = true
-        unsupported.push("long names require Windows filesystem queries")
-      }
+      "--short-name" => short = true
+      "--long-name" => long = true
       "--root-local" => raise UnknownOption("--root-local")
       "-r" => root_local = true
       "--codepage" =>
@@ -376,7 +410,9 @@ fn parse_args_inner(
         } else if values[0].to_upper() is ("ANSI" | "OEM") {
           unavailable_codepage = Some(values[0])
         } else {
-          codepage = numeric_codepage(values[0], ignore)
+          let number = numeric_codepage(values[0], ignore)
+          // A zero UINT selects cygpath's default multibyte conversion.
+          codepage = if number == 0 { 65001 } else { number }
           unavailable_codepage = if @encoding.supported(codepage) {
             None
           } else {
@@ -391,7 +427,7 @@ fn parse_args_inner(
       "--version" => return Version
       "--file" => {
         if from_file {
-          option_usage(ignore)
+          raise usage_error(ignore)
         }
         file = Some(values[0])
       }
@@ -418,9 +454,10 @@ fn parse_args_inner(
         let policy : @lib.MountCase = match values[1] {
           "sensitive" => Sensitive
           "ascii-insensitive" => AsciiInsensitive
+          "windows-insensitive" => WindowsInsensitive
           _ =>
             raise InvalidOptions(
-              "--mount-case requires sensitive or ascii-insensitive",
+              "--mount-case requires sensitive, ascii-insensitive, or windows-insensitive",
             )
         }
         let key = mount_case_key(values[0])
@@ -447,25 +484,39 @@ fn parse_args_inner(
         }
         drive_cwds[drive] = values[1]
       }
-      "--mode" => unsupported.push("file modes require the Cygwin runtime")
+      "--mode" => mode = true
       "--allusers" => ()
       "--option" => {
         if from_file {
-          option_usage(ignore)
+          raise usage_error(ignore)
         }
         file_options = true
       }
       "--close" =>
-        unsupported.push("closing host process handles is not supported")
-      _ =>
-        unsupported.push(option + " requires Windows system-directory queries")
+        // NULL denotes no object. Closing the process or thread pseudo handle
+        // has no effect. Keep actual handles distinct from Wasm descriptors.
+        match option_ulong(values[0], hexadecimal=true) {
+          Some(0UL | 0xffffffffffffffffUL | 0xfffffffffffffffeUL) => ()
+          _ =>
+            raise UnsupportedCapability(
+              "closing host process handles is not supported",
+            )
+        }
+      "--folder" => {
+        folder_option = Some(option)
+        folder_id = values[0]
+      }
+      _ => folder_option = Some(option)
     }
   }
   if (short && long) || (short && root_local) || (long && root_local) {
-    option_usage(ignore)
+    raise usage_error(ignore)
   }
-  if unix && windows && !file_options {
-    option_usage(ignore)
+  let outputs = (if unix { 1 } else { 0 }) +
+    (if windows { 1 } else { 0 }) +
+    (if mode { 1 } else { 0 })
+  if outputs > (if file_options { 2 } else { 1 }) {
+    raise usage_error(ignore)
   }
   let to : @lib.OutputFormat = if unix || (!windows && !file_options) {
     Posix
@@ -474,28 +525,26 @@ fn parse_args_inner(
   } else {
     Windows
   }
-  if root_local && to != Windows {
-    option_usage(ignore)
+  if root_local && (!windows || mixed) {
+    raise usage_error(ignore)
   }
   if (short || long) && !windows {
-    option_usage(ignore)
-  }
-  if to != Posix && unavailable_codepage is Some(page) {
-    raise UnsupportedCapability(
-      "code page " + page + " is not supported by the pure encoder",
-    )
-  }
-  if unsupported.get(0) is Some(reason) {
-    raise UnsupportedCapability(reason)
+    raise usage_error(ignore)
   }
   if file_options && file is None {
-    option_usage(ignore)
+    raise usage_error(ignore)
   }
   if file is Some(_) && !names.is_empty() {
-    option_usage(ignore)
+    raise usage_error(ignore)
   }
   let source = match file {
     Some(path) => File(path)
+    None if folder_option is Some(option) => {
+      if !names.is_empty() {
+        raise usage_error(ignore)
+      }
+      Folder(parse_system_folder(option, folder_id))
+    }
     None => {
       if names.is_empty() {
         if ignore {
@@ -507,6 +556,16 @@ fn parse_args_inner(
       Names(names)
     }
   }
+  let output_error = if (!mode || source is Folder(_)) &&
+    to != Posix &&
+    unavailable_codepage is Some(page) {
+    Some("code page " + page + " is not supported by the pure encoder")
+  } else {
+    None
+  }
+  if !(source is Folder(VirtualFolder)) && output_error is Some(reason) {
+    raise UnsupportedCapability(reason)
+  }
   for key, _ in mount_cases {
     if !mounts.any(pair => mount_case_key(pair.0) == key) {
       raise InvalidOptions("--mount-case has no matching mount: " + key)
@@ -514,6 +573,7 @@ fn parse_args_inner(
   }
   Convert({
     source,
+    mode,
     from: match from {
       Some("windows") => Some(@lib.Windows)
       Some(_) => Some(@lib.Posix)
@@ -540,7 +600,15 @@ fn parse_args_inner(
     windows_cwd,
     drive_cwds,
     root_local,
+    name_form: if short {
+      Short
+    } else if long {
+      Long
+    } else {
+      Ordinary
+    },
     file_options,
     codepage,
+    output_error,
   })
 }
