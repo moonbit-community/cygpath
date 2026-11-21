@@ -1691,6 +1691,50 @@ async fn check_mount_owners(
       tag + " differs in " + profile,
     )
   }
+  // Use real NTFS reparse points with a .lnk suffix, including an encoded
+  // decoy on a DOS mount. The target mount makes following a link visible to -M.
+  @fs.write_file(
+    root + "/etc/fstab",
+    dos_table + escaped + "/text-origin /text ntfs text\n",
+  )
+  @fs.write_file(dos_dir + "/decoy-data", b"C:/wrong-file\n")
+  for
+    (name, destination) in [
+      ("ref.lnk", target + "/records"),
+      ("dot..lnk", target + "/records"),
+      ("decoy\uF02E.lnk", target + "/records"),
+      ("both..lnk", target + "/records"),
+      ("both\uF02E.lnk", dos_dir + "/decoy-data"),
+      ("dir.lnk", target + "/sub"),
+      ("pair.lnk", target + "/records"),
+    ] {
+    @fs.symlink(dos_dir + "/" + name, target=destination, force_symlink=true)
+  }
+  @fs.write_file(dos_dir + "/pair.exe", b"C:/chosen-exe\n")
+  let lnk_names = [
+    "/dos/ref", "/dos/dot.", "/dos/decoy.", "/dos/both.", "/dos/dir", "/dos/dir.lnk",
+    "/dos/pair",
+  ]
+  for
+    (tag, args, status, expected) in [
+      ("names", ["-m", ..lnk_names], (0, Some(b"")), None),
+      ("mode", ["-M", ..lnk_names], (0, Some(b"")), None),
+      (
+        "parents",
+        [
+          "-M", "/dos/ref/child", "/dos/ref/../records", "/dos/dir/../records", "/dos/dir.lnk/../records",
+          "/dos/decoy./../records",
+        ],
+        (0, None),
+        None,
+      ),
+      ("input", ["-uf", "/dos/ref"], (0, Some(b"")), None),
+      ("dos-input", ["-uf", "/dos/both."], (0, Some(b"")), None),
+      ("decoy-input", ["-uf", "/dos/decoy."], (1, None), Some(b"")),
+      ("exe-input", ["-uf", "/dos/pair"], (0, Some(b"")), None),
+    ] {
+    compare_installed("reparse-lnk-" + tag, args, root, status, expected)
+  }
   // The capture files are inherited from a native parent on the cygdrive mount.
   // Record the stream-mode boundary independently of path conversion parity.
   let text_table = dos_table.replace_all(
