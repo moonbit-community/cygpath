@@ -328,8 +328,8 @@ For Windows/Mixed output, a bare drive (`C:`), or a drive-relative operand with
 `-a` (`C:child`), follows the official CLI's literal POSIX-relative branch.
 Given `posix_cwd=/cygdrive/c/cwd`, `-aw C:child` produces
 `C:\cwd\C<U+F03A>child`, whereas explicit `--from windows -aw C:child`
-produces `C:\child`. `-u C:child` yields `/cygdrive/c/child`. Per-drive metadata
-does not change these rules.
+produces `C:\child`. `-u C:child` prints `C:child`. With the default drive
+prefix, `-au C:child` prints `/cygdrive/c/child` and `-u C:` prints `/cygdrive/c`.
 
 Natural list input uses Windows syntax for POSIX output and POSIX syntax for
 Windows/Mixed output. After delimiter splitting, backslash-containing members
@@ -421,8 +421,9 @@ records. An ignored empty operand skips only that operand.
 
 ## 8. Output encoding and failure ordering
 
-Each successful conversion is encoded, then followed by one raw LF byte. Default
-output is UTF-8; POSIX output always uses UTF-8. Windows/Mixed output additionally
+Each successful conversion ends with one raw LF byte. POSIX output preserves
+Cygwin filename bytes, including bytes outside UTF-8. Windows/Mixed output
+defaults to UTF-8 and additionally
 supports 115 table-based legacy code pages. The original 110 are recorded in the
 [Microsoft catalog](../third_party/microsoft/codepages.json) and
 [Unicode catalog](../third_party/unicode/codepages.json). CP20932, CP20936

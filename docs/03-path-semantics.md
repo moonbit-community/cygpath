@@ -34,7 +34,7 @@ below contain literal path characters, without shell escaping.
 | Input | Classification and behavior |
 | --- | --- |
 | `C:\a`, `C:/a` | Drive-absolute Windows path; the drive must be ASCII A–Z |
-| `C:a`, `C:` | Drive-relative syntax; preserved for non-absolute Windows/Mixed library output, anchored at C's root for POSIX or absolute conversion |
+| `C:a`, `C:` | Drive-relative syntax. POSIX output preserves `C:a` by default and maps bare `C:` to the drive root. Absolute conversion anchors both at the drive root. |
 | `\a` | Windows path rooted on the current drive; resolution needs a drive-absolute `windows_cwd` |
 | `\\server\share\a`, `//server/share/a` | Complete UNC path with a server and share under the network root |
 | `\\?\C:\a`, `\??\C:\a` | Supported ordinary extended drive spelling |
@@ -310,8 +310,9 @@ the start and can therefore return a different name.
 | Ordinary relative input, `absolute=false` | No cwd, except the long Windows-output fallback below |
 | POSIX relative input, `absolute=true` | `posix_cwd`; Windows output also needs its mapping |
 | Windows ordinary relative input, `absolute=true` | `windows_cwd` |
-| `C:a` to Windows/Mixed, `absolute=false` | Preserve `C:a` |
-| `C:a` or `C:` to POSIX, or with `absolute=true` | Resolve from `C:\`, without using per-drive cwd metadata |
+| `C:a`, `absolute=false` | Preserve `C:a` for all three output formats |
+| `C:`, `absolute=false` | POSIX output maps the drive root. Windows/Mixed output preserves `C:`. |
+| `C:a` or `C:`, `absolute=true` | Resolve from `C:\` |
 | `\a` to Windows/Mixed, `absolute=false` | Preserve its current-drive-rooted form |
 | `\a` to POSIX, or with `absolute=true` | Take the drive from drive-absolute `windows_cwd` |
 
@@ -456,7 +457,8 @@ The default Context is Cygwin with prefix `/cygdrive`, no mounts, and no cwd.
 | POSIX → Mixed | `/proc/cygdrive/d/a` | `D:/a` |
 | POSIX → Windows | `/usr/bin`, no mounts | `MissingContext` |
 | POSIX → Windows | `/usr/bin`, `/ → C:\cygwin64` | `C:\cygwin64\usr\bin` |
-| Windows → POSIX | `C:a`, with or without `drive_cwds` | `/cygdrive/c/a` |
+| Windows → POSIX | `C:a`, default options | `C:a` |
+| Windows → POSIX | `C:a`, `absolute=true` | `/cygdrive/c/a` |
 | Windows → POSIX | `\\?\C:\a` | `/cygdrive/c/a` |
 | Windows → POSIX | `\\server\share\..\file` | `//server/share/../file` |
 | POSIX → Windows | `a/../b`, `absolute=false` | `a\..\b` |

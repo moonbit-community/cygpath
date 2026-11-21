@@ -98,7 +98,7 @@ flowchart TD
 
 The Wasm executable uses the toolchain's experimental `moonbitlang/core/async` for files and streams and `moonbitlang/core/env` for process context and exit. External `async` and `x/crypto` are standalone tooling dependencies only. Product conversion launches no subprocesses.
 
-The encoder uses 110 tables from the original archive and three Windows mappings from Unicode ICU data. The ISO-2022-JP, ISO-2022-KR and HZ encoders reuse the Shift-JIS, Korean and Chinese tables respectively. UTF-8, UTF-7 and GB18030-2000 have separate encoders. The MSYS2 sorting helpers adapt BSD-3-Clause newlib code with its full notice retained. [Data and implementation provenance](01-upstream-and-scope.md#3-licensing-and-implementation-provenance).
+The encoder uses 110 tables from the original archive and three Windows mappings from Unicode ICU data. The seven ISO-2022/HZ selectors implement Windows shift sequences and use the JIS, Wansung, GB2312 and CNS mappings for their character sets. UTF-8, UTF-7 and GB18030-2000 have separate encoders. The MSYS2 sorting helpers adapt BSD-3-Clause newlib code with its full notice retained. [Data and implementation provenance](01-upstream-and-scope.md#3-licensing-and-implementation-provenance).
 
 ## 5. Data Flow and State Ownership
 
@@ -106,7 +106,7 @@ The encoder uses 110 tables from the original archive and three Windows mappings
 2. For a conversion, `Request::prepare` builds one validated immutable Context before reading a file or producing path results. Control commands skip that construction.
 3. NAME operands are processed in order. File/stdin input is streamed through the host text-record adapter; `-o` records go through the converter's state machine.
 4. The core classifies, resolves, maps, and renders each path/list using explicit syntax, options, and the selected profile.
-5. The CLI returns `Output(text)`, `Skip`, or `Stop(text)`. Root encodes conversion text using `Converter::codepage()`, then appends one raw LF byte and writes it. POSIX output always selects UTF-8; Windows/Mixed output uses the explicit supported encoder. Help/version and diagnostics use UTF-8.
+5. The CLI can return `OutputBytes` to preserve POSIX filename bytes. For Windows and mixed output, the converter applies the requested encoding. The root writes the resulting bytes followed by LF. Help, version and diagnostics use UTF-8.
 6. Host writes the exact supplied bytes and reports I/O errors. Root stops on a failure or successful control stop, formats the owning package's diagnostic, and exits with its assigned status.
 
 Context stores the profile, drive prefix, ordered mount snapshots, and optional POSIX/Windows cwd. It copies caller-owned collections and never reads global host state. `drive_cwds` values are validated compatibility metadata; they are not stored as resolution state and do not override cygpath's drive-root behavior.

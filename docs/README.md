@@ -68,8 +68,8 @@ contract, fixtures, and evidence together.
 1. Implement product logic in MoonBit. Root `main.mbt` is the direct executable
    entry, with `moonx ZSeanYves/cygpath -h` or `-u` as the intended published
    command. The public library remains in `lib/`.
-2. Share conversion and encoding between Wasm and Native. Do not introduce a
-   system-cygpath proxy, project C/C++ FFI, or backend-specific path rules.
+2. Target linear-memory Wasm for the `moonx` executable. The CLI uses the
+   portable conversion library and MoonBit toolchain I/O.
 3. Select Cygwin/MSYS2 explicitly and preserve their observed differences,
    including mount ordering. Do not guess host profiles, roots, or cwd.
 4. Keep immutable Context separate from mutable CLI record options and host
