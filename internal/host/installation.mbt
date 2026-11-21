@@ -93,18 +93,7 @@ fn InstallTable::context(
     drive_case~,
   )
   guard cwd is Some(cwd) else { return base }
-  let posix_cwd = base.convert(cwd, from=Windows, to=Posix)
-  @lib.Context::new(
-    profile=self.profile,
-    nt_null?=self.nt_null,
-    mounts~,
-    drive_prefix=self.prefix,
-    drive_text_mode~,
-    drive_dos_names~,
-    drive_case~,
-    windows_cwd=cwd,
-    posix_cwd~,
-  )
+  base.with_native_cwd(cwd)
 }
 
 ///|

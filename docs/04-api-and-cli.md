@@ -46,6 +46,8 @@ Context::convert_list(paths, from~, to~, absolute?=false,
                       recognize_windows?=false, unix_prefix?=Configured)
   -> String raises ConversionError
 
+Context::with_native_cwd(directory : String) -> Context raises ConversionError
+
 Context::windows_to_posix_bytes(path, absolute?=false,
                                 unix_prefix?=Configured, list?=false)
   -> Bytes raises ConversionError
@@ -55,6 +57,10 @@ Reuse a Context across conversions. Its constructor copies collections and
 validates mounts, prefixes, cwd, and drive metadata. `drive_cwds` is validated
 metadata, not a conversion-base override: explicit Windows drive-relative
 conversion follows cygpath's drive-root rule. Context never reads the host.
+
+`with_native_cwd` derives the POSIX working directory from an observed Windows
+directory using the existing mount table. A native component ending in U+F0FF
+contributes byte `FF` to POSIX output. Windows output retains its native spelling.
 
 `convert`, `relative_windows_name` and `mode_candidate` take either a
 Unicode `String` or a narrow `Bytes` operand. For Windows output, byte

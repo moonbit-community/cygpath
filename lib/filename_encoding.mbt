@@ -117,3 +117,19 @@ fn decode_windows_filename(
   }
   output.to_string()
 }
+
+///|
+fn ParsedPath::narrow_filename(self : ParsedPath) -> ParsedPath {
+  let root = match self.root {
+    Unc(server, share) =>
+      Unc(decode_windows_filename(server), decode_windows_filename(share))
+    other => other
+  }
+  {
+    ..self,
+    root,
+    components: self.components.map(component => {
+      decode_windows_filename(component)
+    }),
+  }
+}

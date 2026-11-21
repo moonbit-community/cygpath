@@ -1241,25 +1241,39 @@ async fn check_mount_owners(
       ("raw-absolute", lookup_table, raw_cwd, ["-m", "/text/sub/file"]),
     ] {
     @fs.write_file(root + "/etc/fstab", table)
-    for
-      (which, program, argv, vars) in [
-        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
-        (
-          "installed",
-          moonrun,
-          [wasm, "--", "--profile", profile, ..args],
-          installed,
-        ),
-      ] {
-      ignore(
-        probe(
-          output,
-          "link-lookup-posix-cwd-" + label + "-" + which,
-          program,
-          argv,
-          here,
-          vars,
-        ),
+    let tag = "link-lookup-posix-cwd-" + label
+    let oracle = probe(
+      output,
+      tag + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      args,
+      here,
+      environment,
+    )
+    let port = probe(
+      output,
+      tag + "-installed",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..args],
+      here,
+      installed,
+    )
+    compare(
+      oracle.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      oracle.stdout_length > 0 &&
+      oracle.stderr_length == 0 &&
+      port.status == "completed" &&
+      port.exit_code == oracle.exit_code &&
+      port.stdout_sha256 == oracle.stdout_sha256 &&
+      port.stderr_sha256 == oracle.stderr_sha256,
+      tag + " differs in " + profile,
+    )
+    if label == "raw-unix" {
+      compare(
+        oracle.stdout_sha256 ==
+        digest(b"/text/byte-\xff/\n/text/byte-\xff/sub/doc\n/text/relative\n"),
+        "unexpected POSIX cwd filename bytes in " + profile,
       )
     }
   }

@@ -56,34 +56,25 @@ pub fn Mount::new(
 }
 
 ///|
-fn parse_cwd(
-  value : String?,
+fn ParsedPath::checked_cwd(
+  self : ParsedPath,
   syntax : InputSyntax,
   field : String,
   drive_prefix? : Array[String],
   nt_null? : Bool,
-) -> ParsedPath? raise ConversionError {
-  match value {
-    None => None
-    Some(value) => {
-      let path = context_path(value, syntax, field)
-      guard path.is_absolute() else {
-        raise InvalidContext(
-          field~,
-          reason="working directory must be absolute",
-        )
-      }
-      let (path, _) = path.normalize(drive_prefix?, nt_null?) catch {
-        error => raise InvalidContext(field~, reason="\{Repr(error)}")
-      }
-      if syntax == Posix && !(virtual_node(path.components) is Some(Directory)) {
-        validate_posix_namespace(path) catch {
-          error => raise InvalidContext(field~, reason="\{Repr(error)}")
-        }
-      }
-      Some(path)
+) -> ParsedPath raise ConversionError {
+  guard self.is_absolute() else {
+    raise InvalidContext(field~, reason="working directory must be absolute")
+  }
+  let (path, _) = self.normalize(drive_prefix?, nt_null?) catch {
+    error => raise InvalidContext(field~, reason="\{Repr(error)}")
+  }
+  if syntax == Posix && !(virtual_node(path.components) is Some(Directory)) {
+    validate_posix_namespace(path) catch {
+      error => raise InvalidContext(field~, reason="\{Repr(error)}")
     }
   }
+  path
 }
 
 ///|
@@ -214,15 +205,43 @@ pub fn Context::new(
     } else {
       ordered_mounts(mounts, windows=true)
     },
-    posix_cwd: parse_cwd(
-      posix_cwd,
+    posix_cwd: posix_cwd.map(value => {
+      context_path(value, Posix, "posix_cwd").checked_cwd(
+        Posix,
+        "posix_cwd",
+        drive_prefix=prefix.components,
+        nt_null?,
+      )
+    }),
+    windows_cwd: windows_cwd.map(value => {
+      context_path(value, Windows, "windows_cwd").checked_cwd(
+        Windows,
+        "windows_cwd",
+      )
+    }),
+  }
+}
+
+///|
+/// Sets both working directories from a native Windows directory and the
+/// context's mount table. Its POSIX spelling can contain non-UTF-8 bytes.
+pub fn Context::with_native_cwd(
+  self : Context,
+  directory : String,
+) -> Context raise ConversionError {
+  let windows = context_path(directory, Windows, "windows_cwd").checked_cwd(
+    Windows,
+    "windows_cwd",
+  )
+  let posix = self
+    .to_posix(windows.narrow_filename(), Configured)
+    .checked_cwd(
       Posix,
       "posix_cwd",
-      drive_prefix=prefix.components,
-      nt_null?,
-    ),
-    windows_cwd: parse_cwd(windows_cwd, Windows, "windows_cwd"),
-  }
+      drive_prefix=self.drive_prefix,
+      nt_null?=self.nt_null,
+    )
+  { ..self, windows_cwd: Some(windows), posix_cwd: Some(posix), }
 }
 
 ///|

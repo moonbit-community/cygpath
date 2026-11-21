@@ -271,6 +271,13 @@ Windows-to-POSIX branch uses mount conversion directly. See the upstream
 [parent lookup](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L333-L378)
 and [direction-specific conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L3986-L4066).
 
+For absolute Windows output from a POSIX relative name, the runtime maps the
+native cwd to a POSIX mount point before resolving the operand. For example,
+if the native cwd maps to `/text` and a second directory is mounted on
+`/text/sub`, `cygpath -am ./sub/file` uses the second directory. When two
+sources share one mount point, even `cygpath -am .` can select a different
+native directory from the process cwd. [Cygwin working-directory initialization](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L5015-L5024)
+
 When an installed relative operand maps back into the native working directory,
 the CLI compares that directory using the selected mount's case policy. A
 `posix=0` alias targeting `D:\WORK` can therefore return `Leaf.exe` from

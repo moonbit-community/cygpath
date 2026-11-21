@@ -106,14 +106,18 @@ fn Context::windows_to_posix(
       ) {
       return text
     }
-    if original.root == Relative &&
-      self.windows_cwd is Some({ root: Unc(server, share), components, .. }) {
-      let base = [server, share]
-      base.append(components)
-      guard network_lookup_path(base, text[:]) is Some(network) else {
-        return text
+    if original.root == Relative && self.windows_cwd is Some(wide) {
+      let cwd = wide.narrow_filename()
+      if cwd.root is Unc(server, share) {
+        let base = [server, share]
+        base.append(cwd.components)
+        guard network_lookup_path(base, text[:]) is Some(network) else {
+          return text
+        }
+        network
+      } else {
+        resolve_against(cwd, original, self.drive_prefix, self.nt_null).0
       }
-      network
     } else {
       self.resolve(original, Windows, Posix, absolute)
     }

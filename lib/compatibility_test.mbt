@@ -356,3 +356,19 @@ test "an invalid drive beneath a custom prefix has a typed lexical failure" {
     "C:\\root\\p3-drives-extra\\cat\\file",
   )
 }
+
+///|
+test "native working directory retains Windows spelling and POSIX filename bytes" {
+  for native in ["D:/work", "//server/share/work"] {
+    let base = @lib.Context::new(mounts=[@lib.Mount::new("/work", native)])
+    let cwd = base.with_native_cwd(native + "/byte-\uF0FF")
+    assert_eq(
+      cwd.windows_to_posix_bytes("leaf", absolute=true),
+      b"/work/byte-\xff/leaf",
+    )
+    assert_eq(
+      cwd.convert("leaf", from=Posix, to=Mixed, absolute=true),
+      native + "/byte-\uF0FF/leaf",
+    )
+  }
+}
