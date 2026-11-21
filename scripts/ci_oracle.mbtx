@@ -986,6 +986,86 @@ async fn check_mount_owners(
     "/remapped /bridge/records ntfs binary\n"
   @fs.write_file(root + "/etc/fstab", lookup_table)
   @fs.write_file(output + "/link-lookup.fstab", lookup_table)
+  let junction_setup = probe(
+    output,
+    "junction-setup",
+    locate_tool("pwsh.exe"),
+    [
+      "-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; $j = New-Item -ItemType Junction -Path 'junction' -Target (Get-Item -LiteralPath '../text-origin').FullName; $j.LinkType",
+    ],
+    root,
+    environment,
+  )
+  require(
+    successful_text(output, junction_setup) == "Junction",
+    "directory junction fixture unavailable",
+  )
+  @fs.write_file(target + "/sub/tool.exe", b"tool")
+  let rooted_file = target[2:].to_owned().replace_all(old="/", new="\\") +
+    "\\sub\\file"
+  let drive_relative = target[:2].to_owned() + rooted_file[1:].to_owned()
+  let local_operands = [
+    "sub\\file", ".\\sub\\missing", "sub\\file\\child", rooted_file, drive_relative,
+    "sub\\file\\.",
+  ]
+  for
+    (label, names, here) in [
+      ("cwd-mode", ["-M", ..local_operands], target),
+      (
+        "cwd-output",
+        [
+          "-am", "sub\\file", ".\\sub\\missing", "sub\\tool", rooted_file, drive_relative,
+        ],
+        target,
+      ),
+      (
+        "junction-mode",
+        [
+          "-M", "/junction", "/junction/sub/file", "/junction/absent", "/junction/sub/file/child",
+          "/junction/sub/../records",
+        ],
+        root,
+      ),
+      (
+        "junction-path",
+        [
+          "-m", "/junction", "/junction/sub/file", "/junction/sub/tool", "/junction/sub/../records",
+          "/junction/",
+        ],
+        root,
+      ),
+      ("junction-file", ["-uf", "/junction/sub/../records"], root),
+    ] {
+    for
+      (which, program, argv, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", names, environment),
+        (
+          "installed",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..names],
+          installed,
+        ),
+        (
+          "implicit",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..names],
+          environment,
+        ),
+      ] {
+      if which != "implicit" || label.has_prefix("cwd") {
+        ignore(
+          probe(
+            output,
+            "link-lookup-" + label + "-" + which,
+            program,
+            argv,
+            here,
+            vars,
+          ),
+        )
+      }
+    }
+  }
   let existing = target + "/sub/file"
   let absent = target + "/sub/missing"
   let backslashes = existing.replace_all(old="/", new="\\")
