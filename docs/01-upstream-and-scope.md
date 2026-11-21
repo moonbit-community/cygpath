@@ -108,7 +108,7 @@ This table inventories the official primary options and the current implementati
 | `-p`, `--path` | Convert a path list | Core lists | Implemented; direction, empty members, natural CLI recognition, and atomic failure have separate contracts |
 | `-a`, `--absolute` | Absolute output | Core and context | Implemented with explicit context and measured drive-relative rules |
 | `-U`, `--proc-cygdrive` | Use /proc/cygdrive for drive fallback | Core mapping | Implemented for POSIX output; explicit mounts keep precedence |
-| `-d`, `--dos` | Windows short-name output | Windows filesystem | Dot operands, existing drive roots, and missing-path errors implemented. Windows differential pending |
+| `-d`, `--dos` | Windows short-name output | Windows filesystem | Existing ASCII 8.3 paths retain caller casing, including supplied aliases. Dot operands, existing drive roots and missing-path errors are supported |
 | `-s`, `--short-name` | Windows/mixed short names | Windows filesystem | Same lookup as `-d`. Reading stored alternate names requires a host API |
 | `-l`, `--long-name` | Windows/mixed long names | Windows filesystem | Expands ordinary existing short names component by component and keeps the input on missing paths. Reparse aliases and OEM-dependent spellings have explicit limits. Windows oracle cases await execution. |
 | `-r`, `--root-local` | Windows root-local prefix | Namespace and conversion context | Short -r implemented for single Windows output; the list branch leaves it unapplied. The measured upstream long spelling is rejected because its option table maps it to an unhandled value; use -r |

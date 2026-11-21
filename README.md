@@ -97,10 +97,13 @@ on disk. A missing path keeps its original Windows spelling, including any
 short parent names. An alternate name of a reparse point or a spelling that
 depends on the host OEM page can require metadata outside the runtime API.
 
-`-d` and `-s` handle dot operands and existing Windows drive roots. A missing
-Windows path produces the short-name diagnostic and exit status 2. For an
-existing file or directory that needs an 8.3 name record, the command reports
-the missing host capability. [Windows name lookup](https://github.com/moonbit-community/cygpath/issues/2)
+On Windows, `-d` and `-s` preserve the input spelling of an existing path
+whose components already have unambiguous ASCII 8.3 names. This includes a
+supplied DOS alias. For example, `-ws ReAdMe.TxT` prints `ReAdMe.TxT` even
+when `README.TXT` has a different assigned alias. Dot operands and drive
+roots are supported. A missing path exits with status 2. A component needing
+conversion still requires its stored alternate name.
+[Windows name lookup](https://github.com/moonbit-community/cygpath/issues/2)
 
 On a Windows host, `-W` and `-S` query the running Windows installation and
 print the Windows or system directory as a POSIX path. The same queries accept

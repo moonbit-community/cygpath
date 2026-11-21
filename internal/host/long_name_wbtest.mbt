@@ -47,6 +47,22 @@ async test "long lookup uses the entire original name when a component is missin
 }
 
 ///|
+test "DOS eligibility checks every component after the volume or share" {
+  for
+    root in [
+      "", "D:", "D:/", "//server/long share/", "\\\\?\\D:\\", "\\\\?\\UNC\\server\\long share\\",
+    ] {
+    assert_true(already_short_path(root + "ReAdMe.TxT"))
+    assert_true(already_short_path(root + "DiR/FiLe~1.TxT"))
+    assert_false(already_short_path(root + "Directory name/X.TXT"))
+    assert_false(already_short_path(root + "DIR/X.more"))
+    assert_false(already_short_path(root + "DIR/A B.TXT"))
+  }
+  assert_false(already_short_path("\\\\.\\PIPE\\short"))
+  assert_false(already_short_path("\\\\?\\GLOBALROOT\\DEVICE"))
+}
+
+///|
 async test "DOS lookup distinguishes missing paths from unavailable alias metadata" {
   let tmp = @fs.tmpdir(prefix="cygpath-short-")
   defer @fs.remove(tmp, recursive=true)
@@ -57,6 +73,6 @@ async test "DOS lookup distinguishes missing paths from unavailable alias metada
     NameLookupUnavailable(_) => ()
     err => raise err
   } noraise {
-    _ => fail("a primary name does not establish the alternate spelling")
+    _ => fail("a long parent requires its own stored DOS alias")
   }
 }

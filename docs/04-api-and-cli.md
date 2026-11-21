@@ -211,7 +211,7 @@ official control flow.
 | `-i`, `--ignore` | Skip empty operands/records and suppress official usage failures occurring after this flag |
 | `-C`, `--codepage CP` | Select an implemented output encoding; ignored for POSIX output after syntax validation |
 | `-l`, `--long-name` | Expand ordinary short-name components on Windows with `-w` or `-m` |
-| `-d`, `--dos`, `-s`, `--short-name` | Return dot operands or an existing Windows drive root. A missing Windows operand or list member reports its converted spelling and exits 2. Other existing entries require their Windows 8.3 name record |
+| `-d`, `--dos`, `-s`, `--short-name` | Preserve the case of an existing ASCII 8.3 path, including a supplied alias, drive root or dot operand. A missing Windows operand or list member reports its converted spelling and exits 2. Shortening a long component requires its stored alternate name |
 | `-A`, `--allusers` | Accepted without effect on ordinary conversion |
 | `-h`, `--help`; `-V`, `--version` | Implementation help/version |
 

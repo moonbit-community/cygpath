@@ -41,7 +41,7 @@ fn dos_component(name : String) -> Bool? {
 }
 
 ///|
-fn long_name_root(path : String) -> Int32 {
+fn windows_name_root(path : String) -> Int32 {
   let plain = plain_native(path)
   let prefix = path.length() - plain.length()
   let root = if plain.has_prefix("//") {
@@ -69,7 +69,7 @@ fn entry_parent(path : String, name : String) -> String {
     let end = prefix
       .trim_end(chars="/\\")
       .length()
-      .max(long_name_root(prefix.to_owned()))
+      .max(windows_name_root(prefix.to_owned()))
     prefix[:end].to_owned()
   }
 }
@@ -148,7 +148,7 @@ async fn expand_long_components(
   path : String,
   entry : async (String, String) -> String,
 ) -> String {
-  let root = long_name_root(path)
+  let root = windows_name_root(path)
   let result = StringBuilder()
   result.write_stringview(path[:root])
   for start = root; start < path.length(); {
@@ -193,12 +193,32 @@ pub async fn long_name(path : String) -> String {
 }
 
 ///|
+/// GetShortPathNameW copies components already in DOS form, including the
+/// caller's case, even when NTFS has a separately assigned alternate name.
+fn already_short_path(path : String) -> Bool {
+  let plain = plain_native(path)
+  let drive = plain.length() >= 3 &&
+    plain[0] is ('a'..<='z' | 'A'..<='Z') &&
+    plain[1:3] == ":/"
+  if plain.has_prefix("//./") ||
+    plain.has_prefix("/??/") ||
+    (plain.length() != path.length() && !drive && !plain.has_prefix("//")) {
+    return false
+  }
+  plain[windows_name_root(plain):]
+  .split("/")
+  .all(part => {
+    part is ("" | "." | "..") || dos_component(part.to_owned()) == Some(true)
+  })
+}
+
+///|
 async fn short_name_on_disk(path : String) -> String? {
   let plain = plain_native(path)
   let drive_root = plain.length() == 3 &&
     plain[0] is ('A'..<='Z' | 'a'..<='z') &&
     plain[1:] == ":/"
-  ignore(@fs.kind(host_io_path(path), follow_symlink=false)) catch {
+  let kind = @fs.kind(host_io_path(path), follow_symlink=false) catch {
     @os_error.OsError(NotFound | NotDirectory, ..) if !drive_root => return None
     @os_error.OsError(_, ..) =>
       raise NameLookupUnavailable(
@@ -206,11 +226,11 @@ async fn short_name_on_disk(path : String) -> String? {
       )
     err => raise err
   }
-  if drive_root {
+  if drive_root ||
+    (kind is (Regular | Directory | SymLink) && already_short_path(path)) {
     return Some(path)
   }
-  // Directory enumeration exposes the primary name. Even a legal DOS
-  // spelling does not tell us which alternate name the filesystem stored.
+  // A component needing conversion requires its actual alternate name.
   raise NameLookupUnavailable(
     "Windows 8.3 name record required for " + @debug.to_string(path),
   )

@@ -14,7 +14,7 @@ Output and input:
   -t, --type TYPE            unix, windows, mixed, or dos
   -p, --path                 Convert each NAME as a path list
   -l, --long-name            Expand ordinary short names on a Windows host
-  -d, -s, --short-name       Query DOS names (dot operands and drive roots supported)
+  -d, -s, --short-name       Preserve existing ASCII 8.3 paths as DOS names
   -c, --close HANDLE         Accept null and current process/thread pseudo handles
   -a, --absolute             Resolve relative paths using supplied cwd
   -U, --proc-cygdrive        Use /proc/cygdrive for drive fallback

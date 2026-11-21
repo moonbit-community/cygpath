@@ -734,6 +734,121 @@ async fn audit_scope(
 }
 
 ///|
+async fn check_dos_names(
+  output : String,
+  profile : String,
+  bin : String,
+  root : String,
+  wasm : String,
+  moonrun : String,
+  environment : Map[String, String],
+  compare : (Bool, String) -> Unit,
+) -> Unit {
+  let dir = root + "/name-probe"
+  @fs.mkdir(dir + "/SUBDIR", recursive=true)
+  for
+    name in [
+      "README.TXT", "lower.txt", "SUBDIR/FILE.TXT", "A long primary name.txt",
+    ] {
+    @fs.write_file(dir + "/" + name, b"test", create_mode=CreateNew)
+  }
+  let installed = environment.copy()
+  installed["CYGPATH_ROOT"] = root
+  async fn check(
+    label : String,
+    args : Array[String],
+    expected : String,
+  ) -> Unit {
+    let name = "dos-" + label
+    let oracle = probe(
+      output,
+      name + "-oracle",
+      bin + "/cygpath.exe",
+      args,
+      dir,
+      environment,
+    )
+    let port = probe(
+      output,
+      name + "-wasm",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..args],
+      dir,
+      installed,
+    )
+    compare(
+      oracle.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      oracle.stderr_length == 0 &&
+      oracle.stdout_sha256 == digest(@utf8.encode(expected)) &&
+      port.status == "completed" &&
+      port.exit_code == oracle.exit_code &&
+      port.stdout_sha256 == oracle.stdout_sha256 &&
+      port.stderr_sha256 == oracle.stderr_sha256,
+      "DOS " + label + " differs in " + profile,
+    )
+  }
+  let args = [
+    "-d", "README.TXT", "readme.txt", "ReAdMe.TxT", "lower.txt", "LOWER.TXT", "subdir/File.txt",
+  ]
+  let expected = "README.TXT\nreadme.txt\nReAdMe.TxT\nlower.txt\nLOWER.TXT\nsubdir\\File.txt\n"
+  check("original", args, expected)
+  // An assigned alias on an 8.3 primary name distinguishes lexical copies
+  // from implementations that always return the alternate directory field.
+  let fsutil = locate_tool("fsutil.exe")
+  for
+    (primary, short) in [
+      ("README.TXT", "RALT.TXT"),
+      ("SUBDIR", "DALT"),
+      ("A long primary name.txt", "LALT.TXT"),
+    ] {
+    ignore(
+      successful_text(
+        output,
+        probe(
+          output,
+          "dos-set-" + short,
+          fsutil,
+          ["file", "setshortname", dir + "/" + primary, short],
+          dir,
+          environment,
+        ),
+      ),
+    )
+    require(
+      @fs.exists(dir + "/" + short),
+      "assigned DOS fixture name is missing: " + short,
+    )
+  }
+  check("explicit", args, expected)
+  check(
+    "alias-list",
+    ["-msp", "RaLt.TxT:dalt/File.txt:lalt.txt"],
+    "RaLt.TxT;dalt/File.txt;lalt.txt\n",
+  )
+  let absolute = successful_text(
+    output,
+    probe(
+      output,
+      "dos-fixture-directory",
+      bin + "/cygpath.exe",
+      ["-ws", dir],
+      dir,
+      environment,
+    ),
+  )
+  let filename = absolute + "\\rEaDmE.TxT"
+  check("absolute", ["-ws", filename], filename + "\n")
+  let unc = "//localhost/" +
+    filename[:1].to_owned() +
+    "$" +
+    path_text(filename[2:].to_owned())
+  if @fs.exists(unc) {
+    check("unc", ["-ms", unc], unc + "\n")
+  }
+}
+
+///|
 async fn check_mount_owners(
   output : String,
   profile : String,
@@ -855,68 +970,9 @@ async fn check_mount_owners(
     project.stderr_sha256 == reference.stderr_sha256,
     "isolated fstab conversion differs in " + profile,
   )
-  let dos_dir = root + "/name-probe"
-  @fs.mkdir(dos_dir)
-  @fs.mkdir(dos_dir + "/SUBDIR")
-  for
-    name in [
-      "README.TXT", "lower.txt", "Case.TXT", "SUBDIR/FILE.TXT", "A long primary name.txt",
-    ] {
-    @fs.write_file(dos_dir + "/" + name, b"test", create_mode=CreateNew)
-  }
-  let dos_args = [
-    "-ws", "README.TXT", "readme.txt", "ReAdMe.TxT", "lower.txt", "LOWER.TXT", "Case.TXT",
-    "case.txt", "subdir/File.txt", "A long primary name.txt",
-  ]
-  async fn observe_dos(label : String, args : Array[String]) -> Unit {
-    ignore(
-      successful_text(
-        output,
-        probe(
-          output,
-          "dos-" + label + "-oracle",
-          runtime_bin + "/cygpath.exe",
-          args,
-          dos_dir,
-          environment,
-        ),
-      ),
-    )
-  }
-  observe_dos("original", dos_args)
-  let fsutil = locate_tool("fsutil.exe")
-  let aliases : Array[String] = ["-ws"]
-  for
-    (primary, short) in [
-      ("README.TXT", "RALT.TXT"),
-      ("Case.TXT", "CALT.TXT"),
-      ("SUBDIR", "DALT"),
-      ("A long primary name.txt", "LALT.TXT"),
-    ] {
-    let setup = probe(
-      output,
-      "dos-set-" + short,
-      fsutil,
-      ["file", "setshortname", dos_dir + "/" + primary, short],
-      dos_dir,
-      environment,
-    )
-    if setup.exit_code == Some(0) && @fs.exists(dos_dir + "/" + short) {
-      for value in [short, short.to_lower()] {
-        aliases.push(
-          if primary == "SUBDIR" {
-            value + "/File.txt"
-          } else {
-            value
-          },
-        )
-      }
-    }
-  }
-  observe_dos("explicit", dos_args)
-  if aliases.length() > 1 {
-    observe_dos("alias", aliases)
-  }
+  check_dos_names(
+    output, profile, runtime_bin, root, wasm, moonrun, environment, compare,
+  )
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)
   @fs.write_file(output + "/usertemp.fstab", temp_table)
