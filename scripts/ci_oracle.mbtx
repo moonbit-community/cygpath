@@ -3392,6 +3392,43 @@ async fn run(options : Map[String, String]) -> Unit {
     "context_mount_source": "Only declarations from the raw mount table are supplied to the project; queried path mappings do not create extra mounts.",
   })
   let measured_context = explicit_mount_args(wasm, profile, prefix, mount_table)
+  // Read all low-byte CSIDL values in one process. A marker after each
+  // query identifies empty results without relying on a localized path.
+  if variant == "default" {
+    let ids : Array[String] = []
+    for id in 0..<256 {
+      ids.push("-wF" + id.to_string())
+    }
+    for
+      flag in [
+        0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x4800, 0x7000, 0x10000,
+        0x4000000,
+      ] {
+      for id in [1, 0x14, 0x24, 0x25, 0x29, 0x38, 0xfe] {
+        ids.push("-wF" + (flag | id).to_string())
+      }
+    }
+    for opt in ["-wW", "-wS", "-mW", "-mS", "-W", "-S", "-F0x24", "-F0x25"] {
+      ids.push(opt)
+    }
+    let records = output + "/csidl-probe.txt"
+    let input = ids
+      .mapi((i, opt) => opt + "\n-u folder-mark-" + i.to_string() + "\n")
+      .join("")
+    @fs.write_file(records, input)
+    let observation = probe(
+      output,
+      "csidl-raw-oracle",
+      cygpath,
+      ["-of", records],
+      cwd,
+      environment,
+    )
+    require(
+      observation.status == "completed" && observation.exit_code == Some(0),
+      "CSIDL scan did not finish",
+    )
+  }
   for
     (label, args, code) in [
       ("folder-system-x86", ["-F", "41"], 0),
