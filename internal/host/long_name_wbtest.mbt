@@ -21,10 +21,16 @@ async test "long names preserve the root, separator spelling and queried links" 
     )
     assert_eq(visited, [root + ".\\REPORT~1", root + ".\\REPORT~1/../Link"])
   }
-  assert_eq(dos_component("FILE.TXT"), Some(true))
-  assert_eq(dos_component("FILE~1"), Some(true))
-  assert_eq(dos_component("Report.backup"), Some(false))
-  assert_eq(dos_component("École"), None)
+  assert_true(is_ascii_short_component("FILE.TXT"))
+  assert_true(is_ascii_short_component("FILE~1"))
+  assert_false(is_ascii_short_component("Report.backup"))
+  assert_false(is_ascii_short_component("École"))
+  for name in ["A+B.txt", "A B.txt", "A😀bcdef", "Ωmega.txt"] {
+    assert_true(may_expand_long_component(name))
+  }
+  for name in [".abc", "A.B.C", "A😀bcdefg", "AB.ABCD"] {
+    assert_false(may_expand_long_component(name))
+  }
 }
 
 ///|

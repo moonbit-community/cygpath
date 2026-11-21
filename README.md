@@ -99,10 +99,11 @@ The fixed `/proc` files, including `/proc/version` and `/proc/uptime`, also
 keep their names in Windows output. Process-specific paths and registry
 values require Cygwin runtime state.
 
-On Windows, `-wl` and `-ml` expand ordinary short names using the name stored
-on disk. A missing path keeps its original Windows spelling, including any
-short parent names. An alternate name of a reparse point or a spelling that
-depends on the host OEM page can require metadata outside the runtime API.
+On Windows, `-wl` and `-ml` can expand a supplied alias and restore the
+stored spelling of short-shaped ordinary names, including spaces, punctuation
+and Unicode. For example, `-wl a+b.txt` prints `A+B.txt` when that is the
+name on disk. A missing path keeps its entire converted spelling. Looking up
+a reparse point by an alternate name can still require additional host metadata.
 
 On Windows, `-d` and `-s` preserve the input spelling of an existing path
 whose components already have unambiguous ASCII 8.3 names. This includes a

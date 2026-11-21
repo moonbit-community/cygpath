@@ -268,17 +268,21 @@ mount changes, Cygwin-only link metadata and native links without a resolvable
 target. Missing installation context is a capability failure, not a binary
 default. See [upstream mode lookup](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/external.cc#L425-L436).
 
-`-l` queries the Windows host after path conversion. For ordinary files and
-directories, `moonrun` obtains the normalized name of the opened entry. The CLI
-uses only the last component of that result so a junction in an earlier
-component keeps its spelling. Directory enumeration supplies the reparse point's
-own name, including an unambiguous ASCII case variant of an eligible DOS name.
-Unresolved reparse aliases and
-OEM-dependent case or alias decisions produce a capability error. A missing
-path returns the whole original spelling, including any short parent names.
+`-l` decides which converted path components need Windows metadata. A stem
+longer than eight UTF-16 code units, an extension longer than three, a leading
+dot or multiple dots preserves that component's spelling. A DOS or UNC path
+made entirely of such components can pass through on any host. Spaces,
+punctuation and Unicode inside the 8.3 widths can still require lookup.
+For ordinary entries, `moonrun` obtains the normalized name of the opened
+entry. The CLI uses only its last component so an earlier junction keeps
+its spelling. For a reparse point, directory enumeration can recover its
+own name by exact or unique ASCII case match. An unresolved reparse alias
+produces a capability error. A missing Windows path returns the whole
+original spelling, including any short parent names.
 Lists apply the lookup to each member. With `-C`, the first encoded result
 must decode in the supported UTF-8 locale before the lookup. Windows
 comparisons use names obtained from the fixture volume itself.
+[Windows long-name lookup](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlongpathnamew),
 [Cygwin fallback](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L430-L445),
 [moonrun Windows realpath](https://github.com/moonbitlang/moon/blob/738607b/crates/moonrun/src/filesystem/job/runner.rs#L1343-L1405),
 and [Windows normalized names](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/20bcadba-808c-4880-b757-4af93e41edf6).

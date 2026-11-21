@@ -847,50 +847,66 @@ async fn check_dos_names(
   let expanded = names.copy()
   expanded[expanded.length() - 1] = ".guide"
   check("shape-long", ["-wl", ..operands], expanded.join("\n") + "\n")
-  // OEM-dependent 8.3 forms have separate short-name results.
-  let short = probe(
-    output,
-    "dos-shape-short-oracle",
-    bin + "/cygpath.exe",
-    ["-ws", ..operands],
-    dir,
-    environment,
-  )
-  require(
-    short.status == "completed" && short.exit_code == Some(0),
-    "short-name observation failed",
-  )
+  let assigned = names.mapi((i, _) => "p" + i.to_string() + ".aLt")
+  check("shape-supplied-short", ["-ws", ..assigned], assigned.join("\n") + "\n")
+  check("shape-supplied-long", ["-wl", ..assigned], names.join("\n") + "\n")
   let shapes = [
     "ABCDEFGHI", "ABCDEFGHIJKL", "ABCDEFGHIJKLM", "ABCDEFGHI.A", "ABCDEFGH.ABC",
     "AB.ABCD", ".Ab", ".AbC", "A.B.C", "Ab.C.Dd", "A..B", "A😀bcdef", "A😀bcdefg",
-    "A😀b.cd😀", "Ab.😀c", "éCOLE2.txt", "ωMEGA2.txt", "a[2].txt", "A=B.txt",
+    "A😀b.cd😀", "Ab.😀c", "éCOLE2.txt", "ωMEGA2.txt", "A[2].txt", "A=B.txt",
     "A;C.txt",
   ]
   for n in shapes {
     @fs.write_file(dir + "/" + n, b"shape", create_mode=CreateNew)
   }
   let query = shapes.map(s => s.to_lower())
-  let long = probe(
+  let lookup_expected = [
+    "abcdefghi", "abcdefghijkl", "abcdefghijklm", "abcdefghi.a", "ABCDEFGH.ABC",
+    "ab.abcd", ".ab", ".abc", "a.b.c", "ab.c.dd", "a..b", "A😀bcdef", "a😀bcdefg",
+    "a😀b.cd😀", "Ab.😀c", "éCOLE2.txt", "ωMEGA2.txt", "A[2].txt", "A=B.txt",
+    "A;C.txt",
+  ]
+  check("shape-boundary", ["-wl", ..query], lookup_expected.join("\n") + "\n")
+  @fs.mkdir(dir + "/D +中")
+  @fs.write_file(dir + "/D +中/A+B.txt", b"child", create_mode=CreateNew)
+  @fs.symlink(
+    dir + "/R+éF.lnk",
+    target=dir + "/A long primary name.txt",
+    force_symlink=true,
+  )
+  check(
+    "shape-links",
+    ["-ml", "r+éf.LNK", "d +中/a+b.txt"],
+    "R+éF.lnk\nD +中/A+B.txt\n",
+  )
+  @fs.write_file(dir + "/Ab", b"plain", create_mode=CreateNew)
+  let trailing = ["-wl", "ab.", "ab..", "readme.txt.", "ab   "]
+  let raw = probe(
     output,
-    "dos-shape-boundary-oracle",
+    "dos-shape-trailing-oracle",
     bin + "/cygpath.exe",
-    ["-wl", ..query],
+    trailing,
     dir,
     environment,
   )
-  require(
-    long.status == "completed" && long.exit_code == Some(0),
-    "long-name boundary observation failed",
+  let port = probe(
+    output,
+    "dos-shape-trailing-wasm",
+    moonrun,
+    [wasm, "--", "--profile", profile, ..trailing],
+    dir,
+    installed,
   )
-  ignore(
-    probe(
-      output,
-      "dos-shape-boundary-wasm",
-      moonrun,
-      [wasm, "--", "--profile", profile, "-wl", ..query],
-      dir,
-      installed,
-    ),
+  compare(
+    raw.status == "completed" &&
+    raw.exit_code == Some(0) &&
+    raw.stderr_length == 0 &&
+    raw.stdout_length > 0 &&
+    port.status == "completed" &&
+    port.exit_code == raw.exit_code &&
+    port.stdout_sha256 == raw.stdout_sha256 &&
+    port.stderr_sha256 == raw.stderr_sha256,
+    "long lookup for trailing dots and spaces differs in " + profile,
   )
   check("explicit", args, expected)
   check(

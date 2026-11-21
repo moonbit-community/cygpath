@@ -981,6 +981,14 @@
       "exit_code": 0
     },
     {
+      "case_id": "long-name-structurally-long-components",
+      "category": "options",
+      "argv": ["-ml", "C:/Directory over eight/Report.backup", "C:/Mixed.Case.long", "C:/.config"],
+      "stdout_text": "C:/Directory over eight/Report.backup\nC:/Mixed.Case.long\nC:/.config\n",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
       "case_id": "long-name-invalid-multibyte-input",
       "category": "encoding",
       "argv": ["-wlC1252", "/cygdrive/c/é"],

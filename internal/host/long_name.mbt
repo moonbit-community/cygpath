@@ -1,43 +1,27 @@
 ///|
-/// None means DOS eligibility depends on the OEM character set or space
-/// handling. An exact spelling on disk is usable in either case.
-fn dos_component(name : String) -> Bool? {
-  if name.length() > 12 || name.has_prefix(".") || name.has_suffix(".") {
-    return Some(false)
-  }
-  let fields = name.split(".").to_array()
-  if fields.length() > 2 ||
-    fields[0].length() > 8 ||
-    (fields.length() == 2 && fields[1].length() > 3) {
-    return Some(false)
-  }
-  let mut uncertain = false
-  for unit in name.code_units() {
-    if unit
-      is ('+'
-      | ','
-      | ';'
-      | '='
-      | '['
-      | ']'
-      | '*'
-      | '?'
-      | '<'
-      | '>'
-      | '"'
-      | '|'
-      | ':') {
-      return Some(false)
-    }
-    if unit <= 32 || unit >= 127 {
-      uncertain = true
-    }
-  }
-  if uncertain {
-    None
-  } else {
-    Some(true)
-  }
+/// Names that GetShortPathNameW can copy without reading an alternate name.
+fn is_ascii_short_component(name : String) -> Bool {
+  may_expand_long_component(name) &&
+  name
+  .code_units()
+  .all(unit => {
+    unit > 32 &&
+    unit < 127 &&
+    !(unit
+    is ('+'
+    | ','
+    | ';'
+    | '='
+    | '['
+    | ']'
+    | '*'
+    | '?'
+    | '<'
+    | '>'
+    | '"'
+    | '|'
+    | ':'))
+  })
 }
 
 ///|
@@ -102,7 +86,10 @@ async fn primary_entry_name(parent : String, name : String) -> String? {
 /// GetLongPathNameW consults the directory entry for short-shaped names,
 /// including spaces and characters that require an alternate name for -s.
 fn may_expand_long_component(name : String) -> Bool {
-  if name.length() > 12 {
+  if name.is_empty() ||
+    name.has_prefix(".") ||
+    name.has_suffix(".") ||
+    name.length() > 12 {
     return false
   }
   match name.split(".").to_array() {
@@ -114,9 +101,6 @@ fn may_expand_long_component(name : String) -> Bool {
 
 ///|
 async fn long_component(path : String, name : String) -> String {
-  if !may_expand_long_component(name) {
-    return name
-  }
   if @fs.kind(host_io_path(path), follow_symlink=false) is SymLink {
     // A normalized handle name would follow this link. Use its own directory entry.
     if primary_entry_name(entry_parent(path, name), name) is Some(entry) {
@@ -168,10 +152,10 @@ async fn expand_long_components(
     }
     let name = path[start:end].to_owned()
     result.write_string(
-      if name is ("." | "..") {
-        name
-      } else {
+      if may_expand_long_component(name) {
         entry(path[:end].to_owned(), name)
+      } else {
+        name
       },
     )
     continue end
@@ -192,10 +176,26 @@ async fn long_name_on_disk(path : String) -> String {
 
 ///|
 pub async fn long_name(path : String) -> String {
-  guard @async.platform is Windows else {
-    raise NameLookupUnavailable("long-name lookup requires a Windows host")
+  if @async.platform is Windows {
+    long_name_on_disk(path)
+  } else {
+    guard is_dos_namespace(path, plain_native(path)) else {
+      raise NameLookupUnavailable("long-name lookup requires a Windows host")
+    }
+    expand_long_components(path, (_, _) => {
+      raise NameLookupUnavailable("long-name lookup requires a Windows host")
+    })
   }
-  long_name_on_disk(path)
+}
+
+///|
+fn is_dos_namespace(path : String, plain : String) -> Bool {
+  let drive = plain.length() >= 3 &&
+    plain[0] is ('a'..<='z' | 'A'..<='Z') &&
+    plain[1:3] == ":/"
+  !plain.has_prefix("//./") &&
+  !plain.has_prefix("/??/") &&
+  (plain.length() == path.length() || drive || plain.has_prefix("//"))
 }
 
 ///|
@@ -203,18 +203,11 @@ pub async fn long_name(path : String) -> String {
 /// caller's case, even when NTFS has a separately assigned alternate name.
 fn already_short_path(path : String) -> Bool {
   let plain = plain_native(path)
-  let drive = plain.length() >= 3 &&
-    plain[0] is ('a'..<='z' | 'A'..<='Z') &&
-    plain[1:3] == ":/"
-  if plain.has_prefix("//./") ||
-    plain.has_prefix("/??/") ||
-    (plain.length() != path.length() && !drive && !plain.has_prefix("//")) {
-    return false
-  }
+  guard is_dos_namespace(path, plain) else { return false }
   plain[windows_name_root(plain):]
   .split("/")
   .all(part => {
-    part is ("" | "." | "..") || dos_component(part.to_owned()) == Some(true)
+    part is ("" | "." | "..") || is_ascii_short_component(part.to_owned())
   })
 }
 
