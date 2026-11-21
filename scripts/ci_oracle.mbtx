@@ -1703,8 +1703,8 @@ async fn check_mount_owners(
       ("ref.lnk", target + "/records"),
       ("dot..lnk", target + "/records"),
       ("decoy\uF02E.lnk", target + "/records"),
-      ("both..lnk", target + "/records"),
-      ("both\uF02E.lnk", dos_dir + "/decoy-data"),
+      ("twins..lnk", target + "/records"),
+      ("twins\uF02E.lnk", dos_dir + "/decoy-data"),
       ("dir.lnk", target + "/sub"),
       ("pair.lnk", target + "/records"),
     ] {
@@ -1712,29 +1712,112 @@ async fn check_mount_owners(
   }
   @fs.write_file(dos_dir + "/pair.exe", b"C:/chosen-exe\n")
   let lnk_names = [
-    "/dos/ref", "/dos/dot.", "/dos/decoy.", "/dos/both.", "/dos/dir", "/dos/dir.lnk",
+    "/dos/ref", "/dos/dot.", "/dos/decoy.", "/dos/twins.", "/dos/dir", "/dos/dir.lnk",
     "/dos/pair",
   ]
+  let win_names = [
+    "ref.lnk", "dot..lnk", "decoy\uF02E", "twins..lnk", "dir", "dir.lnk", "pair.exe",
+  ]
+  let modes = ["text", "text", "binary", "text", "binary", "text", "text"]
+  let mode_lines = lnk_names
+    .mapi((i, name) => name + ": " + modes[i] + "\n")
+    .join("")
+  let parent_errors = b"cygpath: file '/dos/ref/child' - Not a directory\ncygpath: file '/dos/ref/../records' - Not a directory\n" +
+    b"cygpath: file '/dos/dir/../records' - No such file or directory\ncygpath: file '/dos/decoy./../records' - No such file or directory\n"
   for
-    (tag, args, status, expected) in [
-      ("names", ["-m", ..lnk_names], (0, Some(b"")), None),
-      ("mode", ["-M", ..lnk_names], (0, Some(b"")), None),
+    (tag, args, code, stdout, stderr) in [
+      (
+        "names",
+        ["-m", ..lnk_names],
+        0,
+        @utf8.encode(win_names.map(n => dos_dir + "/" + n + "\n").join("")),
+        b"",
+      ),
+      ("mode", ["-M", ..lnk_names], 0, @utf8.encode(mode_lines), b""),
       (
         "parents",
         [
           "-M", "/dos/ref/child", "/dos/ref/../records", "/dos/dir/../records", "/dos/dir.lnk/../records",
           "/dos/decoy./../records",
         ],
-        (0, None),
-        None,
+        0,
+        b"/dos/dir.lnk/../records: text\n",
+        parent_errors,
       ),
-      ("input", ["-uf", "/dos/ref"], (0, Some(b"")), None),
-      ("dos-input", ["-uf", "/dos/both."], (0, Some(b"")), None),
-      ("decoy-input", ["-uf", "/dos/decoy."], (1, None), Some(b"")),
-      ("exe-input", ["-uf", "/dos/pair"], (0, Some(b"")), None),
+      ("input", ["-uf", "/dos/ref"], 0, b"/cygdrive/c/through-target\n", b""),
+      (
+        "dos-input",
+        ["-uf", "/dos/twins."],
+        0,
+        b"/cygdrive/c/through-target\n",
+        b"",
+      ),
+      (
+        "decoy-input",
+        ["-uf", "/dos/decoy."],
+        1,
+        b"",
+        b"cygpath: No such file or directory\n",
+      ),
+      ("exe-input", ["-uf", "/dos/pair"], 0, b"/cygdrive/c/chosen-exe\n", b""),
     ] {
-    compare_installed("reparse-lnk-" + tag, args, root, status, expected)
+    compare_installed(
+      "reparse-lnk-" + tag,
+      args,
+      root,
+      (code, Some(stderr)),
+      Some(stdout),
+    )
   }
+  for name in windows_names[:3] {
+    @fs.symlink(name + ".lnk", target=target + "/records", force_symlink=true)
+  }
+  @fs.write_file(
+    width_records,
+    raw_names[:3].fold(init=b"", (out, row) => out + row + b"\n"),
+  )
+  compare_installed(
+    "reparse-lnk-width-mode",
+    ["-Mf", width_records],
+    root,
+    (0, Some(b"")),
+    Some(
+      raw_names[0] +
+      b": text\n" +
+      raw_names[1] +
+      b": binary\n" +
+      raw_names[2] +
+      b": binary\n",
+    ),
+  )
+  let local_args = ["-mf", "ref"]
+  let local_oracle = probe(
+    output,
+    "reparse-lnk-local-oracle",
+    runtime_bin + "/cygpath.exe",
+    local_args,
+    dos_dir,
+    environment,
+  )
+  let local_port = probe(
+    output,
+    "reparse-lnk-local-implicit",
+    moonrun,
+    [wasm, "--", "--profile", profile, ..local_args],
+    dos_dir,
+    environment,
+  )
+  compare(
+    local_oracle.status == "completed" &&
+    local_oracle.exit_code == Some(0) &&
+    local_oracle.stdout_sha256 == digest(b"C:/through-target\n") &&
+    local_oracle.stderr_length == 0 &&
+    local_port.status == "completed" &&
+    local_port.exit_code == local_oracle.exit_code &&
+    local_port.stdout_sha256 == local_oracle.stdout_sha256 &&
+    local_port.stderr_sha256 == local_oracle.stderr_sha256,
+    "native .lnk file input from the working directory differs in " + profile,
+  )
   // The capture files are inherited from a native parent on the cygdrive mount.
   // Record the stream-mode boundary independently of path conversion parity.
   let text_table = dos_table.replace_all(

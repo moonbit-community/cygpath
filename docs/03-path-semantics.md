@@ -314,6 +314,14 @@ the leaf keeps its spelling. A trailing separator requests a directory and
 requires resolving that link. A missing name below a native directory link
 can also require resolving the link target. An ordinary Explorer shortcut
 keeps its `.lnk` name. Looking up `report` skips an ordinary `report.lnk`.
+
+A Windows file symlink named `report.lnk` can supply the missing suffix.
+Mixed output prints `report.lnk`, file input opens its target, and `-M`
+uses the target mount. If `report.exe` also exists, Windows output and file
+input select the executable first. The mode query still follows the link.
+A native directory link named `dir.lnk` can be traversed by its full name.
+An omitted `.lnk` cannot supply that directory. [Cygwin suffix and reparse checks](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L3436-L3500).
+
 The Cygwin shortcut check uses the Shell Link CLSID, flags, normal show
 mode, and a nonempty description. On Windows a successful write-access
 check rules out the read-only attribute for a matching regular file.

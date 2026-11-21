@@ -32,8 +32,8 @@ fn local_windows_context(path : String) -> @lib.Context? raise {
 async fn installed_mode(
   context : @lib.Context,
   operand : String,
-  inspect~ : async (String) -> NativeEntity = native_entity,
-  parent_inspect? : async (String) -> NativeEntity,
+  inspect~ : async (@lib.NativePath) -> NativeEntity = mapped_native_entity,
+  parent_inspect? : async (@lib.NativePath) -> NativeEntity,
   server_lookup~ : async (String) -> Bool = network_server_exists,
 ) -> Bool {
   let windows = operand.contains_char('\\') || absolute_drive_name(operand)
@@ -86,7 +86,7 @@ pub async fn report_mode(
       // A local Windows name bypasses POSIX mounts until a link target
       // has to be fed back through the runtime mount table.
       installed_mode(drive_context, path, inspect=native => {
-        match native_entity(native) {
+        match mapped_native_entity(native) {
           Found(_) as entry => entry
           Follow(_, _) =>
             raise InstallationError(
@@ -101,7 +101,7 @@ pub async fn report_mode(
       let parent_inspect = if server_lookup is Some(_) &&
         path.has_prefix("//") &&
         !path.has_prefix("///") {
-        Some(native_entity)
+        Some(mapped_native_entity)
       } else {
         None
       }

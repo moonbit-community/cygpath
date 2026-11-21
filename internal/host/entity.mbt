@@ -266,13 +266,24 @@ async fn executable_candidate(exe : String, name : String) -> @fs.FileKind? {
     extension.equal_ignore_ascii_case("lnk") {
     return None
   }
-  match native_kind(exe) {
+  suffixed_file(exe, shortcut=false)
+}
+
+///|
+/// A native file reparse point is a link even when the suffix is .lnk.
+/// An ordinary file found through .lnk must pass Cygwin's shortcut check.
+async fn suffixed_file(path : String, shortcut~ : Bool) -> @fs.FileKind? {
+  match native_kind(path) {
+    Some(Regular) if shortcut => {
+      check_cygwin_link(path, appended=true)
+      None
+    }
     Some(Regular) => Some(Regular)
     Some(SymLink) =>
-      if (@fs.kind(host_io_path(exe)) catch {
+      if (@fs.kind(host_io_path(path)) catch {
           _ =>
             raise InstallationError(
-              "cannot determine executable link type: " + @debug.to_string(exe),
+              "cannot determine suffixed link type: " + @debug.to_string(path),
             )
         }) ==
         Directory {
@@ -290,6 +301,31 @@ fn needs_directory(path : String) -> Bool {
   path.has_suffix("/") ||
   path.has_suffix("/.") ||
   path.has_suffix("/..")
+}
+
+///|
+fn basename_size(
+  mapped : @lib.NativePath?,
+  parents : Int32,
+  name : String,
+) -> Int32 {
+  match mapped {
+    Some(entry) => entry.basename_bytes(parents~).unwrap_or(0)
+    None => @utf8.encode(name).length()
+  }
+}
+
+///|
+fn suffixed_name(
+  mapped : @lib.NativePath?,
+  current : String,
+  parents : Int32,
+  suffix : String,
+) -> String raise {
+  match mapped {
+    Some(entry) => entry.windows_name(parents~, suffix~)
+    None => current + suffix
+  }
 }
 
 ///|
@@ -311,32 +347,26 @@ async fn windows_entity(
       .rev_split_once("/")
       .map(p => p.1.to_owned())
       .unwrap_or(current)
-    let size = match mapped {
-      Some(entry) => entry.basename_bytes(parents~).unwrap_or(0)
-      None => @utf8.encode(name).length()
-    }
-    fn with_suffix(suffix : String) -> String raise {
-      match mapped {
-        Some(entry) => entry.windows_name(parents~, suffix~)
-        None => current + suffix
-      }
-    }
+    let size = basename_size(mapped, parents, name)
     if size > 255 {
       raise LookupErrno("File name too long")
     }
     let mut kind = native_kind(current)
     let mut suffix = ""
+    let mut selected = current
     if kind is None && length > root && size <= 251 {
       if leaf && purpose != LongAbsolute {
-        kind = executable_candidate(with_suffix(".exe"), name)
+        selected = suffixed_name(mapped, current, parents, ".exe")
+        kind = executable_candidate(selected, name)
         if kind is Some(_) {
           suffix = ".exe"
         }
       }
       if kind is None {
-        let lnk = with_suffix(".lnk")
-        if native_kind(lnk) is Some(Regular) {
-          check_cygwin_link(lnk, appended=true)
+        selected = suffixed_name(mapped, current, parents, ".lnk")
+        kind = suffixed_file(selected, shortcut=true)
+        if kind is Some(_) {
+          suffix = ".lnk"
         }
       }
     }
@@ -346,28 +376,12 @@ async fn windows_entity(
           return (Found(kind), suffix)
         }
         let tail = path[length:end].trim_start(chars="/").to_owned()
-        return (
-          native_link(
-            if suffix.is_empty() {
-              current
-            } else {
-              with_suffix(suffix)
-            },
-            tail,
-          ),
-          "",
-        )
+        return (native_link(selected, tail), "")
       }
       Some(Regular) => {
         // Input checks the opened file's header, preserving open-time errno.
         if purpose != FileInput || !leaf || need_directory {
-          check_cygwin_link(
-            if suffix.is_empty() {
-              current
-            } else {
-              with_suffix(suffix)
-            },
-          )
+          check_cygwin_link(selected)
         }
         if !leaf || need_directory {
           raise LookupErrno("Not a directory")
@@ -396,7 +410,15 @@ async fn mapped_windows_entity(
 }
 
 ///|
-async fn native_entity(native : String) -> NativeEntity {
+async fn mapped_native_entity(entry : @lib.NativePath) -> NativeEntity {
+  native_entity(entry.windows_name(), mapped=entry)
+}
+
+///|
+async fn native_entity(
+  native : String,
+  mapped? : @lib.NativePath,
+) -> NativeEntity {
   let path = plain_native(native)
   let parts = path
     .split("/")
@@ -422,8 +444,12 @@ async fn native_entity(native : String) -> NativeEntity {
     }
     kind = native_kind(current)
     if kind is None {
-      if native_kind(current + ".lnk") is Some(Regular) {
-        check_cygwin_link(current + ".lnk", appended=true)
+      let parents = parts.length() - index - 1
+      if basename_size(mapped, parents, parts[index]) <= 251 {
+        let lnk = suffixed_name(mapped, current, parents, ".lnk")
+        if suffixed_file(lnk, shortcut=true) is Some(SymLink) {
+          return native_link(lnk, parts[index + 1:].join("/"))
+        }
       }
       continue
     }
@@ -522,7 +548,7 @@ async fn locate_entity(
   context : @lib.Context,
   path : String,
   from : @lib.InputSyntax,
-  inspect : async (String) -> NativeEntity,
+  inspect : async (@lib.NativePath) -> NativeEntity,
   server_lookup? : async (String) -> Bool,
 ) -> (Bool?, Bool, String) {
   let mut path = path
@@ -540,7 +566,7 @@ async fn locate_entity(
         if native.basename_bytes().unwrap_or(0) > 255 {
           raise LookupErrno("File name too long")
         }
-        (native.windows_name(), text_mode)
+        (native, text_mode)
       }
     }
     match inspect(native) {
@@ -559,7 +585,7 @@ async fn locate_entity(
 async fn checked_parents(
   context : @lib.Context,
   operand : String,
-  inspect : async (String) -> NativeEntity,
+  inspect : async (@lib.NativePath) -> NativeEntity,
   server_lookup~ : async (String) -> Bool = network_server_exists,
 ) -> String {
   if !operand.split("/").any(part => part == "..") {
@@ -638,7 +664,7 @@ pub async fn convert_installed(
   absolute : Bool,
 ) -> Result[String, String] {
   checked_windows_path(
-    context, path, from, absolute, native_entity, mapped_windows_entity,
+    context, path, from, absolute, mapped_native_entity, mapped_windows_entity,
   )
 }
 
@@ -659,19 +685,22 @@ async fn local_windows_output(
 ) -> Result[String, String]? {
   guard local_windows_context(path) is Some(context) else { return None }
   Some(
-    checked_windows_path(context, path, Windows, absolute, native_entity, (
-      native,
-      directory,
-      purpose,
-    ) => {
-      let (entity, suffix) = mapped_windows_entity(native, directory, purpose)
-      if entity is Follow(_, _) {
-        raise InstallationError(
-          "a selected Cygwin installation is required for a link target",
-        )
-      }
-      (entity, suffix)
-    }),
+    checked_windows_path(
+      context,
+      path,
+      Windows,
+      absolute,
+      mapped_native_entity,
+      (native, directory, purpose) => {
+        let (entity, suffix) = mapped_windows_entity(native, directory, purpose)
+        if entity is Follow(_, _) {
+          raise InstallationError(
+            "a selected Cygwin installation is required for a link target",
+          )
+        }
+        (entity, suffix)
+      },
+    ),
   )
 }
 
@@ -681,7 +710,7 @@ async fn checked_windows_path(
   path : String,
   from : @lib.InputSyntax,
   absolute : Bool,
-  inspect : async (String) -> NativeEntity,
+  inspect : async (@lib.NativePath) -> NativeEntity,
   lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
     NativeEntity,
     String,

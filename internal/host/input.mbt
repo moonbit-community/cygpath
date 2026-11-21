@@ -163,8 +163,8 @@ async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
         return @fs.open(host_io_path(base + ".exe"), mode=ReadOnly)
       }
       if @async.platform is Windows &&
-        native_kind(base + ".lnk") is Some(Regular) {
-        check_cygwin_link(base + ".lnk", appended=true)
+        suffixed_file(base + ".lnk", shortcut=true) is Some(SymLink) {
+        return @fs.open(host_io_path(base + ".lnk"), mode=ReadOnly)
       }
       raise missing
     }

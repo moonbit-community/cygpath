@@ -182,7 +182,7 @@ async test "fstab checks a cancelled POSIX directory against earlier mounts" {
     #|E:/via-link /first/link/../alias ntfs binary
   for profile in [@lib.Cygwin, Msys2] {
     let ctx = mounted_context("C:/root", rows, "", None, profile~, inspect=native => {
-      match plain_native(native) {
+      match plain_native(native.windows_name()) {
         "D:/mount/missing" => Found(None)
         "D:/mount/file" => Found(Some(Regular))
         "D:/mount/dir" | "C:/root/actual/deep" => Found(Some(Directory))

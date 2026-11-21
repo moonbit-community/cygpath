@@ -5,8 +5,8 @@ async test "byte-valued POSIX records use the selected mount for native lookup a
     @lib.Mount::new("/\uF0FF", "D:/literal", text_mode=true),
   ])
   let path = @filename.decode(b"/\xff/")
-  let inspect : async (String) -> NativeEntity = name => {
-    assert_eq(name, "C:\\root\\\uF0FF\\")
+  let inspect : async (@lib.NativePath) -> NativeEntity = name => {
+    assert_eq(name.windows_name(), "C:\\root\\\uF0FF\\")
     Found(None)
   }
   let lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
@@ -14,7 +14,7 @@ async test "byte-valued POSIX records use the selected mount for native lookup a
     String,
   ) = (name, directory, _) => {
     assert_true(directory)
-    (inspect(name.windows_name()), "")
+    (inspect(name), "")
   }
   assert_eq(
     checked_windows_path(context, path, Posix, false, inspect, lookup),
@@ -29,7 +29,8 @@ async test "network traversal checks the cancelled entity and follows its resolv
     @lib.Mount::new("/dest", "C:/target", text_mode=true),
   ])
   let checked = []
-  let inspect : async (String) -> NativeEntity = path => {
+  let inspect : async (@lib.NativePath) -> NativeEntity = path => {
+    let path = path.windows_name()
     checked.push(path)
     match path {
       "\\\\old\\share" => Found(Some(Directory))
@@ -84,8 +85,8 @@ async test "network traversal checks the cancelled entity and follows its resolv
 ///|
 async test "virtual conversion and mode do not inspect native files" {
   let context = mounted_context("C:/cygwin", "", "", Some("C:/cygwin/dev"))
-  let inspect : async (String) -> NativeEntity = name => {
-    fail("unexpected filesystem lookup: " + name)
+  let inspect : async (@lib.NativePath) -> NativeEntity = name => {
+    fail("unexpected filesystem lookup: " + name.windows_name())
   }
   let lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
     NativeEntity,
@@ -163,7 +164,9 @@ async test "installed relative output uses the operand's mount when comparing cw
     "",
     Some("D:/Work"),
   )
-  let inspect : async (String) -> NativeEntity = _ => Found(Some(Directory))
+  let inspect : async (@lib.NativePath) -> NativeEntity = _ => {
+    Found(Some(Directory))
+  }
   let lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
     NativeEntity,
     String,
@@ -275,6 +278,11 @@ async test "installed mode uses filesystem entities and effective fstab flags" {
   @fs.write_binary(base + "/text/plain", b"abc")
   @fs.write_binary(base + "/text/cookie", b"!<symlink>target")
   @fs.symlink(base + "/binary/link", target=base + "/text")
+  @fs.symlink(
+    base + "/binary/ref.lnk",
+    target=base + "/text/plain",
+    force_symlink=true,
+  )
   @fs.mkdir(base + "/text/deep")
   @fs.symlink(base + "/binary/nested-link", target=base + "/text/deep")
   let context = mounted_context(
@@ -298,8 +306,8 @@ async test "installed mode uses filesystem entities and effective fstab flags" {
       Found(_) => entity
     }
   }
-  async fn inspect(native : String) -> NativeEntity {
-    remap(native_entity(test_path(native)))
+  async fn inspect(native : @lib.NativePath) -> NativeEntity {
+    remap(native_entity(test_path(native.windows_name())))
   }
   async fn lookup(
     native : @lib.NativePath,
@@ -344,6 +352,7 @@ async test "installed mode uses filesystem entities and effective fstab flags" {
     (path, expected) in [
       ("/text/plain", true),
       ("/text/missing", true),
+      ("/binary/ref", true),
       ("/alias/plain", true),
       ("/binary", false),
       ("C:/text/plain", false),
@@ -428,6 +437,7 @@ async test "installed mode uses filesystem entities and effective fstab flags" {
     (input, expected) in [
       ("/binary/nested-link/../plain", "C:\\text\\plain"),
       ("/binary/app", "C:\\binary\\app.exe"),
+      ("/binary/ref", "C:\\text\\plain"),
       ("file.txt", "C:\\binary\\file.txt.exe"),
       ("C:\\binary\\exact", "C:\\binary\\exact"),
       ("link", "C:\\text"),

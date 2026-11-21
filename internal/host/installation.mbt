@@ -10,7 +10,7 @@ priv struct InstallMount {
 async fn installed_filename(
   context : @lib.Context,
   path : String,
-  inspect~ : async (String) -> NativeEntity = native_entity,
+  inspect~ : async (@lib.NativePath) -> NativeEntity = mapped_native_entity,
   lookup~ : async (@lib.NativePath, Bool) -> (NativeEntity, String) = (
     native,
     directory,
@@ -231,7 +231,7 @@ async fn InstallTable::read_fstab(
   self : InstallTable,
   text : String,
   user~ : Bool,
-  inspect : async (String) -> NativeEntity,
+  inspect : async (@lib.NativePath) -> NativeEntity,
 ) -> Unit {
   for raw in text.split("\n") {
     let row = raw.trim_end(chars="\r").trim_start(chars=" \t")
@@ -382,7 +382,7 @@ async fn mounted_context(
   temp~ : async () -> String? = () => None,
   nt_null? : Bool,
   profile~ : @lib.Profile = Cygwin,
-  inspect~ : async (String) -> NativeEntity = native_entity,
+  inspect~ : async (@lib.NativePath) -> NativeEntity = mapped_native_entity,
 ) -> @lib.Context {
   let table : InstallTable = {
     profile,
