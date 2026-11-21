@@ -300,7 +300,8 @@ respectively. The search counts bytes in the original narrow basename. At 251
 bytes it can append a four-byte suffix. At 252–255 bytes it tries only the
 exact name. A 256-byte basename produces `File name too long`. A raw byte FF
 and the UTF-8 spelling of U+F0FF can identify the same Windows file and reach
-different limits. On a `dos` mount, `plain.` first checks `plain` followed by
+different limits. A mode query (`-M`) reports an overlong basename on stderr
+and continues with the following operands. On a `dos` mount, `plain.` first checks `plain` followed by
 U+F02E. Its executable candidate is `plain..exe`, since the original dot
 becomes internal when the suffix is appended. File input opens that same
 candidate. [Cygwin suffix scan](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L2902-L2958)

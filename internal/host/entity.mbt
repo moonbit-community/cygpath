@@ -536,7 +536,12 @@ async fn locate_entity(
         return (if exists { Some(true) } else { None }, false, path)
       }
       NullDevice(..) => return (Some(false), false, path)
-      Filesystem(native, text_mode~) => (native.windows_name(), text_mode)
+      Filesystem(native, text_mode~) => {
+        if native.basename_bytes().unwrap_or(0) > 255 {
+          raise LookupErrno("File name too long")
+        }
+        (native.windows_name(), text_mode)
+      }
     }
     match inspect(native) {
       Found(kind) => return (kind.map(k => k == Directory), text_mode, path)
@@ -581,7 +586,7 @@ async fn checked_parents(
             inspect,
             server_lookup~,
           ) catch {
-            LookupErrno("No such device or address") =>
+            LookupErrno("No such device or address" | "File name too long") =>
               raise LookupErrno("No such file or directory")
             err => raise err
           }
