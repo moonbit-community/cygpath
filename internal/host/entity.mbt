@@ -30,6 +30,29 @@ fn plain_native(path : String) -> String {
 }
 
 ///|
+/// The Windows host passes paths straight to the Win32 file APIs. Use the
+/// extended spelling for long, already-qualified names (including UNC).
+fn host_io_path(path : String) -> String {
+  if !(@async.platform is Windows) || path.length() < 248 {
+    return path
+  }
+  let win = path.replace_all(old="/", new="\\")
+  if win.has_prefix("\\\\?\\") || win.has_prefix("\\\\.\\") {
+    return win
+  }
+  if win.split("\\").any(part => part is ("." | "..")) {
+    return path
+  }
+  if win.has_prefix("\\\\") {
+    "\\\\?\\UNC\\" + win[2:].to_owned()
+  } else if win[0] is ('a'..<='z' | 'A'..<='Z') && win[1:3] == ":\\" {
+    "\\\\?\\" + win
+  } else {
+    path
+  }
+}
+
+///|
 pub async fn nt_null_presence() -> Bool? {
   guard @async.platform is Windows else { return None }
   probe_device(@lib.nt_null_path)
@@ -82,7 +105,7 @@ pub async fn network_server_exists(server : String) -> Bool {
 
 ///|
 async fn probe_device(path : String) -> Bool? {
-  try @fs.kind(path) catch {
+  try @fs.kind(host_io_path(path)) catch {
     @os_error.OsError(NotFound, ..) => return Some(false)
     @os_error.OsError(_, ..) => return None
     err => raise err
@@ -115,7 +138,7 @@ async fn native_kind(path : String) -> @fs.FileKind? {
   if !(@async.platform is Windows) && path.has_prefix("//") {
     raise NameLookupUnavailable("network share lookup requires a Windows host")
   }
-  Some(@fs.kind(path, follow_symlink=false)) catch {
+  Some(@fs.kind(host_io_path(path), follow_symlink=false)) catch {
     @os_error.OsError(NotFound, ..) => None
     @os_error.OsError(NotDirectory, ..) => raise LookupErrno("Not a directory")
     @os_error.OsError(AccessDenied, ..) =>
@@ -170,7 +193,7 @@ async fn possible_cygwin_link(
   // Windows GENERIC_WRITE succeeds only for a writable regular file.
   // A denied open can also result from an ACL or a sharing restriction.
   !(@async.platform is Windows &&
-  (@fs.can_write(path) catch {
+  (@fs.can_write(host_io_path(path)) catch {
     @os_error.OsError(_, ..) => false
     err => raise err
   }))
@@ -199,7 +222,7 @@ async fn check_link_header(
 
 ///|
 async fn check_cygwin_link(path : String, appended~ : Bool = false) -> Unit {
-  let file = @fs.open(path, mode=ReadOnly) catch {
+  let file = @fs.open(host_io_path(path), mode=ReadOnly) catch {
     @os_error.OsError(AccessDenied, ..) => return
     _ =>
       raise InstallationError(
@@ -212,7 +235,7 @@ async fn check_cygwin_link(path : String, appended~ : Bool = false) -> Unit {
 
 ///|
 async fn native_link(path : String, tail : String) -> NativeEntity {
-  let target = @fs.realpath(path) catch {
+  let target = @fs.realpath(host_io_path(path)) catch {
     _ =>
       raise InstallationError(
         "cannot resolve native link: " + @debug.to_string(path),
@@ -237,7 +260,7 @@ async fn executable_candidate(path : String, name : String) -> @fs.FileKind? {
   match native_kind(exe) {
     Some(Regular) => Some(Regular)
     Some(SymLink) =>
-      if (@fs.kind(exe) catch {
+      if (@fs.kind(host_io_path(exe)) catch {
           _ =>
             raise InstallationError(
               "cannot determine executable link type: " + @debug.to_string(exe),

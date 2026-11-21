@@ -116,7 +116,7 @@ pub async fn stream_file(
 
 ///|
 async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
-  @fs.open(path, mode=ReadOnly) catch {
+  @fs.open(host_io_path(path), mode=ReadOnly) catch {
     @os_error.OsError(NotFound, ..) as missing if probe_suffix => {
       let native = if @async.platform is Windows {
         path.replace_all(old="\\", new="/")
@@ -138,7 +138,7 @@ async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
         executable_candidate(base, name) is Some(_) else {
         raise missing
       }
-      @fs.open(base + ".exe", mode=ReadOnly)
+      @fs.open(host_io_path(base + ".exe"), mode=ReadOnly)
     }
     err => raise err
   }

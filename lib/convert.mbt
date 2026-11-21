@@ -228,6 +228,11 @@ pub fn[P : ToPathInput] Context::convert(
       let directory_suffix = original.trailing ||
         original.components.last() is Some("." | "..")
       { ..mapped, trailing: !absolute && directory_suffix, }
+    } else if absolute &&
+      self.profile == Msys2 &&
+      parsed.root == PosixRoot &&
+      parsed.components.is_empty() {
+      { ..mapped, trailing: false, }
     } else {
       mapped
     }

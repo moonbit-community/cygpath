@@ -78,7 +78,7 @@ fn entry_parent(path : String, name : String) -> String {
 /// Prefer an exact directory entry. Accept an ASCII case match only when it
 /// is unique. The name may instead be a separately stored DOS alias.
 async fn primary_entry_name(parent : String, name : String) -> String? {
-  let dir = @fs.opendir(parent)
+  let dir = @fs.opendir(host_io_path(parent))
   defer dir.close()
   let mut match_count = 0
   let mut candidate = None
@@ -104,7 +104,7 @@ async fn long_component(path : String, name : String) -> String {
   if eligible == Some(false) {
     return name
   }
-  if @fs.kind(path, follow_symlink=false) is SymLink {
+  if @fs.kind(host_io_path(path), follow_symlink=false) is SymLink {
     // A normalized handle name would follow this link. Use its own directory entry.
     if primary_entry_name(entry_parent(path, name), name) is Some(entry) &&
       (entry == name || eligible == Some(true)) {
@@ -117,7 +117,7 @@ async fn long_component(path : String, name : String) -> String {
   // moonrun requests FILE_NAME_NORMALIZED. Only take the leaf so that an
   // expanded parent junction never replaces the user's chosen directory.
   let normalized = plain_native(
-    @fs.realpath(path) catch {
+    @fs.realpath(host_io_path(path)) catch {
       @os_error.OsError(_, ..) => {
         if primary_entry_name(entry_parent(path, name), name) is Some(entry) &&
           (entry == name || eligible == Some(true)) {
@@ -176,7 +176,7 @@ async fn expand_long_components(
 ///|
 async fn long_name_on_disk(path : String) -> String {
   try {
-    ignore(@fs.kind(path, follow_symlink=false))
+    ignore(@fs.kind(host_io_path(path), follow_symlink=false))
     expand_long_components(path, long_component)
   } catch {
     @os_error.OsError(_, ..) => path
@@ -198,7 +198,7 @@ async fn short_name_on_disk(path : String) -> String? {
   let drive_root = plain.length() == 3 &&
     plain[0] is ('A'..<='Z' | 'a'..<='z') &&
     plain[1:] == ":/"
-  ignore(@fs.kind(path, follow_symlink=false)) catch {
+  ignore(@fs.kind(host_io_path(path), follow_symlink=false)) catch {
     @os_error.OsError(NotFound | NotDirectory, ..) if !drive_root => return None
     @os_error.OsError(_, ..) =>
       raise NameLookupUnavailable(

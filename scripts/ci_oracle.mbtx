@@ -742,6 +742,7 @@ async fn check_mount_owners(
   moonrun : String,
   cwd : String,
   environment : Map[String, String],
+  compare : (Bool, String) -> Unit,
 ) -> Unit {
   let tmp = @fs.tmpdir(prefix="cygpath-owners-")
   defer @fs.rmdir(tmp, recursive=true)
@@ -843,7 +844,7 @@ async fn check_mount_owners(
     cwd,
     installed,
   )
-  require(
+  compare(
     reference.status == "completed" &&
     reference.exit_code == Some(0) &&
     reference.stderr_length == 0 &&
@@ -902,7 +903,7 @@ async fn check_mount_owners(
       root,
       vars,
     )
-    require(
+    compare(
       oracle.status == "completed" &&
       oracle.exit_code == Some(0) &&
       oracle.stderr_length == 0 &&
@@ -924,6 +925,7 @@ async fn check_installed_bind(
   moonrun : String,
   cwd : String,
   environment : Map[String, String],
+  compare : (Bool, String) -> Unit,
 ) -> Unit {
   let tmp = @fs.tmpdir(prefix="cygpath-bind-")
   defer @fs.rmdir(tmp, recursive=true)
@@ -1012,14 +1014,13 @@ async fn check_installed_bind(
   @fs.mkdir(root + "/work/dir-only.exe")
   let parent = "a".repeat(125) + "/" + "b".repeat(125)
   @fs.mkdir(root + "/bin/" + "a".repeat(125))
-  @fs.mkdir(root + "/bin/" + parent)
+  let long_parent = "\\\\?\\" +
+    (root + "/bin/" + parent).replace_all(old="/", new="\\")
+  @fs.mkdir(long_parent)
   for name in ["abc.exe", "abcd.exe"] {
-    @fs.write_file(root + "/bin/" + parent + "/" + name, b"suffix")
+    @fs.write_file(long_parent + "\\" + name, b"suffix")
   }
-  @fs.symlink(
-    root + "/bin/" + parent + "/longlink",
-    target=root + "/target/known",
-  )
+  @fs.symlink(long_parent + "\\longlink", target=root + "/target/known")
   let long_dir = "Directory for long names"
   let long_file = long_dir + "\\Document with spaces.txt"
   let hard_link = long_dir + "\\Second hard link.txt"
@@ -1381,7 +1382,7 @@ async fn check_installed_bind(
       test_cwd,
       installed,
     )
-    require(
+    compare(
       official.status == "completed" &&
       official.exit_code == Some(code) &&
       official.stdout_sha256 == digest(@utf8.encode(stdout)) &&
@@ -1427,7 +1428,7 @@ async fn check_installed_bind(
       cwd,
       installed,
     )
-    require(
+    compare(
       official.status == "completed" &&
       official.exit_code == Some(0) &&
       official.stdout_sha256 == digest(@utf8.encode(stdout)) &&
@@ -1464,7 +1465,7 @@ async fn check_installed_bind(
       cwd,
       installed,
     )
-    require(
+    compare(
       successful_text(output, official) == root + suffix &&
       project.status == "completed" &&
       project.exit_code == official.exit_code &&
@@ -1503,6 +1504,15 @@ async fn run(options : Map[String, String]) -> Unit {
     @async.platform is Windows,
     "CI official-oracle orchestration requires Windows",
   )
+  let comparison_failures : Array[String] = []
+  let mut extra_comparisons = 0
+  fn compare(matched : Bool, description : String) -> Unit {
+    extra_comparisons += 1
+    if !matched {
+      println("comparison failed: " + description)
+      comparison_failures.push(description)
+    }
+  }
   let profile = options.get("--profile").unwrap()
   let variant = options.get("--context-variant").unwrap_or("default")
   require(
@@ -1580,7 +1590,9 @@ async fn run(options : Map[String, String]) -> Unit {
     "CP29001 capability boundary requires successful independent Windows API diagnosis",
   )
   if variant == "default" {
-    check_mount_owners(output, profile, bin, wasm, moonrun, cwd, environment)
+    check_mount_owners(
+      output, profile, bin, wasm, moonrun, cwd, environment, compare,
+    )
     let installed = environment.copy()
     installed["CYGPATH_ROOT"] = root
     let cases : Array[(String, Array[String], Bytes, Bytes)] = [
@@ -1701,7 +1713,7 @@ async fn run(options : Map[String, String]) -> Unit {
         cwd,
         environment,
       )
-      require(
+      compare(
         reference.status == "completed" &&
         reference.exit_code == Some(0) &&
         reference.stdout_sha256 == digest(stdout) &&
@@ -1721,7 +1733,7 @@ async fn run(options : Map[String, String]) -> Unit {
           cwd,
           env,
         )
-        require(
+        compare(
           actual.status == "completed" &&
           actual.exit_code == reference.exit_code &&
           actual.stdout_sha256 == reference.stdout_sha256 &&
@@ -1763,7 +1775,7 @@ async fn run(options : Map[String, String]) -> Unit {
         cwd,
         installed,
       )
-      require(
+      compare(
         official.status == "completed" &&
         official.exit_code == Some(0) &&
         official.stdout_length > 0 &&
@@ -1776,7 +1788,7 @@ async fn run(options : Map[String, String]) -> Unit {
     }
   }
   if profile == "cygwin" && variant == "default" {
-    check_installed_bind(output, bin, wasm, moonrun, cwd, environment)
+    check_installed_bind(output, bin, wasm, moonrun, cwd, environment, compare)
     let installed = environment.copy()
     installed["CYGPATH_ROOT"] = root
     // Keep the official device spellings and exit status for this session.
@@ -2005,7 +2017,7 @@ async fn run(options : Map[String, String]) -> Unit {
         cwd,
         installed,
       )
-      require(
+      compare(
         reference.status == "completed" &&
         reference.exit_code == Some(0) &&
         reference.stdout_length > 0 &&
@@ -2279,6 +2291,7 @@ async fn run(options : Map[String, String]) -> Unit {
       ("folder-expanded", ["-F0x2024"], 0),
       ("folder-no-alias-expanded", ["-F0x3025"], 0),
       ("drive-link-directory", ["-m", "/proc/cygdrive"], 0),
+      ("absolute-root-directory", ["-aw", "/"], 0),
       ("drive-link-directory-slash", ["-aw", "/proc/cygdrive/"], 0),
       ("drive-link-parent", ["-m", "/proc/cygdrive/../p3-alias-neighbor"], 0),
       ("drive-link-drive", ["-w", "/proc/cygdrive/c/p3-alias-leaf"], 0),
@@ -2308,7 +2321,7 @@ async fn run(options : Map[String, String]) -> Unit {
       cwd,
       environment,
     )
-    require(
+    compare(
       official.status == "completed" &&
       official.exit_code == Some(code) &&
       project.status == "completed" &&
@@ -2845,6 +2858,7 @@ async fn run(options : Map[String, String]) -> Unit {
       })
   }
   accepted = accepted &&
+    comparison_failures.is_empty() &&
     coverage_verified &&
     fault_verified &&
     infrastructure.is_empty()
@@ -2868,6 +2882,8 @@ async fn run(options : Map[String, String]) -> Unit {
     "capability_boundary_observations": results
     .filter(result => result.gate_status == "capability-boundary")
     .length(),
+    "additional_comparisons": extra_comparisons,
+    "additional_comparison_failures": @json.to_json(comparison_failures),
     "coverage_verified": coverage_verified,
     "fault_drills_verified": fault_verified,
     "infrastructure_errors": @json.to_json(infrastructure),

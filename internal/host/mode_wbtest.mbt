@@ -308,12 +308,15 @@ async test "installed mode uses filesystem entities and effective fstab flags" {
   @fs.mkdir(base + "/binary/folder.exe")
   let parent = "a".repeat(125) + "/" + "b".repeat(125)
   @fs.mkdir(base + "/binary/" + "a".repeat(125))
-  @fs.mkdir(base + "/binary/" + parent)
+  @fs.mkdir(host_io_path(base + "/binary/" + parent))
   for name in ["abc.exe", "abcd.exe"] {
-    @fs.write_binary(base + "/binary/" + parent + "/" + name, b"file")
+    @fs.write_binary(
+      host_io_path(base + "/binary/" + parent + "/" + name),
+      b"file",
+    )
   }
   @fs.symlink(
-    base + "/binary/" + parent + "/longlink",
+    host_io_path(base + "/binary/" + parent + "/longlink"),
     target=base + "/text/plain",
   )
   let win_parent = parent.replace_all(old="/", new="\\")
