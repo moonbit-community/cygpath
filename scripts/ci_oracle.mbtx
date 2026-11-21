@@ -990,6 +990,11 @@ async fn check_mount_owners(
   let absent = target + "/sub/missing"
   let backslashes = existing.replace_all(old="/", new="\\")
   let invalid = existing + "/child"
+  let drive_link_names = [
+    root + "/bridge/sub/file",
+    root + "/bridge/missing",
+    target + "/leaf-link",
+  ]
   let lookup_cases : Array[(String, Array[String], String, String)] = [
     (
       "mode",
@@ -1020,6 +1025,12 @@ async fn check_mount_owners(
       ["-M", backslashes, absent, invalid, target],
       backslashes + ": binary\n" + absent + ": binary\n" + target + ": binary\n",
       "cygpath: file '" + invalid + "' - Not a directory\n",
+    ),
+    (
+      "drive-link",
+      ["-M", ..drive_link_names],
+      drive_link_names.map(name => name + ": text\n").join(""),
+      "",
     ),
   ]
   for (label, args, stdout, stderr) in lookup_cases {
@@ -1061,38 +1072,65 @@ async fn check_mount_owners(
       )
     }
   }
-  let drive_link = [
-    "-M",
-    root + "/bridge/sub/file",
-    root + "/bridge/missing",
-    target + "/leaf-link",
-  ]
-  let drive_link_reference = probe(
+  let boundary = probe(
     output,
-    "link-lookup-drive-link-oracle",
-    runtime_bin + "/cygpath.exe",
-    drive_link,
+    "link-lookup-drive-link-implicit",
+    moonrun,
+    [wasm, "--", "--profile", profile, "-M", ..drive_link_names],
     root,
     environment,
   )
-  for (label, vars) in [("installed", installed), ("implicit", environment)] {
-    let port = probe(
-      output,
-      "link-lookup-drive-link-" + label,
-      moonrun,
-      [wasm, "--", "--profile", profile, ..drive_link],
-      root,
-      vars,
-    )
-    if label == "installed" {
-      compare(
-        drive_link_reference.status == "completed" &&
-        drive_link_reference.exit_code == Some(0) &&
-        port.status == "completed" &&
-        port.exit_code == drive_link_reference.exit_code &&
-        port.stdout_sha256 == drive_link_reference.stdout_sha256 &&
-        port.stderr_sha256 == drive_link_reference.stderr_sha256,
-        "drive-qualified native link mode differs in " + profile,
+  require(
+    boundary.status == "completed" &&
+    boundary.exit_code == Some(1) &&
+    boundary.stdout_length == 0 &&
+    boundary.stderr_sha256 ==
+    digest(
+      b"cygpath: installation context: -M requires a selected Cygwin installation for a link target\n",
+    ),
+    "missing mount context for a native link in " + profile,
+  )
+  let dos_dir = base + "/dos-names"
+  @fs.mkdir(dos_dir)
+  @fs.write_file(dos_dir + "/records\uF02E", b"C:/encoded-leaf\n")
+  let dos_table = escaped +
+    "/dos-names /dos ntfs dos\n" +
+    escaped +
+    "/dos-names /plain ntfs binary\n/dos /inherited none bind\n"
+  @fs.write_file(root + "/etc/fstab", dos_table)
+  @fs.write_file(output + "/dos-spellings.fstab", dos_table)
+  for
+    (label, names) in [
+      (
+        "paths",
+        [
+          "-m", "/dos/ leading", "/dos/name. ", "/dos/ a. / b.", "/dos/mid . dle",
+          "/inherited/file.", "/plain/file.", "/dos/.hidden", "/dos/records.",
+        ],
+      ),
+      ("read", ["-uf", "/dos/records."]),
+      ("relative", ["-m", " leading", "name. ", " a. / b."]),
+    ] {
+    let here = if label == "relative" { dos_dir } else { root }
+    for
+      (tool, program, args, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", names, environment),
+        (
+          "wasm",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..names],
+          installed,
+        ),
+      ] {
+      ignore(
+        probe(
+          output,
+          "link-lookup-dos-" + label + "-" + tool,
+          program,
+          args,
+          here,
+          vars,
+        ),
       )
     }
   }
