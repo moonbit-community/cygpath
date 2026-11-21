@@ -2,26 +2,27 @@
 
 ## November Wasm validation
 
-On 2026-11-21, [`14f8e3c`](https://github.com/moonbit-community/cygpath/commit/14f8e3c7f913e1174eba53df036cdd5781ec984e)
-passed 166 tests, 110 CLI process cases and the external Wasm library consumer on
-Linux, macOS and Windows. [Three-host checks](https://github.com/moonbit-community/cygpath/actions/runs/44849285087)
+On 2026-11-21, [`28c97fb`](https://github.com/moonbit-community/cygpath/commit/28c97fbcfc5596398161ca78955855d573ce8e12)
+passed 170 tests, 113 CLI process cases and the external Wasm library consumer on
+Linux, macOS and Windows. [Three-host checks](https://github.com/moonbit-community/cygpath/actions/runs/44856811698)
 
 | Official runtime and mount context | Exact stdout, stderr and exit status in collection and replay | Additional checks |
 | --- | ---: | ---: |
-| Cygwin default | 866 | 214 |
+| Cygwin default | 866 | 242 |
 | Cygwin custom | 924 | 12 |
-| MSYS2 default | 866 | 88 |
+| MSYS2 default | 866 | 115 |
 | MSYS2 custom | 924 | 12 |
-| **Total** | **3,580** | **326** |
+| **Total** | **3,580** | **381** |
 
 All four jobs passed their coverage audits and fault drills. An additional
 72 malformed-input and 16 unavailable-code-page observations exercised the
 CLI's rejection behavior. The Windows artifacts include the per-process bytes,
-environment and comparison summaries. [Windows oracle](https://github.com/moonbit-community/cygpath/actions/runs/44849285088)
+environment and comparison summaries. [Windows oracle](https://github.com/moonbit-community/cygpath/actions/runs/44856811719)
 
-The default contexts exercise installation fstab handling, five Windows temp
-path forms per runtime, relative DOS operands, long host paths and NT null-device
-input. The Cygwin job also records Win32 encoder output for every valid BMP
+Each default context compared 14 installation `usertemp` cases, including the
+260/261 UTF-16 boundary, selection of the next candidate and fallback to the
+running Windows directory. Both runtimes also exercised relative DOS operands,
+long host paths and NT null-device input. The Cygwin job also records Win32 encoder output for every valid BMP
 scalar on seven ISO-2022/HZ pages. Open host-dependent behavior includes live
 session mounts, NTFS alternate names and redirected shell folders.
 [Remaining compatibility work](https://github.com/moonbit-community/cygpath/issues/9)

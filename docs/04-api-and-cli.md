@@ -129,9 +129,13 @@ Local invocation:
 moon run --target wasm . -- -u 'C:\work\demo.txt'
 ```
 
-After publication and namespace verification, ordinary usage is through the root
-coordinate. These are future delivery examples; `<published-version>` is not
-an already-published release:
+Mooncakes has a September release at `ZSeanYves/cygpath@0.1.0`. On macOS,
+`moonx ZSeanYves/cygpath@0.1.0 -u 'C:\work\demo.txt'` returned
+`/cygdrive/c/work/demo.txt`. The November validation branch still carries
+the same version in its manifest. Its changes require a new owner release.
+[Release tracking](https://github.com/moonbit-community/cygpath/issues/13)
+
+Use the root coordinate to run a published version.
 
 ```text
 moonx ZSeanYves/cygpath -h
@@ -152,27 +156,25 @@ official version. Help documents project extensions and supported capabilities.
 The root README is ordinary `README.md`; compiled documentation examples belong
 in `lib/README.mbt.md` because the root package is executable.
 
-Root and host I/O support Wasm and Native. The pure library and CLI compile for
-all standard compiler targets, which does not imply JavaScript/Wasm GC CLI I/O
-support. On 2026-09-28, local `moonx --help` confirmed coordinate/version syntax
-and default Wasm delivery; its Native option was deprecated. Verify Native
-through development build/run commands, and recheck current tooling at release.
+The executable and its host adapter target linear-memory Wasm for `moonx`.
+The conversion library, parser and encoder also compile on other targets.
+CI runs the Wasm executable on Linux, macOS and Windows.
 
 ## 4. Parser and execution interfaces
 
 `parse_args(Array[String])` receives already-tokenized argv without the executable
 name. It performs no I/O and returns `Help`, `Version`, `ExitSuccess`, or
 `Convert(Request)`. `ExitSuccess` covers an ignored usage/no-input condition.
-Request exposes `input()` (`Names` or `File`), `ignore_missing()`,
+Request exposes `input()` (`Names`, `File` or `Folder`), `ignore_missing()`,
 `per_line_options()`, and `prepare()`. Input arrays are copied.
 
 `prepare()` creates a Converter with one validated immutable Context and mutable
 conversion flags. `convert(path)` returns one string; `convert_operand(path)`
 handles `-i` and returns `RecordAction`. `convert_file_record(record)` additionally
-applies `-o` parsing/state. `RecordAction` is `Output(String)`, `Skip`, or
-`Stop(String)`. Root writes Output using `codepage()`, ignores Skip, and writes
-Stop control text as UTF-8 before ending the stream. These are internal
-integration interfaces, not additions to the public library surface.
+applies `-o` parsing/state. The executable uses `convert_file_bytes` for file and
+stdin records. It encodes `Output` with the selected code page, writes
+`OutputBytes` verbatim, and dispatches `QueryMode` and `QueryFolder` to the host.
+`Skip` advances to the next record. `Stop` writes control text and ends the stream.
 
 The parser does not repeat shell tokenization, remove backslash escapes, expand
 variables, or interpret globs. GNU-style argument permutation permits options
@@ -537,8 +539,7 @@ P3 verifies the frozen supported matrix against measured Cygwin/MSYS2 binaries,
 with separate boundary outcomes and fault drills. Publication is still separate.
 A release must retrieve and run the exact published version through `moonx`,
 without local source or system cygpath, and exercise help, version, successful
-conversion, invalid input, stdin, and exit status. Native from the same source
-must retain the corresponding contract behavior.
+conversion, invalid input, stdin, and exit status.
 
 Local installation and package-content inspection establish useful prerequisites
 but cannot prove registry availability. Keep the root coordinate
