@@ -858,6 +858,47 @@ async fn check_mount_owners(
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)
   @fs.write_file(output + "/usertemp.fstab", temp_table)
+  let cleared = environment.copy()
+  for key in ["TMP", "TEMP", "USERPROFILE"] {
+    cleared.remove(key)
+  }
+  let windows = successful_text(
+    output,
+    probe(
+      output,
+      "usertemp-windows-directory",
+      runtime_bin + "/cygpath.exe",
+      ["-mW"],
+      root,
+      cleared,
+    ),
+  )
+  let recased = cleared.copy()
+  for key in ["SystemRoot", "WINDIR"] {
+    recased[key] = windows.to_lower().replace_all(old="/", new="\\")
+  }
+  recased["SystemTemp"] = base + "/unrelated"
+  let extended = environment.copy()
+  extended["TMP"] = "\\\\?\\" + base.replace_all(old="/", new="\\") + "\\absent"
+  let long = environment.copy()
+  long["TMP"] = base + "/" + "segment/".repeat(40) + "absent"
+  for
+    (name, vars) in [
+      ("unset", cleared),
+      ("recased", recased),
+      ("extended", extended),
+      ("long", long),
+    ] {
+    let observed = probe(
+      output,
+      "usertemp-" + name + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      ["-am", "/temporary/file"],
+      root,
+      vars,
+    )
+    ignore(successful_text(output, observed))
+  }
   let temp_cases = [
     ("relative", "..\\missing", base + "/missing"),
     ("drive", root[:2].to_owned(), root),
