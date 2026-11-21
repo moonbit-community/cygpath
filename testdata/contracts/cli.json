@@ -1111,6 +1111,15 @@
       "exit_code": 0
     },
     {
+      "case_id": "iscii-output-records",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC57002 /cygdrive/c/कকAখक\n-mC57006 /cygdrive/d/অঅ\n-wC57003 /cygdrive/d/অঅ\n-wC57011 /cygdrive/c/ক্\u200d\u200cক\n",
+      "stdout_hex": "433a5cb3ef43b341b4ef42b30a443a2fef43a4a40a443a5ca4a40a433a5cef43b3e8e93fb30a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
       "case_id": "windows-nls-aliases",
       "category": "encoding",
       "argv": ["-of-"],

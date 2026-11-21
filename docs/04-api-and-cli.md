@@ -450,6 +450,11 @@ produce an embedded zero in that stream. The CLI ends the output name at
 the first zero, as Cygwin does before printing.
 [Windows evidence and byte samples](../third_party/microsoft/README.md#stateful-code-pages).
 
+ISCII (57002–57011) starts each output name in the selected script.
+For example, Bengali `অঅ` produces `a4 a4` on 57003 and `ef 43 a4 a4`
+on 57006. A script change persists across ASCII path separators. After virama,
+U+200C adds the virama byte and U+200D adds the nukta byte. [Mapping and Windows evidence](../third_party/dotnet/README.md#iscii)
+
 CP54936 uses the Windows-derived GB18030-2000 mapping and encodes each
 supplementary scalar as four bytes. The Windows comparison includes characters
 whose mappings changed in later standards. See [the data source and regeneration command](../third_party/dotnet/README.md).

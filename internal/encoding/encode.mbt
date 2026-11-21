@@ -14,6 +14,7 @@ pub fn supported(codepage : Int32) -> Bool {
     | 50229
     | 52936
     | 54936
+    | 57002..<=57011
     | 65000
     | 65001 => true
     29001 => false
@@ -128,6 +129,7 @@ pub fn encode(text : String, codepage : Int32) -> Bytes raise EncodingError {
     50225 | 50227 | 50229 => return encode_iso2022_cn_kr(text, codepage)
     52936 => return encode_hz(text)
     54936 => return encode_gb18030(text)
+    57002..<=57011 => return encode_iscii(text, codepage)
     65000 => return encode_utf7(text)
     65001 => return @utf8.encode(text)
     // The archived Europa 3 table exists, but Win32 conversion can fail.

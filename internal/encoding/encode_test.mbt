@@ -62,6 +62,16 @@ test "stateful pages match the Windows NLS scalar captures" {
       (50227, 0xdabfa81aU),
       (50229, 0x46d74693U),
       (52936, 0xeb8eb3e8U),
+      (57002, 0xe60ed2b0U),
+      (57003, 0x3d46605cU),
+      (57004, 0xec2fddeeU),
+      (57005, 0xaa054c10U),
+      (57006, 0xcb4c3458U),
+      (57007, 0x0c281650U),
+      (57008, 0x144a2bf4U),
+      (57009, 0x1e9b042aU),
+      (57010, 0x2016e60aU),
+      (57011, 0x3f6653ecU),
     ] {
     let mut hash = 2166136261U
     for value in 0..<0x10000 {
@@ -82,6 +92,28 @@ test "stateful pages match the Windows NLS scalar captures" {
     }
     assert_eq((page, hash), (page, expected))
   }
+}
+
+///|
+test "ISCII preserves the selected script and consumes one joiner after virama" {
+  assert_eq(
+    @encoding.encode("ক€খ😀ग", 57002),
+    b"\xefC\xb3?\xb4??\xefB\xb5",
+  )
+  assert_eq(@encoding.encode("অঅ", 57003), b"\xa4\xa4")
+  assert_eq(@encoding.encode("অঅ", 57006), b"\xefC\xa4\xa4")
+  assert_eq(
+    @encoding.encode("क्\u{200c}क्\u{200d}क", 57002),
+    b"\xb3\xe8\xe8\xb3\xe8\xe9\xb3",
+  )
+  assert_eq(
+    @encoding.encode("ক্\u{200d}\u{200c}ক", 57003),
+    b"\xb3\xe8\xe9?\xb3",
+  )
+  assert_eq(
+    @encoding.encode("क़ॐ॒॑॰", 57002),
+    b"\xb3\xe9\xa1\xe9?\xf0\xb8\xf0\xbf",
+  )
 }
 
 ///|

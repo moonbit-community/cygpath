@@ -1855,6 +1855,17 @@ async fn run(options : Map[String, String]) -> Unit {
       b"-m /usr/bin/\xed\xa0\xbd\xed\xb8\x80\n-u C:/\xed\xa0\xbd\xed\xb8\x80\n-pu C:/\xed\xa0\xbd\xed\xb8\x80;relative\n-wC1252 /usr/lib/\xed\xa0\xbd\xed\xb8\x80\n",
       create_mode=CreateNew,
     )
+    let iscii_records = StringBuilder()
+    for page in 57002..<=57011 {
+      iscii_records.write_string(
+        "-mC\{page} /cygdrive/c/कকAখ/அఅಒഅଅਅઅ/क्\u{200c}क्\u{200d}क/€😀॰\n",
+      )
+    }
+    @fs.write_file(
+      input + ".iscii",
+      iscii_records.to_string(),
+      create_mode=CreateNew,
+    )
     // Keep the observations for isolated units independent of pair parity.
     @fs.write_file(
       input + ".utf16-units",
@@ -1986,6 +1997,7 @@ async fn run(options : Map[String, String]) -> Unit {
         ("iso2022-cn-traditional", ["-mC50229", "/cygdrive/c/中万中"]),
         ("hz-byte-zero", ["-wC52936", "/cygdrive/c/A\u{80}B"]),
         ("hz-gb2312", ["-mC52936", "/cygdrive/c/中文~文/丂€😀"]),
+        ("iscii-pages", ["-of", input_path + ".iscii"]),
         ("ansi-best-fit", ["-wC1252", "/cygdrive/c/a\u{202f}b\u{2012}c"]),
         ("oem-best-fit", ["-wC437", "/cygdrive/c/a\u{2007}b"]),
         (

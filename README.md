@@ -24,7 +24,7 @@ Input can come from arguments, files (`-f FILE`), or stdin (`-f -`), with
 per-record options (`-o`) and skipping empty operands (`-i`). Windows/mixed output
 supports UTF-8, UTF-7 (65000), GB18030-2000 (54936), Windows Symbol (42),
 the three Japanese ISO-2022 variants (50220–50222), ISO-2022-KR (50225), ISO-2022-CN (50227/50229),
-HZ-GB-2312 (52936), and 115 table-based pages, including Windows JIS (20932), GB2312 (20936),
+HZ-GB-2312 (52936), ISCII (57002–57011), and 115 table-based pages, including Windows JIS (20932), GB2312 (20936),
 logical Hebrew (38598) and EUC Korean (51949). The CLI targets only
 linear-memory Wasm for `moonx`; it has no external module dependencies. Import
 `ZSeanYves/cygpath/lib` to use the conversion library without host I/O.
