@@ -880,33 +880,10 @@ async fn check_dos_names(
     "R+éF.lnk\nD +中/A+B.txt\n",
   )
   @fs.write_file(dir + "/Ab", b"plain", create_mode=CreateNew)
-  let trailing = ["-wl", "ab.", "ab..", "readme.txt.", "ab   "]
-  let raw = probe(
-    output,
-    "dos-shape-trailing-oracle",
-    bin + "/cygpath.exe",
-    trailing,
-    dir,
-    environment,
-  )
-  let port = probe(
-    output,
-    "dos-shape-trailing-wasm",
-    moonrun,
-    [wasm, "--", "--profile", profile, ..trailing],
-    dir,
-    installed,
-  )
-  compare(
-    raw.status == "completed" &&
-    raw.exit_code == Some(0) &&
-    raw.stderr_length == 0 &&
-    raw.stdout_length > 0 &&
-    port.status == "completed" &&
-    port.exit_code == raw.exit_code &&
-    port.stdout_sha256 == raw.stdout_sha256 &&
-    port.stderr_sha256 == raw.stderr_sha256,
-    "long lookup for trailing dots and spaces differs in " + profile,
+  check(
+    "shape-trailing",
+    ["-wl", "ab.", "ab..", "readme.txt.", "ab   "],
+    "Ab\nab..\nreadme.txt.\nAb\n",
   )
   check("explicit", args, expected)
   check(

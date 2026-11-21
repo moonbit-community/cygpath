@@ -25,7 +25,8 @@ async test "long names preserve the root, separator spelling and queried links" 
   assert_true(is_ascii_short_component("FILE~1"))
   assert_false(is_ascii_short_component("Report.backup"))
   assert_false(is_ascii_short_component("École"))
-  for name in ["A+B.txt", "A B.txt", "A😀bcdef", "Ωmega.txt"] {
+  assert_false(is_ascii_short_component("Ab."))
+  for name in ["A+B.txt", "A B.txt", "A😀bcdef", "Ωmega.txt", "Ab."] {
     assert_true(may_expand_long_component(name))
   }
   for name in [".abc", "A.B.C", "A😀bcdefg", "AB.ABCD"] {

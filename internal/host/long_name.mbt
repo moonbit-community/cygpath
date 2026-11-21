@@ -2,6 +2,7 @@
 /// Names that GetShortPathNameW can copy without reading an alternate name.
 fn is_ascii_short_component(name : String) -> Bool {
   may_expand_long_component(name) &&
+  !name.has_suffix(".") &&
   name
   .code_units()
   .all(unit => {
@@ -86,10 +87,7 @@ async fn primary_entry_name(parent : String, name : String) -> String? {
 /// GetLongPathNameW consults the directory entry for short-shaped names,
 /// including spaces and characters that require an alternate name for -s.
 fn may_expand_long_component(name : String) -> Bool {
-  if name.is_empty() ||
-    name.has_prefix(".") ||
-    name.has_suffix(".") ||
-    name.length() > 12 {
+  if name.is_empty() || name.has_prefix(".") || name.length() > 12 {
     return false
   }
   match name.split(".").to_array() {
