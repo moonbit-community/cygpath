@@ -96,6 +96,7 @@ pub struct Mount {
   priv windows : ParsedPath
   priv case : MountCase
   priv text_mode : Bool
+  priv dos_names : Bool
   system : Bool?
 }
 
@@ -107,6 +108,7 @@ pub struct Context {
   priv network_servers : Map[String, Bool]
   priv drive_prefix : Array[String]
   priv drive_text_mode : Bool
+  priv drive_dos_names : Bool
   priv drive_case : MountCase
   priv mounts : Array[Mount]
   priv posix_mounts : Array[Int32]

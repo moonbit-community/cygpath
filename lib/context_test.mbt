@@ -541,6 +541,33 @@ test "adding an unrelated mount does not change unmatched conversions" {
 }
 
 ///|
+test "DOS mounts encode filename edges for conversion and filesystem lookup" {
+  let ctx = @lib.Context::new(
+    mounts=[@lib.Mount::new("/dos", "D:/work", dos_names=true)],
+    drive_dos_names=true,
+    posix_cwd="/dos",
+    windows_cwd="D:/work",
+  )
+  assert_eq(
+    ctx.convert("/dos/ a. / b.", from=Posix, to=Mixed),
+    "D:/work/\uF020a\uF02E\uF020/\uF020b\uF02E",
+  )
+  assert_eq(ctx.convert(" a. / b.", from=Posix, to=Mixed), " a. / b\uF02E")
+  assert_eq(
+    ctx.convert("/cygdrive/d/work/name.", from=Posix, to=Mixed),
+    "D:/work/name\uF02E",
+  )
+  assert_eq(
+    ctx.convert("D:/work/name.", from=Windows, to=Mixed),
+    "D:/work/name.",
+  )
+  assert_true(
+    ctx.mode_candidate("/dos/records.", from=Posix)
+    is Filesystem("D:\\work\\records\uF02E", text_mode=false),
+  )
+}
+
+///|
 test "text mount flags follow the selected path spelling, not a reverse alias" {
   let context = @lib.Context::new(
     mounts=[

@@ -82,6 +82,7 @@ fn InstallTable::context(
 ) -> @lib.Context raise @lib.ConversionError {
   let mounts = self.entries.map(entry => entry.mount)
   let drive_text_mode = self.drive_flags.contains("text")
+  let drive_dos_names = self.drive_flags.contains("dos")
   let drive_case : @lib.MountCase = if self.drive_flags.contains("posix=0") {
     WindowsInsensitive
   } else {
@@ -93,6 +94,7 @@ fn InstallTable::context(
     mounts~,
     drive_prefix=self.prefix,
     drive_text_mode~,
+    drive_dos_names~,
     drive_case~,
   )
   guard cwd is Some(cwd) else { return base }
@@ -103,6 +105,7 @@ fn InstallTable::context(
     mounts~,
     drive_prefix=self.prefix,
     drive_text_mode~,
+    drive_dos_names~,
     drive_case~,
     windows_cwd=cwd,
     posix_cwd~,
@@ -156,6 +159,7 @@ async fn InstallTable::add(
         Sensitive
       },
       text_mode=flags.contains("text"),
+      dos_names=flags.contains("dos"),
     ),
     source,
     flags,

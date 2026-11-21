@@ -79,6 +79,9 @@ POSIX path-list members and per-line options.
 On Windows, `-M C:/work/file` can query an ordinary drive-qualified path
 without `CYGPATH_ROOT`. A native link can require the installation mount table
 to determine its target’s mode.
+On an `fstab` mount with the `dos` option, Windows output uses U+F020 and
+U+F02E for affected filename-edge spaces and dots. File input uses the same
+native spelling, so `-f /dos/records.` can open the encoded name on disk.
 In installation mode, `-M NAME` reports the selected mount's text/binary
 mode for ordinary files, directories, and missing names. It follows native
 links that the host can resolve. Live session mounts, Cygwin shortcut/sysfile

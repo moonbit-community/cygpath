@@ -1096,43 +1096,67 @@ async fn check_mount_owners(
   let dos_table = escaped +
     "/dos-names /dos ntfs dos\n" +
     escaped +
-    "/dos-names /plain ntfs binary\n/dos /inherited none bind\n"
+    "/dos-names /plain ntfs binary\n/dos /inherited none bind\nnone /cygdrive cygdrive dos\n"
   @fs.write_file(root + "/etc/fstab", dos_table)
   @fs.write_file(output + "/dos-spellings.fstab", dos_table)
+  let stored = [
+    "\uF020leading", "name\uF02E\uF020", "\uF020a\uF02E\uF020/\uF020b\uF02E", "mid . dle",
+    "file\uF02E", "file.", ".hidden", "records\uF02E",
+  ]
+  let drive = "/cygdrive/" +
+    dos_dir[:1].to_owned().to_lower() +
+    dos_dir[2:].to_owned()
   for
-    (label, names) in [
+    (label, names, expected) in [
       (
         "paths",
         [
           "-m", "/dos/ leading", "/dos/name. ", "/dos/ a. / b.", "/dos/mid . dle",
           "/inherited/file.", "/plain/file.", "/dos/.hidden", "/dos/records.",
         ],
+        stored.map(name => dos_dir + "/" + name + "\n").join(""),
       ),
-      ("read", ["-uf", "/dos/records."]),
-      ("relative", ["-m", " leading", "name. ", " a. / b."]),
+      ("read", ["-uf", "/dos/records."], "/cygdrive/c/encoded-leaf\n"),
+      (
+        "relative",
+        ["-m", " leading", "name. ", " a. / b."],
+        " leading\nname. \n a. / b\uF02E\n",
+      ),
+      (
+        "drive",
+        ["-m", drive + "/records.", dos_dir + "/records."],
+        dos_dir + "/records\uF02E\n" + dos_dir + "/records.\n",
+      ),
     ] {
     let here = if label == "relative" { dos_dir } else { root }
-    for
-      (tool, program, args, vars) in [
-        ("oracle", runtime_bin + "/cygpath.exe", names, environment),
-        (
-          "wasm",
-          moonrun,
-          [wasm, "--", "--profile", profile, ..names],
-          installed,
-        ),
-      ] {
-      ignore(
-        probe(
-          output,
-          "link-lookup-dos-" + label + "-" + tool,
-          program,
-          args,
-          here,
-          vars,
-        ),
-      )
-    }
+    let tag = "link-lookup-dos-" + label
+    let oracle = probe(
+      output,
+      tag + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      names,
+      here,
+      environment,
+    )
+    let port = probe(
+      output,
+      tag + "-wasm",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..names],
+      here,
+      installed,
+    )
+    compare(
+      oracle.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      oracle.stderr_length == 0 &&
+      oracle.stdout_sha256 == digest(@utf8.encode(expected)) &&
+      port.status == "completed" &&
+      port.exit_code == oracle.exit_code &&
+      port.stdout_sha256 == oracle.stdout_sha256 &&
+      port.stderr_sha256 == oracle.stderr_sha256,
+      tag + " differs in " + profile,
+    )
   }
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)

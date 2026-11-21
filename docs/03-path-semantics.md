@@ -437,6 +437,13 @@ Configured UNC mount targets require valid server and share components. CR/LF
 are path content where allowed; the CLI does not impose a second blanket
 line-break rejection on argv or converted output.
 
+The `dos` fstab option changes the Windows spelling at component boundaries.
+For a mount `/dos` pointing to `D:/work`, `-m /dos/name.` ends in
+`name` followed by U+F02E. A leading space after the mount directory
+becomes U+F020. Regular ntfs mounts preserve these literal characters.
+The same selection applies to file lookup and to bind mounts that inherit
+the source flags. [Cygwin native path conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L467-L523)
+
 There is no tilde, variable, glob, or URI expansion. Path content is never
 executed. The portable library performs no host queries. The installed CLI
 consults filesystem entries for Windows output and mount modes as described

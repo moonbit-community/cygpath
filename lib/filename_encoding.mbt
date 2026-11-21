@@ -30,6 +30,46 @@ fn encode_windows_component(component : String) -> String raise ConversionError 
 }
 
 ///|
+/// The DOS mount option applies to separators and the end of the NT name.
+/// The first eight UTF-16 units include the native drive or UNC prefix.
+/// A relative spelling has no implicit prefix.
+fn dos_mount_spelling(
+  name : String,
+  root : PathRoot,
+  format : OutputFormat,
+) -> String {
+  if !name.contains_char(' ') && !name.contains_char('.') {
+    return name
+  }
+  let start = match root {
+    DriveAbsolute(_) => 4
+    Unc(_, _) => 2
+    _ => 8
+  }
+  let sep = if format == Windows { "\\" } else { "/" }
+  let out = StringBuilder()
+  let mut offset = 0
+  for part in name.split(sep) {
+    let end = offset + part.length()
+    if offset > 0 {
+      out.write_string(sep)
+    }
+    let middle = if offset > start { part.trim_start(chars=" ") } else { part }
+    let leading = part.length() - middle.length()
+    if leading > 0 {
+      out.write_string(String::make(leading, '\uF020'))
+    }
+    let body = if end >= start { middle.trim_end(chars=" .") } else { middle }
+    out.write_view(body)
+    for c in middle[body.length():] {
+      out.write_char(if c == '.' { '\uF02E' } else { '\uF020' })
+    }
+    offset = end + 1
+  }
+  out.to_string()
+}
+
+///|
 fn decode_windows_filename(
   path : String,
   start~ : Int32 = 0,

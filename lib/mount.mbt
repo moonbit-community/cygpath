@@ -146,6 +146,24 @@ fn Context::map_posix_mount(
 }
 
 ///|
+fn Context::dos_names(
+  self : Context,
+  path : ParsedPath,
+  operand : String,
+  mount : Int32?,
+) -> Bool {
+  match mount {
+    Some(index) => self.mounts[index].dos_names
+    None =>
+      self.drive_dos_names &&
+      (
+        path.root == PosixRoot ||
+        (path.root is Unc(_, _) && !operand.contains_char('\\'))
+      )
+  }
+}
+
+///|
 fn Context::is_drive_directory(self : Context, path : ParsedPath) -> Bool {
   path.root == PosixRoot &&
   !self.drive_prefix.is_empty() &&
@@ -192,11 +210,16 @@ pub fn[P : ToPathInput] Context::relative_windows_name(
   ) else {
     return None
   }
+  let name = if parts.length() == cwd.components.length() {
+    "."
+  } else {
+    parts[cwd.components.length():].join("\\")
+  }
   Some(
-    if parts.length() == cwd.components.length() {
-      "."
+    if self.dos_names(parsed, path, mount) {
+      dos_mount_spelling(name, Relative, Windows)
     } else {
-      parts[cwd.components.length():].join("\\")
+      name
     },
   )
 }
@@ -235,7 +258,10 @@ pub fn[P : ToPathInput] Context::mode_candidate(
     Some(index) => self.mounts[index].text_mode
     None => (from == Posix || native.root is Unc(_, _)) && self.drive_text_mode
   }
-  Filesystem(native.render(Windows), text_mode~)
+  Filesystem(
+    native.render(Windows, dos_names=self.dos_names(parsed, path, mount)),
+    text_mode~,
+  )
 }
 
 ///|

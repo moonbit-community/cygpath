@@ -2,6 +2,7 @@
 fn ParsedPath::render(
   self : ParsedPath,
   format : OutputFormat,
+  dos_names~ : Bool = false,
 ) -> String raise ConversionError {
   let sep = if format == Windows { "\\" } else { "/" }
   let parts = if format == Posix {
@@ -39,6 +40,11 @@ fn ParsedPath::render(
   }
   let result = if self.trailing && !result.has_suffix(sep) {
     result + sep
+  } else {
+    result
+  }
+  let result = if dos_names {
+    dos_mount_spelling(result, self.root, format)
   } else {
     result
   }

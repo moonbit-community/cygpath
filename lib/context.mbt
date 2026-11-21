@@ -31,6 +31,7 @@ pub fn Mount::new(
   windows : String,
   case~ : MountCase = Sensitive,
   text_mode~ : Bool = false,
+  dos_names~ : Bool = false,
   system? : Bool,
 ) -> Mount raise ConversionError {
   let posix = context_path(posix, Posix, "mount.posix")
@@ -51,7 +52,7 @@ pub fn Mount::new(
       reason="expected a dot-free drive-absolute or UNC path",
     )
   }
-  { posix, windows, case, text_mode, system, }
+  { posix, windows, case, text_mode, dos_names, system, }
 }
 
 ///|
@@ -118,6 +119,7 @@ pub fn Context::new(
   nt_null? : Bool,
   drive_prefix? : String,
   drive_text_mode~ : Bool = false,
+  drive_dos_names~ : Bool = false,
   drive_case~ : MountCase = WindowsInsensitive,
   mounts~ : Array[Mount] = [],
   posix_cwd? : String,
@@ -199,6 +201,7 @@ pub fn Context::new(
     network_servers: {},
     drive_prefix: prefix.components,
     drive_text_mode,
+    drive_dos_names,
     drive_case,
     mounts: mounts.copy(),
     posix_mounts: if use_runtime_order {

@@ -221,6 +221,7 @@ pub fn[P : ToPathInput] Context::convert(
       @filename.native_name(spelling)
     }
   }
+  let mut dos_names = false
   let output = if to == Posix {
     if parsed.root is Unc(_, _) {
       self.to_posix(parsed, unix_prefix)
@@ -229,7 +230,20 @@ pub fn[P : ToPathInput] Context::convert(
       parsed
     }
   } else if from == Posix {
-    let mapped = self.map_posix_mount(parsed).0
+    let (mapped, mount) = self.map_posix_mount(parsed)
+    dos_names = if parsed.root == Relative &&
+      self.posix_cwd is Some(_) &&
+      (self.drive_dos_names || self.mounts.any(entry => entry.dos_names)) {
+      let full = self.resolve(original, from, Windows, true)
+      try self.map_posix_mount(full) catch {
+        MissingContext(_) => false
+        err => raise err
+      } noraise {
+        (_, selection) => self.dos_names(full, path, selection)
+      }
+    } else {
+      self.dos_names(parsed, path, mount)
+    }
     if self.is_drive_directory(parsed) {
       let directory_suffix = original.trailing ||
         original.components.last() is Some("." | "..")
@@ -243,9 +257,10 @@ pub fn[P : ToPathInput] Context::convert(
       mapped
     }
   } else {
+    dos_names = self.dos_names(parsed, path, None)
     parsed
   }
-  let rendered = output.render(to)
+  let rendered = output.render(to, dos_names~)
   if to != Posix &&
     !absolute &&
     output.root is (Relative | DriveRelative(_)) &&
