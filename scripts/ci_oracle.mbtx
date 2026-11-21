@@ -1194,6 +1194,75 @@ async fn check_mount_owners(
     ),
     "missing mount context for a native link in " + profile,
   )
+  let raw_cwd = target + "/byte-\uF0FF"
+  @fs.mkdir(raw_cwd + "/sub", recursive=true)
+  @fs.write_file(raw_cwd + "/sub/doc.exe", b"doc")
+  @fs.write_file(raw_cwd + "/records", b"cwd-file\n")
+  let overlay = base + "/cwd-overlay"
+  @fs.mkdir(overlay)
+  @fs.write_file(overlay + "/file.exe", b"overlay")
+  let overlay_table = lookup_table +
+    escaped +
+    "/cwd-overlay /text/sub ntfs binary\n"
+  let alias_table = escaped +
+    "/text-origin /collision ntfs user,text\n" +
+    escaped +
+    "/cwd-overlay /collision ntfs binary\n"
+  for
+    (label, table, here, args) in [
+      (
+        "ordinary",
+        lookup_table,
+        target,
+        ["-am", ".", "./", "./sub/file", "sub/tool", ".."],
+      ),
+      (
+        "overlay",
+        overlay_table,
+        target,
+        ["-am", ".", "./", "./sub/file", "sub/tool", ".."],
+      ),
+      ("alias-first", alias_table, target, ["-am", ".", "./file", ".."]),
+      ("alias-second", alias_table, overlay, ["-am", ".", "./file", ".."]),
+      (
+        "raw-mixed",
+        lookup_table,
+        raw_cwd,
+        ["-am", ".", "sub/doc", "sub/../records"],
+      ),
+      (
+        "raw-unix",
+        lookup_table,
+        raw_cwd,
+        ["-au", ".", "sub/doc", "../relative"],
+      ),
+      ("raw-file", lookup_table, raw_cwd, ["-uf", "records"]),
+      ("raw-mode", lookup_table, raw_cwd, ["-M", "sub/doc", "."]),
+      ("raw-absolute", lookup_table, raw_cwd, ["-m", "/text/sub/file"]),
+    ] {
+    @fs.write_file(root + "/etc/fstab", table)
+    for
+      (which, program, argv, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
+        (
+          "installed",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..args],
+          installed,
+        ),
+      ] {
+      ignore(
+        probe(
+          output,
+          "link-lookup-posix-cwd-" + label + "-" + which,
+          program,
+          argv,
+          here,
+          vars,
+        ),
+      )
+    }
+  }
   let dos_dir = base + "/dos-names"
   @fs.mkdir(dos_dir)
   @fs.write_file(dos_dir + "/records\uF02E", b"C:/encoded-leaf\n")
