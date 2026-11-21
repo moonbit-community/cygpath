@@ -1483,6 +1483,77 @@ async fn check_mount_owners(
     "/dos-names /plain ntfs binary\n/dos /inherited none bind\nnone /cygdrive cygdrive dos\n"
   @fs.write_file(root + "/etc/fstab", dos_table)
   @fs.write_file(output + "/dos-spellings.fstab", dos_table)
+  let width_records = root + "/etc/widths"
+  let raw_names : Array[Bytes] = []
+  let literal_names : Array[Bytes] = []
+  let punct_names : Array[Bytes] = []
+  let windows_names : Array[String] = []
+  for width in [251, 252, 255, 256] {
+    // Both spellings reach one native entry, but have different narrow lengths.
+    let prefix = "é".repeat(100)
+    let tail = "a".repeat(width - 201)
+    let wide = prefix + "\uF0FF" + tail
+    let punct = prefix + "\uF03A" + tail
+    @fs.write_file(dos_dir + "/" + wide + ".exe", b"width-file\n")
+    @fs.write_file(dos_dir + "/" + punct + ".exe", b"punct-file\n")
+    raw_names.push(
+      b"/plain/" + @utf8.encode(prefix) + b"\xff" + @utf8.encode(tail),
+    )
+    literal_names.push(@utf8.encode("/plain/" + wide))
+    punct_names.push(@utf8.encode("/plain/" + prefix + ":" + tail))
+    windows_names.push(dos_dir + "/" + wide)
+  }
+  for
+    (name, body) in [
+      ("plain..exe", b"plain-dot\n"),
+      ("encoded\uF02E.exe", b"encoded-dot\n"),
+      ("both..exe", b"plain-winner\n"),
+      ("both\uF02E.exe", b"encoded-winner\n"),
+      ("space .exe", b"space-file\n"),
+    ] {
+    @fs.write_file(dos_dir + "/" + name, body)
+  }
+  for
+    (label, args, rows) in [
+      ("raw", ["-mf", width_records], raw_names),
+      ("punct", ["-mf", width_records], punct_names),
+      ("literal", ["-mf", width_records], literal_names),
+      ("native", ["-m", ..windows_names], []),
+      (
+        "dos-names",
+        ["-m", "/dos/plain.", "/dos/encoded.", "/dos/both.", "/dos/space "],
+        [],
+      ),
+      ("dot-input", ["-uf", "/dos/plain."], []),
+      ("encoded-input", ["-uf", "/dos/encoded."], []),
+      ("both-input", ["-uf", "/dos/both."], []),
+    ] {
+    @fs.write_file(
+      width_records,
+      rows.fold(init=b"", (out, row) => out + row + b"\n"),
+    )
+    for
+      (which, program, argv, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
+        (
+          "installed",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..args],
+          installed,
+        ),
+      ] {
+      ignore(
+        probe(
+          output,
+          "suffix-width-" + label + "-" + which,
+          program,
+          argv,
+          root,
+          vars,
+        ),
+      )
+    }
+  }
   let stored = [
     "\uF020leading", "name\uF02E\uF020", "\uF020a\uF02E\uF020/\uF020b\uF02E", "mid . dle",
     "file\uF02E", "file.", ".hidden", "records\uF02E",
