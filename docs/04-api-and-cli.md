@@ -66,11 +66,15 @@ byte-valued drive prefix, pass `drive_prefix_bytes` in place of `drive_prefix`.
 directory using the existing mount table. A native component ending in U+F0FF
 contributes byte `FF` to POSIX output. Windows output retains its native spelling.
 
-`convert`, `relative_windows_name` and `mode_candidate` take either a
+`convert`, `relative_windows_name`, `lookup_target` and `mode_candidate` take either a
 Unicode `String` or a narrow `Bytes` operand. For Windows output, byte
 operands preserve filename bytes through mount and working-directory lookup.
 For example, `convert(b"/cygdrive/c/\xff", from=Posix, to=Mixed)` returns
-`C:/` followed by U+F0FF.
+`C:/` followed by U+F0FF. For a filesystem operand, `lookup_target` returns
+a `NativePath`. Its `basename_bytes()` gives the narrow byte count and
+`windows_name(suffix=".exe")` renders the complete native candidate.
+Both methods accept `parents=1` to inspect the parent component.
+`mode_candidate` returns the exact native spelling as a string.
 
 `convert_list` owns source delimiters, empty-member handling, and atomic failure.
 Its optional `recognize_windows` flag recognizes backslash-containing members

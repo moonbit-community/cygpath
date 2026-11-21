@@ -11,9 +11,10 @@ async fn installed_filename(
   context : @lib.Context,
   path : String,
   inspect~ : async (String) -> NativeEntity = native_entity,
-  lookup~ : async (String, Bool) -> (NativeEntity, String) = (native, directory) => {
-    windows_entity(native, directory, FileInput)
-  },
+  lookup~ : async (@lib.NativePath, Bool) -> (NativeEntity, String) = (
+    native,
+    directory,
+  ) => mapped_windows_entity(native, directory, FileInput),
 ) -> String? {
   let windows = path.contains_char('\\') || absolute_drive_name(path)
   let directory = needs_directory(
@@ -31,7 +32,7 @@ async fn installed_filename(
       checked_parents(context, path, inspect)
     }
     for operand = checked, syntax = from, links = 0 {
-      match mode_candidate(context, operand, syntax) {
+      match lookup_target(context, operand, syntax) {
         Virtual(directory=true) => return None
         // The network directory's read-only open uses the NT null object,
         // including when an individual server name did not resolve.
@@ -44,7 +45,7 @@ async fn installed_filename(
         Filesystem(native, ..) => {
           let (entry, suffix) = lookup(native, directory)
           match entry {
-            Found(_) => return Some(native + suffix)
+            Found(_) => return Some(native.windows_name(suffix~))
             Follow(target, tail) =>
               continue link_operand(context, target, tail, links),
                 Posix,

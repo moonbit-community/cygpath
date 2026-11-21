@@ -13,7 +13,7 @@ async test "fstab posix=0 applies Windows case mapping to mounts and bind source
 ///|
 async test "installation defaults use the two automatic mounts and physical cwd" {
   let context = mounted_context("C:\\cygwin", "", "", Some("C:\\cygwin\\bin"))
-  let lookup : async (String, Bool) -> (NativeEntity, String) = (_, _) => {
+  let lookup : async (@lib.NativePath, Bool) -> (NativeEntity, String) = (_, _) => {
     (Found(None), "")
   }
   assert_eq(

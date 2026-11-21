@@ -1198,6 +1198,7 @@ async fn check_mount_owners(
     tag : String,
     args : Array[String],
     here : String,
+    expected_code : Int32,
     expected : Bytes?,
   ) -> Unit {
     let oracle = probe(
@@ -1218,9 +1219,12 @@ async fn check_mount_owners(
     )
     compare(
       oracle.status == "completed" &&
-      oracle.exit_code == Some(0) &&
-      oracle.stdout_length > 0 &&
-      oracle.stderr_length == 0 &&
+      oracle.exit_code == Some(expected_code) &&
+      (if expected_code == 0 {
+        oracle.stdout_length > 0 && oracle.stderr_length == 0
+      } else {
+        oracle.stderr_length > 0
+      }) &&
       port.status == "completed" &&
       port.exit_code == oracle.exit_code &&
       port.stdout_sha256 == oracle.stdout_sha256 &&
@@ -1285,6 +1289,7 @@ async fn check_mount_owners(
       "link-lookup-posix-cwd-" + label,
       args,
       here,
+      0,
       if label == "raw-unix" {
         Some(b"/text/byte-\xff/\n/text/byte-\xff/sub/doc\n/text/relative\n")
       } else {
@@ -1343,7 +1348,7 @@ async fn check_mount_owners(
       ),
     ] {
     @fs.write_file(root + "/etc/fstab", table)
-    compare_installed("fstab-bytes-" + name, args, root, Some(expected))
+    compare_installed("fstab-bytes-" + name, args, root, 0, Some(expected))
   }
   @fs.write_file(root + "/etc/fstab", lookup_table)
   let link_cookie = b"!<symlink>/text/records\x00"
@@ -1406,18 +1411,21 @@ async fn check_mount_owners(
     "cookie-regular-names",
     ["-m", ..regular.map(name => "/" + name)],
     root,
+    0,
     Some(@utf8.encode(regular.map(name => root + "/" + name + "\n").join(""))),
   )
   compare_installed(
     "cookie-regular-mode",
     ["-M", ..regular.map(name => "/" + name)],
     root,
+    0,
     Some(@utf8.encode(regular.map(name => "/" + name + ": binary\n").join(""))),
   )
   compare_installed(
     "cookie-empty-input",
     ["-uf", "sys-empty"],
     root,
+    0,
     Some(b"!<symlink>\n"),
   )
   for
@@ -1488,6 +1496,7 @@ async fn check_mount_owners(
   let literal_names : Array[Bytes] = []
   let punct_names : Array[Bytes] = []
   let windows_names : Array[String] = []
+  let punct_windows : Array[String] = []
   for width in [251, 252, 255, 256] {
     // Both spellings reach one native entry, but have different narrow lengths.
     let prefix = "é".repeat(100)
@@ -1502,6 +1511,7 @@ async fn check_mount_owners(
     literal_names.push(@utf8.encode("/plain/" + wide))
     punct_names.push(@utf8.encode("/plain/" + prefix + ":" + tail))
     windows_names.push(dos_dir + "/" + wide)
+    punct_windows.push(dos_dir + "/" + punct)
   }
   for
     (name, body) in [
@@ -1513,46 +1523,51 @@ async fn check_mount_owners(
     ] {
     @fs.write_file(dos_dir + "/" + name, body)
   }
+  fn widths(names : Array[String], narrow : Bool) -> Bytes {
+    let lines = if narrow {
+      [names[0] + ".exe", names[1], names[2]]
+    } else {
+      [names[0], names[1]]
+    }
+    @utf8.encode(lines.join("\n") + "\n")
+  }
+  let dos_expected = ["plain..exe", "encoded\uF02E", "both..exe", "space .exe"]
+    .map(name => dos_dir + "/" + name + "\n")
+    .join("")
   for
-    (label, args, rows) in [
-      ("raw", ["-mf", width_records], raw_names),
-      ("punct", ["-mf", width_records], punct_names),
-      ("literal", ["-mf", width_records], literal_names),
-      ("native", ["-m", ..windows_names], []),
+    (label, args, rows, code, expected) in [
+      ("raw", ["-mf", width_records], raw_names, 1, widths(windows_names, true)),
+      (
+        "punct",
+        ["-mf", width_records],
+        punct_names,
+        1,
+        widths(punct_windows, true),
+      ),
+      (
+        "literal",
+        ["-mf", width_records],
+        literal_names,
+        1,
+        widths(windows_names, false),
+      ),
+      ("native", ["-m", ..windows_names], [], 1, widths(windows_names, false)),
       (
         "dos-names",
         ["-m", "/dos/plain.", "/dos/encoded.", "/dos/both.", "/dos/space "],
         [],
+        0,
+        @utf8.encode(dos_expected),
       ),
-      ("dot-input", ["-uf", "/dos/plain."], []),
-      ("encoded-input", ["-uf", "/dos/encoded."], []),
-      ("both-input", ["-uf", "/dos/both."], []),
+      ("dot-input", ["-uf", "/dos/plain."], [], 0, b"plain-dot\n"),
+      ("encoded-input", ["-uf", "/dos/encoded."], [], 1, b""),
+      ("both-input", ["-uf", "/dos/both."], [], 0, b"plain-winner\n"),
     ] {
     @fs.write_file(
       width_records,
       rows.fold(init=b"", (out, row) => out + row + b"\n"),
     )
-    for
-      (which, program, argv, vars) in [
-        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
-        (
-          "installed",
-          moonrun,
-          [wasm, "--", "--profile", profile, ..args],
-          installed,
-        ),
-      ] {
-      ignore(
-        probe(
-          output,
-          "suffix-width-" + label + "-" + which,
-          program,
-          argv,
-          root,
-          vars,
-        ),
-      )
-    }
+    compare_installed("suffix-width-" + label, args, root, code, Some(expected))
   }
   let stored = [
     "\uF020leading", "name\uF02E\uF020", "\uF020a\uF02E\uF020/\uF020b\uF02E", "mid . dle",

@@ -1,20 +1,22 @@
 ///|
-/// A mode query either needs an ordinary filesystem lookup or has a fixed
-/// binary-mode answer from Cygwin's virtual filesystem.
+/// A mapped operand identifies a native filesystem entry or a virtual node.
 /// For a null-backed device, `native_input` identifies the POSIX null stream.
 #derive(Eq, Debug)
-pub(all) enum ModeCandidate {
-  Filesystem(String, text_mode~ : Bool)
+pub(all) enum PathTarget[T] {
+  Filesystem(T, text_mode~ : Bool)
   Virtual(directory~ : Bool)
   NetworkDirectory(String?)
   NullDevice(native_input~ : Bool)
 }
 
 ///|
-pub extend ModeCandidate with Eq::{equal, not_equal}
+pub extend PathTarget with Eq::{equal, not_equal}
 
 ///|
-pub extend ModeCandidate with @debug.Debug::{to_repr}
+pub extend PathTarget with @debug.Debug::{to_repr}
+
+///|
+pub type ModeCandidate = PathTarget[String]
 
 ///|
 /// The input grammar, independent of the machine running the conversion.

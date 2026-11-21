@@ -258,16 +258,14 @@ async fn native_link(path : String, tail : String) -> NativeEntity {
 ///|
 // Called only when the exact entry is absent. The suffix scanner measures
 // the basename in bytes and allows a single four-byte executable suffix.
-async fn executable_candidate(path : String, name : String) -> @fs.FileKind? {
+async fn executable_candidate(exe : String, name : String) -> @fs.FileKind? {
   let extension = name.rev_split_once(".").map(p => p.1).unwrap_or("")
   if name.is_empty() ||
     name is ("." | "..") ||
-    @utf8.encode(name).length() > 251 ||
     extension.equal_ignore_ascii_case("exe") ||
     extension.equal_ignore_ascii_case("lnk") {
     return None
   }
-  let exe = path + ".exe"
   match native_kind(exe) {
     Some(Regular) => Some(Regular)
     Some(SymLink) =>
@@ -301,18 +299,28 @@ async fn windows_entity(
   native : String,
   need_directory : Bool,
   purpose : LookupPurpose,
+  mapped? : @lib.NativePath,
 ) -> (NativeEntity, String) {
   let path = plain_native(native)
   let root = native_root_end(path)
   let end = path.trim_end(chars="/").length().max(root)
-  for length = end {
+  for length = end, parents = 0 {
     let current = path[:length].to_owned()
     let leaf = length == end
     let name = current
       .rev_split_once("/")
       .map(p => p.1.to_owned())
       .unwrap_or(current)
-    let size = @utf8.encode(name).length()
+    let size = match mapped {
+      Some(entry) => entry.basename_bytes(parents~).unwrap_or(0)
+      None => @utf8.encode(name).length()
+    }
+    fn with_suffix(suffix : String) -> String raise {
+      match mapped {
+        Some(entry) => entry.windows_name(parents~, suffix~)
+        None => current + suffix
+      }
+    }
     if size > 255 {
       raise LookupErrno("File name too long")
     }
@@ -320,13 +328,16 @@ async fn windows_entity(
     let mut suffix = ""
     if kind is None && length > root && size <= 251 {
       if leaf && purpose != LongAbsolute {
-        kind = executable_candidate(current, name)
+        kind = executable_candidate(with_suffix(".exe"), name)
         if kind is Some(_) {
           suffix = ".exe"
         }
       }
-      if kind is None && native_kind(current + ".lnk") is Some(Regular) {
-        check_cygwin_link(current + ".lnk", appended=true)
+      if kind is None {
+        let lnk = with_suffix(".lnk")
+        if native_kind(lnk) is Some(Regular) {
+          check_cygwin_link(lnk, appended=true)
+        }
       }
     }
     match kind {
@@ -335,12 +346,28 @@ async fn windows_entity(
           return (Found(kind), suffix)
         }
         let tail = path[length:end].trim_start(chars="/").to_owned()
-        return (native_link(current + suffix, tail), "")
+        return (
+          native_link(
+            if suffix.is_empty() {
+              current
+            } else {
+              with_suffix(suffix)
+            },
+            tail,
+          ),
+          "",
+        )
       }
       Some(Regular) => {
         // Input checks the opened file's header, preserving open-time errno.
         if purpose != FileInput || !leaf || need_directory {
-          check_cygwin_link(current + suffix)
+          check_cygwin_link(
+            if suffix.is_empty() {
+              current
+            } else {
+              with_suffix(suffix)
+            },
+          )
         }
         if !leaf || need_directory {
           raise LookupErrno("Not a directory")
@@ -353,9 +380,19 @@ async fn windows_entity(
           "unsupported path type: " + @debug.to_string(current),
         )
       None if length <= root => return (Found(None), "")
-      None => continue current.rev_find("/").unwrap_or(root).max(root)
+      None =>
+        continue current.rev_find("/").unwrap_or(root).max(root), parents + 1
     }
   }
+}
+
+///|
+async fn mapped_windows_entity(
+  entry : @lib.NativePath,
+  directory : Bool,
+  purpose : LookupPurpose,
+) -> (NativeEntity, String) {
+  windows_entity(entry.windows_name(), directory, purpose, mapped=entry)
 }
 
 ///|
@@ -435,12 +472,12 @@ fn is_posix_root(
 }
 
 ///|
-fn mode_candidate(
+fn lookup_target(
   context : @lib.Context,
   path : String,
   from : @lib.InputSyntax,
-) -> @lib.ModeCandidate raise {
-  context.mode_candidate(input_name(path), from~) catch {
+) -> @lib.PathTarget[@lib.NativePath] raise {
+  context.lookup_target(input_name(path), from~) catch {
     @lib.InvalidDrivePrefix | @lib.EmptyPath | @lib.PathNotFound =>
       raise LookupErrno("No such file or directory")
     @lib.PathTooLong(_) => raise LookupErrno("File name too long")
@@ -491,7 +528,7 @@ async fn locate_entity(
   let mut path = path
   let mut syntax = from
   for followed = 0; ; followed = followed + 1 {
-    let (native, text_mode) = match mode_candidate(context, path, syntax) {
+    let (native, text_mode) = match lookup_target(context, path, syntax) {
       Virtual(directory~) => return (Some(directory), false, path)
       NetworkDirectory(None) => return (Some(true), false, path)
       NetworkDirectory(Some(server)) => {
@@ -499,7 +536,7 @@ async fn locate_entity(
         return (if exists { Some(true) } else { None }, false, path)
       }
       NullDevice(..) => return (Some(false), false, path)
-      Filesystem(native, text_mode~) => (native, text_mode)
+      Filesystem(native, text_mode~) => (native.windows_name(), text_mode)
     }
     match inspect(native) {
       Found(kind) => return (kind.map(k => k == Directory), text_mode, path)
@@ -594,7 +631,7 @@ pub async fn convert_installed(
   absolute : Bool,
 ) -> Result[String, String] {
   checked_windows_path(
-    context, path, from, absolute, native_entity, windows_entity,
+    context, path, from, absolute, native_entity, mapped_windows_entity,
   )
 }
 
@@ -620,7 +657,7 @@ async fn local_windows_output(
       directory,
       purpose,
     ) => {
-      let (entity, suffix) = windows_entity(native, directory, purpose)
+      let (entity, suffix) = mapped_windows_entity(native, directory, purpose)
       if entity is Follow(_, _) {
         raise InstallationError(
           "a selected Cygwin installation is required for a link target",
@@ -638,7 +675,10 @@ async fn checked_windows_path(
   from : @lib.InputSyntax,
   absolute : Bool,
   inspect : async (String) -> NativeEntity,
-  lookup : async (String, Bool, LookupPurpose) -> (NativeEntity, String),
+  lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
+    NativeEntity,
+    String,
+  ),
 ) -> Result[String, String] {
   try {
     async fn checked_operand() -> String {
@@ -659,7 +699,7 @@ async fn checked_windows_path(
     for source = checked, syntax = from, followed = 0, purpose = WindowsOutput {
       let full_output = absolute || purpose == LongAbsolute
       let native = match
-        context.mode_candidate(input_name(source), from=syntax) {
+        context.lookup_target(input_name(source), from=syntax) {
         Filesystem(name, ..) => name
         Virtual(..) | NetworkDirectory(_) | NullDevice(..) => {
           if followed == 0 {
@@ -695,12 +735,12 @@ async fn checked_windows_path(
         }
         Found(kind) => {
           let keep_separator = directory && (!full_output || kind is None)
-          let plain = plain_native(native)
+          let plain = plain_native(native.windows_name(suffix~))
           let end = plain
             .trim_end(chars="/")
             .length()
             .max(native_root_end(plain))
-          let full = plain[:end].to_owned() + suffix
+          let full = plain[:end].to_owned()
           let selected = if keep_separator && !full.has_suffix("/") {
             full + "/"
           } else {
@@ -735,10 +775,13 @@ async fn checked_windows_path(
           if operand.has_prefix("/") || drive {
             return Ok(result)
           }
-          if context.relative_windows_name(input_name(source), from=syntax)
+          if context.relative_windows_name(
+              input_name(source),
+              from=syntax,
+              suffix~,
+            )
             is Some(stem) {
             let relative = stem +
-              suffix +
               (if keep_separator && path != "." { "\\" } else { "" })
             if relative.length() < 260 {
               return Ok(relative)

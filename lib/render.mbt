@@ -59,3 +59,56 @@ fn ParsedPath::render(
     result
   }
 }
+
+///|
+/// A mapped filesystem path before Windows filename encoding.
+pub struct NativePath {
+  priv path : ParsedPath
+  priv dos_names : Bool
+}
+
+///|
+/// Returns the narrow byte length of a basename, counting parents from the leaf.
+pub fn NativePath::basename_bytes(
+  self : NativePath,
+  parents~ : Int32 = 0,
+) -> Int32? {
+  if parents < 0 || parents >= self.path.components.length() {
+    return None
+  }
+  let component = self.path.components[self.path.components.length() -
+    parents -
+    1]
+  Some(@filename.encode(component).length())
+}
+
+///|
+/// Renders the Windows spelling after appending a suffix to the selected entry.
+pub fn NativePath::windows_name(
+  self : NativePath,
+  parents~ : Int32 = 0,
+  suffix~ : String = "",
+) -> String raise ConversionError {
+  if parents == 0 && suffix.is_empty() {
+    return self.path.render(Windows, dos_names=self.dos_names)
+  }
+  guard parents >= 0 && parents < self.path.components.length() else {
+    raise InvalidOptions("no such filename component")
+  }
+  validate_suffix(suffix)
+  let count = self.path.components.length() - parents
+  let components = self.path.components[:count].to_owned()
+  components[count - 1] = components[count - 1] + suffix
+  { ..self.path, components, trailing: false, }.render(
+    Windows,
+    dos_names=self.dos_names,
+  )
+}
+
+///|
+fn validate_suffix(suffix : String) -> Unit raise ConversionError {
+  validate_text(suffix)
+  if suffix.contains_char('/') || suffix.contains_char('\\') {
+    raise InvalidOptions("a filename suffix cannot contain a separator")
+  }
+}

@@ -129,11 +129,11 @@ fn local_input_name(path : String) -> String raise {
     path
   }
   guard local_windows_context(query) is Some(context) else { return path }
-  try mode_candidate(context, query, Windows) catch {
+  try lookup_target(context, query, Windows) catch {
     LookupErrno(reason) => raise input_path_error(path, reason)
     err => raise err
   } noraise {
-    Filesystem(name, ..) => name
+    Filesystem(name, ..) => name.windows_name()
     _ => path
   }
 }
@@ -158,11 +158,11 @@ async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
         .unwrap_or(base)
       // An exact dangling symlink still takes priority over a sibling .exe.
       guard !base.is_empty() && native_kind(base) is None else { raise missing }
-      if executable_candidate(base, name) is Some(_) {
+      guard @utf8.encode(name).length() <= 251 else { raise missing }
+      if executable_candidate(base + ".exe", name) is Some(_) {
         return @fs.open(host_io_path(base + ".exe"), mode=ReadOnly)
       }
       if @async.platform is Windows &&
-        @utf8.encode(name).length() <= 251 &&
         native_kind(base + ".lnk") is Some(Regular) {
         check_cygwin_link(base + ".lnk", appended=true)
       }

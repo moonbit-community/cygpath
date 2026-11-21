@@ -38,9 +38,10 @@ pub struct Context {
 }
 pub fn[P : ToPathInput] Context::convert(Self, P, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
 pub fn Context::convert_list(Self, String, from~ : InputSyntax, to~ : OutputFormat, absolute? : Bool, recognize_windows? : Bool, unix_prefix? : UnixPrefix) -> String raise ConversionError
-pub fn[P : ToPathInput] Context::mode_candidate(Self, P, from~ : InputSyntax) -> ModeCandidate raise ConversionError
+pub fn[P : ToPathInput] Context::lookup_target(Self, P, from~ : InputSyntax) -> PathTarget[NativePath] raise ConversionError
+pub fn[P : ToPathInput] Context::mode_candidate(Self, P, from~ : InputSyntax) -> PathTarget[String] raise ConversionError
 pub fn Context::new(profile? : Profile, nt_null? : Bool, drive_prefix? : String, drive_prefix_bytes? : Bytes, drive_text_mode? : Bool, drive_dos_names? : Bool, drive_case? : MountCase, mounts? : Array[Mount], posix_cwd? : String, windows_cwd? : String, drive_cwds? : Map[String, String]) -> Self raise ConversionError
-pub fn[P : ToPathInput] Context::relative_windows_name(Self, P, from~ : InputSyntax) -> String? raise ConversionError
+pub fn[P : ToPathInput] Context::relative_windows_name(Self, P, from~ : InputSyntax, suffix? : String) -> String? raise ConversionError
 pub fn Context::resolve_bind_source(Self, String) -> (String, Int32?) raise ConversionError
 pub fn Context::resolve_bind_source_bytes(Self, Bytes) -> (Bytes, Int32?) raise ConversionError
 pub fn Context::windows_to_posix_bytes(Self, String, absolute? : Bool, unix_prefix? : UnixPrefix, list? : Bool) -> Bytes raise ConversionError
@@ -55,17 +56,6 @@ pub(all) enum InputSyntax {
 pub fn InputSyntax::equal(Self, Self) -> Bool
 pub fn InputSyntax::not_equal(Self, Self) -> Bool
 pub fn InputSyntax::to_repr(Self) -> @debug.Repr
-
-#derive(Eq, @debug.Debug)
-pub(all) enum ModeCandidate {
-  Filesystem(String, text_mode~ : Bool)
-  Virtual(directory~ : Bool)
-  NetworkDirectory(String?)
-  NullDevice(native_input~ : Bool)
-}
-pub fn ModeCandidate::equal(Self, Self) -> Bool
-pub fn ModeCandidate::not_equal(Self, Self) -> Bool
-pub fn ModeCandidate::to_repr(Self) -> @debug.Repr
 
 pub struct Mount {
   system : Bool?
@@ -83,6 +73,12 @@ pub fn MountCase::equal(Self, Self) -> Bool
 pub fn MountCase::not_equal(Self, Self) -> Bool
 pub fn MountCase::to_repr(Self) -> @debug.Repr
 
+pub struct NativePath {
+  // private fields
+}
+pub fn NativePath::basename_bytes(Self, parents? : Int32) -> Int32?
+pub fn NativePath::windows_name(Self, parents? : Int32, suffix? : String) -> String raise ConversionError
+
 #derive(Eq, @debug.Debug)
 pub(all) enum OutputFormat {
   Windows
@@ -98,6 +94,17 @@ pub(all) enum PathInput {
   Narrow(Bytes)
 }
 pub impl ToPathInput for PathInput
+
+#derive(Eq, @debug.Debug)
+pub(all) enum PathTarget[T] {
+  Filesystem(T, text_mode~ : Bool)
+  Virtual(directory~ : Bool)
+  NetworkDirectory(String?)
+  NullDevice(native_input~ : Bool)
+}
+pub fn[T : Eq] PathTarget::equal(Self[T], Self[T]) -> Bool
+pub fn[T : Eq] PathTarget::not_equal(Self[T], Self[T]) -> Bool
+pub fn[T : @debug.Debug] PathTarget::to_repr(Self[T]) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
 pub(all) enum Profile {
@@ -118,6 +125,7 @@ pub fn UnixPrefix::not_equal(Self, Self) -> Bool
 pub fn UnixPrefix::to_repr(Self) -> @debug.Repr
 
 // Type aliases
+pub type ModeCandidate = PathTarget[String]
 
 // Traits
 pub trait ToPathInput {

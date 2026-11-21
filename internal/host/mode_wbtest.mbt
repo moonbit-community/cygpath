@@ -9,13 +9,12 @@ async test "byte-valued POSIX records use the selected mount for native lookup a
     assert_eq(name, "C:\\root\\\uF0FF\\")
     Found(None)
   }
-  let lookup : async (String, Bool, LookupPurpose) -> (NativeEntity, String) = (
-    name,
-    directory,
-    _,
-  ) => {
+  let lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
+    NativeEntity,
+    String,
+  ) = (name, directory, _) => {
     assert_true(directory)
-    (inspect(name), "")
+    (inspect(name.windows_name()), "")
   }
   assert_eq(
     checked_windows_path(context, path, Posix, false, inspect, lookup),
@@ -88,11 +87,12 @@ async test "virtual conversion and mode do not inspect native files" {
   let inspect : async (String) -> NativeEntity = name => {
     fail("unexpected filesystem lookup: " + name)
   }
-  let lookup : async (String, Bool, LookupPurpose) -> (NativeEntity, String) = (
-    name,
-    _,
-    _,
-  ) => fail("unexpected filesystem lookup: " + name)
+  let lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
+    NativeEntity,
+    String,
+  ) = (name, _, _) => {
+    fail("unexpected filesystem lookup: " + name.windows_name())
+  }
   assert_eq(
     checked_windows_path(context, "tty", Posix, false, inspect, lookup),
     Ok("/dev/tty"),
@@ -164,12 +164,11 @@ async test "installed relative output uses the operand's mount when comparing cw
     Some("D:/Work"),
   )
   let inspect : async (String) -> NativeEntity = _ => Found(Some(Directory))
-  let lookup : async (String, Bool, LookupPurpose) -> (NativeEntity, String) = (
-    path,
-    _,
-    _,
-  ) => {
-    if path.has_suffix("\\tool") {
+  let lookup : async (@lib.NativePath, Bool, LookupPurpose) -> (
+    NativeEntity,
+    String,
+  ) = (path, _, _) => {
+    if path.windows_name().has_suffix("\\tool") {
       (Found(Some(Regular)), ".exe")
     } else {
       (Found(Some(Directory)), "")
@@ -303,14 +302,18 @@ async test "installed mode uses filesystem entities and effective fstab flags" {
     remap(native_entity(test_path(native)))
   }
   async fn lookup(
-    native : String,
+    native : @lib.NativePath,
     directory : Bool,
     purpose : LookupPurpose,
   ) -> (NativeEntity, String) {
-    let (entity, suffix) = windows_entity(test_path(native), directory, purpose)
+    let (entity, suffix) = windows_entity(
+      test_path(native.windows_name()),
+      directory,
+      purpose,
+    )
     (remap(entity), suffix)
   }
-  let read_lookup : async (String, Bool) -> (NativeEntity, String) = (
+  let read_lookup : async (@lib.NativePath, Bool) -> (NativeEntity, String) = (
     native,
     dir,
   ) => lookup(native, dir, FileInput)

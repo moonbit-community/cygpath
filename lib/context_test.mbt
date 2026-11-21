@@ -568,6 +568,32 @@ test "DOS mounts encode filename edges for conversion and filesystem lookup" {
 }
 
 ///|
+test "suffix lookup keeps the narrow basename until the candidate is complete" {
+  let ctx = @lib.Context::new(
+    mounts=[@lib.Mount::new("/dos", "D:/work", dos_names=true)],
+    posix_cwd="/dos",
+    windows_cwd="D:/work",
+  )
+  guard ctx.lookup_target(b"/dos/link./\xff", from=Posix) is Filesystem(raw, ..) else {
+    fail("expected a native byte path")
+  }
+  guard ctx.lookup_target("/dos/link./\uF0FF", from=Posix)
+    is Filesystem(literal, ..) else {
+    fail("expected a native Unicode path")
+  }
+  assert_eq(raw.windows_name(), literal.windows_name())
+  assert_eq(raw.basename_bytes(), Some(1))
+  assert_eq(literal.basename_bytes(), Some(3))
+  assert_eq(raw.basename_bytes(parents=1), Some(5))
+  assert_eq(raw.windows_name(parents=1), "D:\\work\\link\uF02E")
+  assert_eq(raw.windows_name(parents=1, suffix=".lnk"), "D:\\work\\link..lnk")
+  assert_eq(
+    ctx.relative_windows_name("link.", from=Posix, suffix=".exe"),
+    Some("link..exe"),
+  )
+}
+
+///|
 test "text mount flags follow the selected path spelling, not a reverse alias" {
   let context = @lib.Context::new(
     mounts=[

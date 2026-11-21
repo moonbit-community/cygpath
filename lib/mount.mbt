@@ -171,7 +171,9 @@ pub fn[P : ToPathInput] Context::relative_windows_name(
   self : Context,
   operand : P,
   from~ : InputSyntax,
+  suffix~ : String = "",
 ) -> String? raise ConversionError {
+  validate_suffix(suffix)
   let path = operand.to_path_input().spelling()
   validate_component_lengths(path)
   guard self.windows_cwd is Some(cwd) else { return None }
@@ -207,6 +209,7 @@ pub fn[P : ToPathInput] Context::relative_windows_name(
   } else {
     parts[cwd.components.length():].join("\\")
   }
+  let name = name + suffix
   Some(
     if self.dos_names(parsed, mount) {
       dos_mount_spelling(name, Relative, Windows)
@@ -223,6 +226,22 @@ pub fn[P : ToPathInput] Context::mode_candidate(
   operand : P,
   from~ : InputSyntax,
 ) -> ModeCandidate raise ConversionError {
+  match self.lookup_target(operand, from~) {
+    Filesystem(name, text_mode~) => Filesystem(name.windows_name(), text_mode~)
+    Virtual(directory~) => Virtual(directory~)
+    NetworkDirectory(server) => NetworkDirectory(server)
+    NullDevice(native_input~) => NullDevice(native_input~)
+  }
+}
+
+///|
+/// Maps an operand while retaining the narrow filename used by Cygwin's
+/// suffix search. Rendering a suffixed candidate applies DOS rules last.
+pub fn[P : ToPathInput] Context::lookup_target(
+  self : Context,
+  operand : P,
+  from~ : InputSyntax,
+) -> PathTarget[NativePath] raise ConversionError {
   let path = operand.to_path_input().spelling()
   validate_component_lengths(path)
   let parsed = self.resolve(
@@ -251,7 +270,7 @@ pub fn[P : ToPathInput] Context::mode_candidate(
     None => (from == Posix || native.root is Unc(_, _)) && self.drive_text_mode
   }
   Filesystem(
-    native.render(Windows, dos_names=self.dos_names(parsed, mount)),
+    { path: native, dos_names: self.dos_names(parsed, mount), },
     text_mode~,
   )
 }
