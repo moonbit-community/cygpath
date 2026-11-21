@@ -307,6 +307,10 @@ mode, and a nonempty description. On Windows a successful write-access
 check rules out the read-only attribute for a matching regular file.
 An unsuccessful check leaves that attribute unknown. Following a matching
 Cygwin shortcut or a system-file symlink still needs Windows attributes.
+On Windows, `-f` reports that limitation for a possible link even when the
+installation is unselected, including a shortcut found by appending `.lnk`.
+A system-file cookie with an empty target or more than 4096 bytes of legacy
+narrow target data denotes ordinary file data. [Cygwin system-file recognition](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L2457-L2524)
 [Shell Link header](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/c3376b21-0931-45e4-b2fc-a48ac0e60d15) and
 [Cygwin shortcut recognition](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L2364-L2423).
 [Cygwin suffix scan](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L2902-L3007)

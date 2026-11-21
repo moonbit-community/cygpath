@@ -164,10 +164,21 @@ async fn possible_cygwin_link(
   // A suffix found only by adding .lnk must be a Cygwin shortcut.
   // System-file cookies are considered only for an actual operand name.
   if !appended && prefix.has_prefix(b"IntxLNK\x01") {
-    return true
+    // The Interix target starts at offset 8 and contains little-endian words.
+    let start = reader.peek_exactly(10)
+    return shortcut_word(start, 8) != 0
   }
   if !appended && prefix == b"!<symlink" {
-    return reader.peek_exactly(11).has_prefix(b"!<symlink>")
+    let first = reader.peek_exactly(11)
+    guard first.has_prefix(b"!<symlink>") && first[10] != 0 else {
+      return false
+    }
+    let size = file.size()
+    if first[10] == 0xff && size >= 12 && reader.peek_exactly(12)[11] == 0xfe {
+      return shortcut_word(reader.peek_exactly(14), 12) != 0
+    }
+    // The legacy narrow target, including its terminator, fits in PATH_MAX.
+    return size - 10 <= 4096
   }
   guard prefix.has_prefix(b"L\x00\x00\x00") &&
     path.to_lower().has_suffix(".lnk") else {

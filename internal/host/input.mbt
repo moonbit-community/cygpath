@@ -157,12 +157,16 @@ async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
         .map(p => p.1.to_owned())
         .unwrap_or(base)
       // An exact dangling symlink still takes priority over a sibling .exe.
-      guard !base.is_empty() &&
-        native_kind(base) is None &&
-        executable_candidate(base, name) is Some(_) else {
-        raise missing
+      guard !base.is_empty() && native_kind(base) is None else { raise missing }
+      if executable_candidate(base, name) is Some(_) {
+        return @fs.open(host_io_path(base + ".exe"), mode=ReadOnly)
       }
-      @fs.open(host_io_path(base + ".exe"), mode=ReadOnly)
+      if @async.platform is Windows &&
+        @utf8.encode(name).length() <= 251 &&
+        native_kind(base + ".lnk") is Some(Regular) {
+        check_cygwin_link(base + ".lnk", appended=true)
+      }
+      raise missing
     }
     err => raise err
   }
@@ -228,7 +232,8 @@ pub async fn stream_file_bytes_until(
       !(context is Some(_) && filename == @lib.nt_null_path) {
       raise FileNotDirectory
     }
-    if installation is Some(_) && file.kind() is Regular {
+    if (@async.platform is Windows || installation is Some(_)) &&
+      file.kind() is Regular {
       check_link_header(filename, file)
     }
     stream_record_bytes(file, path, consume)

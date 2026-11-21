@@ -1357,8 +1357,10 @@ async fn check_mount_owners(
     (name, data) in [
       ("sys-file", link_cookie),
       ("sys-copy", link_cookie),
-      ("sys-dir", b"!<symlink>/text/sub\x00"),
-      ("sys-exe.exe", link_cookie),
+      ("sys-empty", b"!<symlink>\x00"),
+      ("sys-wide-empty", b"!<symlink>\xff\xfe\x00\x00"),
+      ("intx-empty", b"IntxLNK\x01\x00\x00"),
+      ("sys-long", b"!<symlink>" + Bytes::make(4096, 97) + b"\x00"),
       ("shell-file.lnk", shortcut_data),
       ("shell-copy.lnk", shortcut_data),
     ] {
@@ -1375,7 +1377,7 @@ async fn check_mount_owners(
       "-Command",
       (
         #|$ErrorActionPreference='Stop'
-        #|foreach ($n in 'sys-file','sys-dir','sys-exe.exe') { [IO.File]::SetAttributes((Join-Path $pwd $n),[IO.FileAttributes]::System) }
+        #|foreach ($n in 'sys-file','sys-empty','sys-wide-empty','intx-empty','sys-long') { [IO.File]::SetAttributes((Join-Path $pwd $n),[IO.FileAttributes]::System) }
         #|[IO.File]::SetAttributes((Join-Path $pwd 'shell-file.lnk'),[IO.FileAttributes]::ReadOnly)
         #|foreach ($n in 'sys-file','sys-copy','shell-file.lnk','shell-copy.lnk') { [Console]::WriteLine("$n $([IO.File]::GetAttributes((Join-Path $pwd $n)))") }
       ),
@@ -1397,50 +1399,78 @@ async fn check_mount_owners(
     )
     ignore(successful_text(output, reset))
   })
+  let regular = [
+    "sys-empty", "sys-wide-empty", "intx-empty", "sys-long", "shell-copy.lnk",
+  ]
+  compare_installed(
+    "cookie-regular-names",
+    ["-m", ..regular.map(name => "/" + name)],
+    root,
+    Some(@utf8.encode(regular.map(name => root + "/" + name + "\n").join(""))),
+  )
+  compare_installed(
+    "cookie-regular-mode",
+    ["-M", ..regular.map(name => "/" + name)],
+    root,
+    Some(@utf8.encode(regular.map(name => "/" + name + ": binary\n").join(""))),
+  )
+  compare_installed(
+    "cookie-empty-input",
+    ["-uf", "sys-empty"],
+    root,
+    Some(b"!<symlink>\n"),
+  )
   for
-    (label, args) in [
-      (
-        "named",
-        [
-          "-m", "/sys-file", "/sys-copy", "/sys-exe", "/shell-file.lnk", "/shell-copy.lnk",
-        ],
-      ),
-      (
-        "relative",
-        [
-          "-m", "sys-file", "./sys-copy", "sys-exe", "shell-file.lnk", "shell-copy.lnk",
-        ],
-      ),
-      ("implicit", ["-m", "/shell-file", "/shell-copy"]),
-      ("list", ["-mp", "/sys-file:/shell-file.lnk:/sys-exe"]),
+    (label, args, stdout) in [
       (
         "mode",
         ["-M", "/sys-file", "/sys-copy", "/shell-file", "/shell-copy.lnk"],
+        b"/sys-file: text\n/sys-copy: binary\n/shell-file: text\n/shell-copy.lnk: binary\n",
       ),
-      ("directory", ["-m", "/sys-dir/", "/sys-dir/tool", "/sys-dir/../records"]),
-      ("read-sys", ["-uf", "/sys-file"]),
-      ("read-shell", ["-uf", "/shell-file"]),
-      ("read-copy", ["-uf", "/sys-copy"]),
+      ("read-sys", ["-uf", "sys-file"], b"/cygdrive/c/through-target\n"),
+      ("read-shell", ["-uf", "shell-file"], b"/cygdrive/c/through-target\n"),
+      ("read-copy", ["-uf", "sys-copy"], b"!<symlink>/text/records\n"),
     ] {
-    for
-      (which, program, argv, vars) in [
-        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
-        (
-          "installed",
-          moonrun,
-          [wasm, "--", "--profile", profile, ..args],
-          installed,
-        ),
-      ] {
-      ignore(
-        probe(
-          output,
-          "cookie-" + label + "-" + which,
-          program,
-          argv,
-          root,
-          vars,
-        ),
+    let tag = "cookie-" + label
+    let oracle = probe(
+      output,
+      tag + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      args,
+      root,
+      environment,
+    )
+    require(
+      oracle.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      oracle.stdout_sha256 == digest(stdout) &&
+      oracle.stderr_length == 0,
+      "unexpected official link attributes result in " + tag,
+    )
+    let runs = [("installed", installed)]
+    if label != "mode" {
+      runs.push(("implicit", environment))
+    }
+    for (selection, vars) in runs {
+      let port = probe(
+        output,
+        tag + "-" + selection,
+        moonrun,
+        [wasm, "--", "--profile", profile, ..args],
+        root,
+        vars,
+      )
+      let same = port.exit_code == oracle.exit_code &&
+        port.stdout_sha256 == oracle.stdout_sha256 &&
+        port.stderr_sha256 == oracle.stderr_sha256
+      let boundary = port.exit_code == Some(1) &&
+        port.stdout_length == 0 &&
+        @fs.read_file(output + "/" + port.stderr_path)
+        .text()
+        .contains("Cygwin link attributes unavailable")
+      require(
+        port.status == "completed" && (same || boundary),
+        "incorrect Cygwin link result in " + tag + " " + selection,
       )
     }
   }

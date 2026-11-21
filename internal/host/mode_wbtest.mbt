@@ -243,6 +243,21 @@ async test "ordinary shell links and unreadable files retain their path spelling
     )
     assert_eq(file.read_all(), data)
   }
+  for
+    (data, possible) in [
+      (b"!<symlink>\x00", false),
+      (b"!<symlink>\xff\xfe\x00\x00", false),
+      (b"!<symlink>\xff\xfeA\x00\x00\x00", true),
+      (b"IntxLNK\x01\x00\x00", false),
+      (b"IntxLNK\x01\x00\x01", true),
+      (b"!<symlink>" + Bytes::make(4095, 97) + b"\x00", true),
+      (b"!<symlink>" + Bytes::make(4096, 97) + b"\x00", false),
+    ] {
+    @fs.write_binary(shortcut, data)
+    let file = @fs.open(shortcut, mode=ReadOnly)
+    defer file.close()
+    assert_eq(possible_cygwin_link(shortcut, file, false), possible)
+  }
   if !(@async.platform is Windows) {
     @fs.chmod(shortcut, 0)
     if !@fs.can_read(shortcut) {
