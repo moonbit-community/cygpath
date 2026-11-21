@@ -407,6 +407,13 @@ A directory found only by appending `.exe` is skipped. Opening
 an explicitly named readable directory returns zero records and exits
 successfully. With a selected installation, Cygwin mount mappings and
 native link traversal also apply to the input filename.
+For relative file input on a local Windows drive, a directory cancelled by
+POSIX-style `..` must exist. For example, `absent/../names` fails before
+opening `names`. An initial Windows drive path or a backslash before the
+cancelled component selects Windows normalization. If a backslash occurs
+later, the earlier complete POSIX parent checks still run. Following a
+directory link before `..` can change which mount supplies the file and
+requires the selected installation. [Cygwin path normalization](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L267-L400).
 [Cygwin open](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/syscalls.cc#L1479-L1489) ·
 [Suffix scan](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L2902-L3007) ·
 [File-input loop](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L1066-L1115).

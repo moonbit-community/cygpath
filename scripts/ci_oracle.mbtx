@@ -1352,6 +1352,18 @@ async fn check_mount_owners(
       ("windows", "absent\\..\\names", b""),
       ("mixed-early", "absent\\../names", b""),
       ("mixed-late", "absent/../dir\\..\\names", missing),
+      ("mixed-file", "file/../dir\\..\\names", not_dir),
+      ("mixed-adjacent", "absent/..\\names", b""),
+      ("mixed-restart", "dir/../absent\\..\\names", b""),
+      ("drive", reader_dir + "/absent/../dir\\..\\names", b""),
+      (
+        "absolute-mixed-file",
+        "/proc/cygdrive/" +
+        reader_dir[:1].to_owned().to_lower() +
+        reader_dir[2:].to_owned() +
+        "/file/../dir\\..\\names",
+        not_dir,
+      ),
     ] {
     compare_file(
       "file-parent-" + tag,
@@ -1379,7 +1391,11 @@ async fn check_mount_owners(
         lookup_table +
         root.replace_all(old=" ", new="\\040") +
         "/mounted-names /text/names ntfs binary\n",
-        b"from-mount\n",
+        if profile == "cygwin" {
+          b"from-mount\n"
+        } else {
+          b"from-link-parent\n"
+        },
       ),
     ] {
     @fs.write_file(root + "/etc/fstab", table)
@@ -1401,8 +1417,14 @@ async fn check_mount_owners(
     environment,
   )
   require(
-    local_link.status == "completed",
-    "local parent link observation failed",
+    local_link.status == "completed" &&
+    local_link.exit_code == Some(1) &&
+    local_link.stdout_length == 0 &&
+    local_link.stderr_sha256 ==
+    digest(
+      b"cygpath: installation context: file input through a link before '..' requires a selected Cygwin installation\n",
+    ),
+    "local file input selected a parent without the link target's mount context",
   )
   let raw_cwd = target + "/byte-\uF0FF"
   @fs.mkdir(raw_cwd + "/sub", recursive=true)

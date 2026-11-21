@@ -27,6 +27,9 @@ async fn installed_filename(
   let from : @lib.InputSyntax = if windows { Windows } else { Posix }
   try {
     let checked = if windows {
+      if mixed_input_parents(path) is Some(prefix) {
+        ignore(checked_parents(context, prefix, inspect))
+      }
       path
     } else {
       checked_parents(context, path, inspect)

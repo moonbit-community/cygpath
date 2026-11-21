@@ -588,6 +588,23 @@ async fn checked_parents(
   inspect : async (@lib.NativePath) -> NativeEntity,
   server_lookup~ : async (String) -> Bool = network_server_exists,
 ) -> String {
+  walk_posix_parents(operand, prefix => {
+    let (kind, _, resolved) = locate_entity(
+      context,
+      prefix,
+      Posix,
+      inspect,
+      server_lookup~,
+    )
+    (kind, resolved)
+  })
+}
+
+///|
+async fn walk_posix_parents(
+  operand : String,
+  directory : async (String) -> (Bool?, String),
+) -> String {
   if !operand.split("/").any(part => part == "..") {
     return operand
   }
@@ -605,13 +622,7 @@ async fn checked_parents(
       "" | "." => continue
       ".." => {
         if check_parent {
-          let (kind, _, resolved) = locate_entity(
-            context,
-            prefix,
-            Posix,
-            inspect,
-            server_lookup~,
-          ) catch {
+          let (kind, resolved) = directory(prefix) catch {
             LookupErrno("File name too long") =>
               raise LookupErrno("Not a directory")
             LookupErrno("No such device or address") =>

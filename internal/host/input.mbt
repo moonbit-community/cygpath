@@ -115,21 +115,54 @@ pub async fn stream_file(
 }
 
 ///|
+/// The runtime can validate a complete POSIX parent before switching to
+/// Windows normalization at the first backslash. A drive path starts in
+/// Windows syntax. The component touching the backslash is still incomplete.
+fn mixed_input_parents(path : String) -> String? {
+  guard !absolute_drive_name(path) &&
+    path.split_once("\\") is Some((head, _)) &&
+    head.contains("/../") else {
+    return None
+  }
+  head.rev_split_once("/").map(pair => pair.0.to_owned())
+}
+
+///|
 /// Anchor a physical input before passing it to Windows. A colon in a POSIX
 /// relative name is a filename character, even when it follows one letter.
-fn local_input_path(path : String) -> @lib.NativePath? raise {
+async fn local_input_path(
+  path : String,
+  default_context : @lib.Context,
+) -> @lib.NativePath? {
   if path.is_empty() || !(@async.platform is Windows) {
     return None
   }
-  let query = if !path.has_prefix("/") &&
+  let relative = !path.has_prefix("/") &&
     !path.contains_char('\\') &&
-    !absolute_drive_name(path) {
-    ".\\" + path
-  } else {
-    path
-  }
-  guard local_windows_context(query) is Some(context) else { return None }
-  try lookup_target(context, query, Windows) catch {
+    !absolute_drive_name(path)
+  let query = if relative { ".\\" + path } else { path }
+  let drive = local_windows_context(query)
+  try {
+    let parents = if relative { Some(path) } else { mixed_input_parents(path) }
+    if parents is Some(head) && head.has_prefix("/") {
+      ignore(checked_parents(default_context, head, mapped_native_entity))
+    } else if parents is Some(head) && drive is Some(context) {
+      let _ = walk_posix_parents(head, prefix => {
+        let (kind, _, _) = locate_entity(context, ".\\" + prefix, Windows, native => {
+          match mapped_native_entity(native) {
+            Found(_) as entry => entry
+            Follow(_, _) =>
+              raise InstallationError(
+                "file input through a link before '..' requires a selected Cygwin installation",
+              )
+          }
+        })
+        (kind, prefix)
+      })
+    }
+    guard drive is Some(context) else { return None }
+    lookup_target(context, query, Windows)
+  } catch {
     LookupErrno(reason) => raise input_path_error(path, reason)
     err => raise err
   } noraise {
@@ -214,8 +247,8 @@ pub async fn stream_file_bytes_until(
       // An empty virtual input supplies no fgets records.
       guard installed_filename(context, path) is Some(native) else { return 0 }
       (native, None)
-    } else if virtual_context is Some(_) &&
-      local_input_path(path) is Some(entry) {
+    } else if virtual_context is Some(ctx) &&
+      local_input_path(path, ctx) is Some(entry) {
       (entry.windows_name(), entry.basename_bytes())
     } else {
       (path, None)
