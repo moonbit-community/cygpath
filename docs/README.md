@@ -8,9 +8,12 @@ complete for the explicit-context portable matrix frozen in
 
 ## Verified status
 
-The current executable target is `moonx` linear-memory Wasm. The following table
-is historical, not certification of the refactor or its installation-aware path.
-Current local acceptance commands are in [chapter 08](08-development-and-release.md).
+The current executable target is `moonx` linear-memory Wasm. The
+[November Wasm results](09-remote-validation.md#november-wasm-validation)
+cover the packaged CLI, its public library and comparisons with installed
+Cygwin and MSYS2. Local acceptance commands are in [chapter 08](08-development-and-release.md).
+
+### September portable matrix
 
 Code revision **`b32dd7448658bc251b216ba93a5c120ef54fdbc9`** passed
 [Check](https://github.com/moonbit-community/cygpath/actions/runs/36385821361)

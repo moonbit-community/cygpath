@@ -80,7 +80,8 @@ forward slashes. Both report binary mode with `-M`.
 On Windows, the CLI checks the NT null device through the Wasm filesystem
 API. When available, `-M /dev/null` reports binary mode and `-f /dev/null`
 reads the device to EOF. The ordinary `-w /dev/null` spelling requires the
-current session's DOS device aliases. Live Windows validation is pending.
+current session's DOS device aliases. Both official runtimes matched the Wasm
+results for null-device mode and file input on Windows. [Windows comparison](docs/09-remote-validation.md#november-wasm-validation)
 The fixed `/proc` files, including `/proc/version` and `/proc/uptime`, also
 keep their names in Windows output. Process-specific paths and registry
 values require Cygwin runtime state.
@@ -100,7 +101,8 @@ print the Windows or system directory as a POSIX path. The same queries accept
 `-F 0x24` and `-F 0x25`. On the standard fixed-folder layout, `-F 0x14`
 selects Fonts, `-F 0x29` selects SysWOW64 on 64-bit Windows, and `-F 0x38`
 selects Resources. Mounts and `-U` apply to each directory.
-The current Wasm implementation awaits comparison with official Cygwin on Windows.
+Cygwin and Wasm produced the same output for `-W`, `-US`, `-F044` and
+`--folder=0x25` on the Windows runner. [Windows comparison](docs/09-remote-validation.md#november-wasm-validation)
 
 Unsupported: automatic selection among installations; reading alternate 8.3
 names; full Cygwin symlink resolution; raw Windows/mixed

@@ -1,6 +1,32 @@
 # Remote Validation
 
-## Accepted code baseline
+## November Wasm validation
+
+On 2026-11-21, [`14f8e3c`](https://github.com/moonbit-community/cygpath/commit/14f8e3c7f913e1174eba53df036cdd5781ec984e)
+passed 166 tests, 110 CLI process cases and the external Wasm library consumer on
+Linux, macOS and Windows. [Three-host checks](https://github.com/moonbit-community/cygpath/actions/runs/44849285087)
+
+| Official runtime and mount context | Exact stdout, stderr and exit status in collection and replay | Additional checks |
+| --- | ---: | ---: |
+| Cygwin default | 866 | 214 |
+| Cygwin custom | 924 | 12 |
+| MSYS2 default | 866 | 88 |
+| MSYS2 custom | 924 | 12 |
+| **Total** | **3,580** | **326** |
+
+All four jobs passed their coverage audits and fault drills. An additional
+72 malformed-input and 16 unavailable-code-page observations exercised the
+CLI's rejection behavior. The Windows artifacts include the per-process bytes,
+environment and comparison summaries. [Windows oracle](https://github.com/moonbit-community/cygpath/actions/runs/44849285088)
+
+The default contexts exercise installation fstab handling, five Windows temp
+path forms per runtime, relative DOS operands, long host paths and NT null-device
+input. The Cygwin job also records Win32 encoder output for every valid BMP
+scalar on seven ISO-2022/HZ pages. Open host-dependent behavior includes live
+session mounts, NTFS alternate names and redirected shell folders.
+[Remaining compatibility work](https://github.com/moonbit-community/cygpath/issues/9)
+
+## September accepted code baseline
 
 On **2026-09-28**, commit
 [`b32dd7448658bc251b216ba93a5c120ef54fdbc9`](https://github.com/moonbit-community/cygpath/commit/b32dd7448658bc251b216ba93a5c120ef54fdbc9)
