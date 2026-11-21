@@ -855,6 +855,68 @@ async fn check_mount_owners(
     project.stderr_sha256 == reference.stderr_sha256,
     "isolated fstab conversion differs in " + profile,
   )
+  let dos_dir = root + "/name-probe"
+  @fs.mkdir(dos_dir)
+  @fs.mkdir(dos_dir + "/SUBDIR")
+  for
+    name in [
+      "README.TXT", "lower.txt", "Case.TXT", "SUBDIR/FILE.TXT", "A long primary name.txt",
+    ] {
+    @fs.write_file(dos_dir + "/" + name, b"test", create_mode=CreateNew)
+  }
+  let dos_args = [
+    "-ws", "README.TXT", "readme.txt", "ReAdMe.TxT", "lower.txt", "LOWER.TXT", "Case.TXT",
+    "case.txt", "subdir/File.txt", "A long primary name.txt",
+  ]
+  async fn observe_dos(label : String, args : Array[String]) -> Unit {
+    ignore(
+      successful_text(
+        output,
+        probe(
+          output,
+          "dos-" + label + "-oracle",
+          runtime_bin + "/cygpath.exe",
+          args,
+          dos_dir,
+          environment,
+        ),
+      ),
+    )
+  }
+  observe_dos("original", dos_args)
+  let fsutil = locate_tool("fsutil.exe")
+  let aliases : Array[String] = ["-ws"]
+  for
+    (primary, short) in [
+      ("README.TXT", "RALT.TXT"),
+      ("Case.TXT", "CALT.TXT"),
+      ("SUBDIR", "DALT"),
+      ("A long primary name.txt", "LALT.TXT"),
+    ] {
+    let setup = probe(
+      output,
+      "dos-set-" + short,
+      fsutil,
+      ["file", "setshortname", dos_dir + "/" + primary, short],
+      dos_dir,
+      environment,
+    )
+    if setup.exit_code == Some(0) && @fs.exists(dos_dir + "/" + short) {
+      for value in [short, short.to_lower()] {
+        aliases.push(
+          if primary == "SUBDIR" {
+            value + "/File.txt"
+          } else {
+            value
+          },
+        )
+      }
+    }
+  }
+  observe_dos("explicit", dos_args)
+  if aliases.length() > 1 {
+    observe_dos("alias", aliases)
+  }
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)
   @fs.write_file(output + "/usertemp.fstab", temp_table)
