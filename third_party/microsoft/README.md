@@ -164,3 +164,19 @@ tie-breaker.
 Review both source and packed hashes when regenerating. Official Windows
 `cygpath` byte probes, rather than data provenance alone, establish the tested
 compatibility scope; see [remote validation](../../docs/09-remote-validation.md).
+
+## Stateful code pages
+
+The Windows 11 / Server 2025 family runner (build 26100) supplied the reference
+bytes for pages 50220–50222, 50225, 50227, 50229 and 52936. The
+`codepage-api-probe/bmp-CP.bin` artifacts contain one length-prefixed result
+per BMP scalar. Each length counts the NUL passed through
+`WideCharToMultiByte`. The Wasm tests verify the fingerprint of all 63,488
+records per page and exercise adjacent character-set transitions.
+[Windows runner artifacts](https://github.com/moonbit-community/cygpath/actions/runs/44847413626) · [Probe](../../scripts/probe_windows_codepages.mbtx).
+
+The port reuses the documented Windows mappings in 20932, 20936, 20949
+and 20000. CP50225 excludes the 259 one-way best fits in the Wansung table.
+CP50229 excludes the two one-way mappings for U+FA0C and U+FA0D. The
+character-set designations and output shifts are covered by byte comparisons.
+[Unicode data provenance](../unicode/README.md) · [Microsoft code page assignments](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/28fefe92-d66c-4b03-90a9-97b473223d43).

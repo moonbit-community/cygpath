@@ -439,14 +439,15 @@ On 20 ANSI/OEM pages the encoder applies the additional Windows punctuation
 best fits. CP932 also encodes U+3099 and U+309A as `81 4a` and `81 4b`
 respectively. [Windows table verification](../third_party/microsoft/README.md).
 
-CP50220 widens each halfwidth kana. CP50221 writes kana after `ESC ( I`.
-CP50222 uses SO/SI to enter kana and restore the previous character set.
-CP50225 designates the Korean set once per path and shifts between Korean
-and ASCII. CP52936 surrounds Chinese runs with `~{` and `~}` and writes
-a literal tilde as `~~`. Each encoder returns to ASCII at the end of the
-string. The local tests compare bytes against Microsoft's managed implementation.
-The Windows workflow compares actual paths against Cygwin.
-[Encoder provenance](../third_party/dotnet/README.md#iso-2022-and-hz).
+The three Japanese pages use Windows JIS (20932), including JIS X 0212.
+CP50220 widens halfwidth kana. CP50221 designates kana with `ESC ( I`.
+CP50222 enters kana with `ESC ( J SO` and designates the next set explicitly.
+CP50225, CP50227 and CP50229 use the Wansung, GB2312 and CNS Taiwan tables,
+respectively. CP50229 changes designation when switching CNS planes.
+CP52936 applies HZ quoting to a stream of Windows GB2312 bytes. Windows can
+produce an embedded zero in that stream. The CLI ends the output name at
+the first zero, as Cygwin does before printing.
+[Windows evidence and byte samples](../third_party/microsoft/README.md#stateful-code-pages).
 
 CP54936 uses the Windows-derived GB18030-2000 mapping and encodes each
 supplementary scalar as four bytes. The Windows comparison includes characters
@@ -487,7 +488,7 @@ A numeric value of zero restores the default conversion. Cygwin uses the
 current locale for that branch. The Wasm CLI's default encoding is UTF-8.
 [Cygwin multibyte conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L156-L163).
 Windows-output `ANSI` and `OEM` require host selection. They, CP29001 and
-unimplemented pages such as ISO-2022-CN are rejected. POSIX
+unimplemented pages such as GSM are rejected. POSIX
 output ignores a syntactically valid codepage selection, including unavailable
 identities, because that branch does not invoke the Windows encoder. No locale
 or platform codec participates in product encoding.

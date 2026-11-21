@@ -17,7 +17,7 @@ test "ISO-2022-KR designates once and shifts back at ASCII and record end" {
     b"A\x1b$)C\x0eGQ1[\x0f/\x0eGQ\x0f B",
   )
   assert_eq(@encoding.encode("한", 50225), b"\x1b$)C\x0eGQ\x0f")
-  assert_eq(@encoding.encode("₩힣😀", 50225), b"\\???")
+  assert_eq(@encoding.encode("₩힣😀", 50225), b"????")
 }
 
 ///|
@@ -26,7 +26,7 @@ test "HZ-GB-2312 separates GB runs from literal tilde escapes" {
   assert_eq(@encoding.encode("~{}~", 52936), b"~~{}~~")
   assert_eq(@encoding.encode("A中文~中文B", 52936), b"A~{VPND~}~~~{VPND~}B")
   assert_eq(@encoding.encode("文", 52936), b"~{ND~}")
-  assert_eq(@encoding.encode("丂€😀\u{f8f5}", 52936), b"?\x80??\xff")
+  assert_eq(@encoding.encode("丂€😀\u{f8f5}", 52936), b"????~{\x1e")
 }
 
 ///|
@@ -36,39 +36,64 @@ test "the Japanese ISO-2022 selectors preserve their distinct kana transitions" 
     @encoding.encode("日ｶ本", 50221),
     b"\x1b$BF|\x1b(I6\x1b$BK\\\x1b(B",
   )
-  assert_eq(@encoding.encode("日ｶ本", 50222), b"\x1b$BF|\x0e6\x0fK\\\x1b(B")
+  assert_eq(
+    @encoding.encode("日ｶ本", 50222),
+    b"\x1b$BF|\x1b(J\x0e6\x1b$BK\\\x1b(B",
+  )
   assert_eq(@encoding.encode("ｶﾞ", 50220), b"\x1b$B%+!+\x1b(B")
-  assert_eq(@encoding.encode("Aｶ", 50222), b"A\x0e6\x0f")
+  assert_eq(@encoding.encode("Aｶ", 50222), b"A\x1b(J\x0e6\x1b(B")
   for page in [50220, 50221, 50222] {
     assert_true(@encoding.supported(page))
-    assert_eq(@encoding.encode("丂髙①😀", page), b"?\x1b$B|b-!\x1b(B??")
+    assert_eq(
+      @encoding.encode("丂髙①😀", page),
+      b"\x1b$(D0!t)\x1b$B-!\x1b(B??",
+    )
   }
 }
 
 ///|
-test "stateful code pages match the Microsoft managed encoder across the BMP" {
-  let bmp = StringBuilder()
-  for value in 0..<0x10000 {
-    if value.to_char() is Some(character) {
-      bmp.write_char(character)
-    }
-  }
-  let text = bmp.to_string()
+test "stateful pages match the Windows NLS scalar captures" {
   for
-    (page, size, expected) in [
-      (50220, 98261, 0xc698bca7U),
-      (50221, 98198, 0xfdaebae1U),
-      (50222, 98194, 0xb19c698fU),
-      (50225, 82341, 0x5849b5f1U),
-      (52936, 86781, 0x986e05a0U),
+    (page, expected) in [
+      (50220, 0x5a266094U),
+      (50221, 0x1a62ec0bU),
+      (50222, 0x9509ec57U),
+      (50225, 0xf130ffcdU),
+      (50227, 0xdabfa81aU),
+      (50229, 0x46d74693U),
+      (52936, 0xeb8eb3e8U),
     ] {
-    let encoded = @encoding.encode(text, page)
     let mut hash = 2166136261U
-    for byte in encoded {
-      hash = (hash ^ byte.to_uint()) * 16777619U
+    for value in 0..<0x10000 {
+      guard value.to_char() is Some(ch) else { continue }
+      let encoded = @encoding.encode(
+        if value == 0 {
+          ""
+        } else {
+          ch.to_string()
+        },
+        page,
+      )
+      hash = (hash ^ (encoded.length() + 1).reinterpret_as_uint()) * 16777619U
+      for byte in encoded {
+        hash = (hash ^ byte.to_uint()) * 16777619U
+      }
+      hash *= 16777619U
     }
-    assert_eq((page, encoded.length(), hash), (page, size, expected))
+    assert_eq((page, hash), (page, expected))
   }
+}
+
+///|
+test "Chinese designation is reused across ASCII and switches between CNS planes" {
+  assert_eq(
+    @encoding.encode("A中文~中文B", 50227),
+    b"A\x1b$)A\x0eVPND\x0f~\x0eVPND\x0fB",
+  )
+  assert_eq(
+    @encoding.encode("中万中", 50229),
+    b"\x1b$)G\x0eDc\x1b$*H!&\x1b$)GDc\x0f",
+  )
 }
 
 ///|

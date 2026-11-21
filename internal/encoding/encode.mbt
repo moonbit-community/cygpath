@@ -7,7 +7,15 @@ pub(all) suberror EncodingError {
 ///|
 pub fn supported(codepage : Int32) -> Bool {
   match codepage {
-    42 | 50220..<=50222 | 50225 | 52936 | 54936 | 65000 | 65001 => true
+    42
+    | 50220..<=50222
+    | 50225
+    | 50227
+    | 50229
+    | 52936
+    | 54936
+    | 65000
+    | 65001 => true
     29001 => false
     _ => numeric_table(codepage) is Some(_)
   }
@@ -117,7 +125,7 @@ pub fn encode(text : String, codepage : Int32) -> Bytes raise EncodingError {
   }
   let (table, fallback) = match codepage {
     50220..<=50222 => return encode_iso2022_jp(text, codepage)
-    50225 => return encode_iso2022_kr(text)
+    50225 | 50227 | 50229 => return encode_iso2022_cn_kr(text, codepage)
     52936 => return encode_hz(text)
     54936 => return encode_gb18030(text)
     65000 => return encode_utf7(text)

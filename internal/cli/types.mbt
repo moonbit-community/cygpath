@@ -103,7 +103,7 @@ pub fn Converter::codepage(self : Converter) -> Int32 {
 
 ///|
 fn encode_name(text : String, page : Int32) -> Bytes raise CliError {
-  @encoding.encode(text, page) catch {
+  let bytes = @encoding.encode(text, page) catch {
     @encoding.UnmappableCharacter(page) => raise UnrepresentableName(page)
     @encoding.UnsupportedCodePage(page) =>
       raise UnsupportedCapability(
@@ -111,6 +111,10 @@ fn encode_name(text : String, page : Int32) -> Bytes raise CliError {
         page.to_string() +
         " is not supported by the pure encoder",
       )
+  }
+  match bytes[:].find(b"\x00") {
+    Some(end) => bytes[:end].to_owned()
+    None => bytes
   }
 }
 

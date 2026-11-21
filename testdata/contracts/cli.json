@@ -1097,7 +1097,7 @@
       "category": "encoding",
       "argv": ["-of-"],
       "stdin_text": "-wC50220 /cygdrive/c/ｶﾞ髙①\n-wC50221 /cygdrive/c/日ｶ本\n-mC50222 /cygdrive/c/日ｶ本\n-wpC50222 /cygdrive/c/日ｶ本:/cygdrive/d/ｶ\n",
-      "stdout_hex": "433a5c1b2442252b212b7c622d211b28420a433a5c1b2442467c1b2849361b24424b5c1b28420a433a2f1b2442467c0e360f4b2f1b28420a433a5c1b2442467c0e360f4b5c1b28423b443a5c0e360f0a",
+      "stdout_hex": "433a5c1b2442252b212b1b24284474291b24422d211b28420a433a5c1b2442467c1b2849361b24424b5c1b28420a433a2f1b2442467c1b284a0e361b24424b2f1b28420a433a5c1b2442467c1b284a0e361b24424b5c1b28423b443a5c1b284a0e361b28420a",
       "stderr_text": "",
       "exit_code": 0
     },
@@ -1105,8 +1105,8 @@
       "case_id": "stateful-korean-and-chinese-records",
       "category": "encoding",
       "argv": ["-of-"],
-      "stdin_text": "-wC50225 /cygdrive/c/한글 한\n-mC52936 /cygdrive/c/中文~文\n-wC0 ~\n",
-      "stdout_hex": "433a5c1b2429430e4751315b0f200e47510f0a433a2f7e7b56504e447e7d7e7e7e7b4e447e7d0a7e0a",
+      "stdin_text": "-wC50225 /cygdrive/c/한글 한\n-mC52936 /cygdrive/c/中文~文\n-wC50227 /cygdrive/c/中文\n-wC50229 /cygdrive/c/中万中\n-wC52936 /cygdrive/c/A\u0080B\n-wC0 ~\n",
+      "stdout_hex": "433a5c1b2429430e4751315b0f200e47510f0a433a2f7e7b56504e447e7d7e7e7e7b4e447e7d0a433a5c1b2429410e56504e440f0a433a5c1b2429470e44631b242a4821261b24294744630f0a433a5c417e7b0a7e0a",
       "stderr_text": "",
       "exit_code": 0
     },

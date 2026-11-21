@@ -55,7 +55,7 @@ pub fn help_text() -> String {
     #|Absolute/POSIX conversion anchors C:name at C:/; drive-cwd does not alter it.
     #|Output uses LF records. -C affects Windows output; POSIX stays UTF-8.
     #|Numeric pages include 115 table-based pages, Symbol (42), ISO-2022-JP
-    #|(50220-50222), ISO-2022-KR (50225), HZ (52936), GB18030-2000 (54936),
+    #|(50220-50222), KR (50225), CN (50227/50229), HZ (52936), GB18030 (54936),
     #|UTF-7 (65000), and UTF-8 (65001). -C 0 restores the default UTF-8 output.
     #|Unavailable pages (including 29001) are errors.
     #|-f cannot be combined with NAME. No shell quoting is applied to records.
