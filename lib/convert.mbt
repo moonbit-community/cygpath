@@ -97,7 +97,13 @@ fn Context::windows_to_posix(
       return text
     }
     let original = parse_validated_path(path[start:].to_owned(), Windows)
-    if original.root == Relative && !absolute {
+    // Cygwin treats a bare drive as absolute, but preserves C:name with
+    // CCP_RELATIVE after stripping a wide-name prefix.
+    if !absolute &&
+      (
+        original.root == Relative ||
+        (original.root is DriveRelative(_) && path.length() > 2)
+      ) {
       return text
     }
     if original.root == Relative &&

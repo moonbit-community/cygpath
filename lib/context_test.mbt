@@ -501,7 +501,7 @@ test "cwd validation is explicit and per-drive entries agree with their keys" {
     context.convert("a", from=Posix, to=Windows, absolute=true),
     "C:\\work\\a",
   )
-  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "C:a")
 }
 
 ///|
@@ -521,8 +521,8 @@ test "context snapshots caller mounts and drive-relative paths ignore drive cwd"
     context.convert("C:\\root\\a", from=Windows, to=Posix),
     "/original/a",
   )
-  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
-  assert_eq(context.convert("D:a", from=Windows, to=Posix), "/cygdrive/d/a")
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "C:a")
+  assert_eq(context.convert("D:a", from=Windows, to=Posix), "D:a")
 }
 
 ///|

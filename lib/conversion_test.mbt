@@ -239,7 +239,12 @@ test "drive-relative conversion follows Cygwin root anchoring" {
   assert_eq(empty.convert("c:a", from=Windows, to=Mixed), "C:a")
   assert_eq(empty.convert("c:", from=Windows, to=Windows), "C:")
   assert_eq(empty.convert("\\a", from=Windows, to=Mixed), "/a")
-  assert_eq(empty.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(empty.convert("C:a", from=Windows, to=Posix), "C:a")
+  assert_eq(empty.convert("c:a/../b", from=Windows, to=Posix), "c:a/../b")
+  assert_eq(
+    empty.convert("C:a", from=Windows, to=Posix, absolute=true),
+    "/cygdrive/c/a",
+  )
   assert_true(
     conversion_error(() => empty.convert("\\a", from=Windows, to=Posix))
     is @lib.MissingContext(field="windows_cwd drive"),
@@ -248,7 +253,7 @@ test "drive-relative conversion follows Cygwin root anchoring" {
     "c": "C:\\work",
     "D": "D:\\other",
   })
-  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "C:a")
   assert_eq(context.convert("C:", from=Windows, to=Posix), "/cygdrive/c")
   assert_eq(
     context.convert("D:../a", from=Windows, to=Windows, absolute=true),
@@ -256,8 +261,8 @@ test "drive-relative conversion follows Cygwin root anchoring" {
   )
   assert_eq(context.convert("\\a", from=Windows, to=Posix), "/cygdrive/c/a")
   let fallback = @lib.Context::new(windows_cwd="C:\\fallback")
-  assert_eq(fallback.convert("c:a", from=Windows, to=Posix), "/cygdrive/c/a")
-  assert_eq(fallback.convert("D:a", from=Windows, to=Posix), "/cygdrive/d/a")
+  assert_eq(fallback.convert("c:a", from=Windows, to=Posix), "c:a")
+  assert_eq(fallback.convert("D:a", from=Windows, to=Posix), "D:a")
 }
 
 ///|
@@ -279,7 +284,7 @@ test "complete UNC paths and UNC cwd preserve the share boundary" {
     conversion_error(() => context.convert("\\a", from=Windows, to=Posix))
     is @lib.MissingContext(field="windows_cwd drive"),
   )
-  assert_eq(context.convert("C:a", from=Windows, to=Posix), "/cygdrive/c/a")
+  assert_eq(context.convert("C:a", from=Windows, to=Posix), "C:a")
 }
 
 ///|

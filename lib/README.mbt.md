@@ -122,10 +122,9 @@ their supported ordinary extended spellings. A root mount does not synthesize
 `windows_cwd` supplies an absolute Windows cwd. `drive_cwds` maps a single drive
 letter to an absolute cwd on that same drive, for example
 `drive_cwds={ "C": "C:\\work" }`. This parameter is validated metadata only;
-it does not override resolution. Explicit Windows `C:name` becomes
-`/cygdrive/c/name` for POSIX output and `C:\name` with absolute Windows output,
-regardless of the supplied per-drive cwd. Without absolute resolution,
-Windows/Mixed output preserves drive-relative syntax.
+it does not override resolution. POSIX output preserves `C:name` by default.
+With absolute resolution, it becomes `/cygdrive/c/name` for POSIX output
+and `C:\name` for Windows output. A bare `C:` maps to `/cygdrive/c`.
 
 The CLI has an additional natural-recognition layer. In particular, bare-drive
 and absolute Windows-output CLI operands can take a literal POSIX-relative

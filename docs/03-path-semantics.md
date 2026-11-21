@@ -375,7 +375,8 @@ and [runtime prefix handling](https://github.com/cygwin/cygwin/blob/b11613e477c0
 The narrow path parser accepts an extended drive root or absolute drive name
 and an uppercase `UNC` marker followed by a separator. A drive-relative
 member such as `\\?\C:name` fails in a list, even though the single-name
-wide API strips its prefix and accepts `C:name`. [Windows normalization](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L1474-L1486).
+wide API strips its prefix and returns `C:name` under `-u`. With `-au`,
+it maps to `/cygdrive/c/name`. [Windows normalization](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L1474-L1486).
 
 This is not a universal guarantee for every Windows path length or filesystem.
 The frozen threshold corpus distinguishes valid multi-component 259/260/261

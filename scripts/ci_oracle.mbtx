@@ -1915,6 +1915,8 @@ async fn run(options : Map[String, String]) -> Unit {
         ("bin-implicit-exe", ["-w", "/usr/bin/sh"]),
         ("lib", ["-m", "/usr/lib/new-file"]),
         ("reverse", ["-u", root + "/bin/sh.exe"]),
+        ("drive-relative-keep", ["-u", "C:name", "C:", "c:a/../b"]),
+        ("drive-relative-absolute", ["-au", "C:name"]),
         (
           "wide-argument-length",
           [
