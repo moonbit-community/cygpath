@@ -1277,6 +1277,58 @@ async fn check_mount_owners(
       )
     }
   }
+  let native_bytes = target + "/byte-\uF0FF"
+  let narrow_table = b" # note: caf\xe9\r\n" +
+    @utf8.encode(escaped) +
+    b"/text-origin/byte-\xff /point-\xfe ntfs posix=0,text\n" +
+    b"/point-\xfe/sub /bound none bind\nnone /drive-\xfd cygdrive binary\n" +
+    @utf8.encode(escaped) +
+    b"/cwd-overlay /after ntfs binary\n"
+  @fs.write_file(output + "/fstab-bytes.bin", narrow_table)
+  let narrow_records = root + "/etc/narrow-records"
+  @fs.write_file(
+    narrow_records, b"/POINT-\xfe/sub/doc\n/bound/doc\n/drive-\xfd/z/test\n/after/file\n",
+  )
+  let nul_table = @utf8.encode(escaped) +
+    b"/cwd-overlay /before ntfs binary\x00ignored\n" +
+    @utf8.encode(escaped) +
+    b"/text-origin /after ntfs binary\n"
+  for
+    (name, table, args) in [
+      (
+        "comment",
+        b"# caf\xe9\n" + @utf8.encode(lookup_table),
+        ["-m", "/text/sub/tool"],
+      ),
+      ("native", narrow_table, ["-u", native_bytes + "/records"]),
+      ("case", narrow_table, ["-u", target + "/BYTE-\uF0FF/records"]),
+      ("operands", narrow_table, ["-mf", narrow_records]),
+      ("drive", narrow_table, ["-u", "Z:/file"]),
+      ("nul", nul_table, ["-m", "/before/file", "/after/sub/tool"]),
+    ] {
+    @fs.write_file(root + "/etc/fstab", table)
+    for
+      (which, program, argv, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
+        (
+          "installed",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..args],
+          installed,
+        ),
+      ] {
+      ignore(
+        probe(
+          output,
+          "fstab-bytes-" + name + "-" + which,
+          program,
+          argv,
+          root,
+          vars,
+        ),
+      )
+    }
+  }
   let dos_dir = base + "/dos-names"
   @fs.mkdir(dos_dir)
   @fs.write_file(dos_dir + "/records\uF02E", b"C:/encoded-leaf\n")
