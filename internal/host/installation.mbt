@@ -15,12 +15,7 @@ async fn installed_filename(
     windows_entity(native, directory, FileInput)
   },
 ) -> String? {
-  let windows = path.contains_char('\\') ||
-    (
-      path.length() >= 2 &&
-      path[0] is ('a'..<='z' | 'A'..<='Z') &&
-      path[1] == ':'
-    )
+  let windows = path.contains_char('\\') || absolute_drive_name(path)
   let directory = needs_directory(
     if windows {
       path.replace_all(old="\\", new="/")

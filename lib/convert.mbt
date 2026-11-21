@@ -239,10 +239,10 @@ pub fn[P : ToPathInput] Context::convert(
         MissingContext(_) => false
         err => raise err
       } noraise {
-        (_, selection) => self.dos_names(full, path, selection)
+        (_, selection) => self.dos_names(full, selection)
       }
     } else {
-      self.dos_names(parsed, path, mount)
+      self.dos_names(parsed, mount)
     }
     if self.is_drive_directory(parsed) {
       let directory_suffix = original.trailing ||
@@ -257,7 +257,7 @@ pub fn[P : ToPathInput] Context::convert(
       mapped
     }
   } else {
-    dos_names = self.dos_names(parsed, path, None)
+    dos_names = self.dos_names(parsed, None)
     parsed
   }
   let rendered = output.render(to, dos_names~)

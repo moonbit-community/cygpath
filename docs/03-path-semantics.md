@@ -442,7 +442,8 @@ For a mount `/dos` pointing to `D:/work`, `-m /dos/name.` ends in
 `name` followed by U+F02E. A leading space after the mount directory
 becomes U+F020. Regular ntfs mounts preserve these literal characters.
 The same selection applies to file lookup and to bind mounts that inherit
-the source flags. [Cygwin native path conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L467-L523)
+the source flags. For an ordinary UNC share, both separator spellings use
+the `cygdrive` DOS flag for the native file lookup. [Cygwin native path conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/path.cc#L467-L523)
 
 There is no tilde, variable, glob, or URI expansion. Path content is never
 executed. The portable library performs no host queries. The installed CLI

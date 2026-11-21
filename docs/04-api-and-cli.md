@@ -227,6 +227,10 @@ conversion failures, missing context, invalid encoding, or I/O errors. No NAME
 without `-i` is a usage failure; an explicitly selected empty input stream is
 successful without needing `-i`.
 
+On Windows, the input name in `-f C:records` is a POSIX filename with a
+literal colon. Its native spelling contains U+F03A. In `-f C:dir\records`
+the backslash selects Windows syntax and the lookup starts at the drive root.
+
 The last `-f` value wins; `-f` and NAME cannot be combined. The last `-C` value
 wins. Identical scalar project context declarations may repeat; conflicting
 values fail. Mounts append, and Context rejects duplicates/conflicts. Duplicate

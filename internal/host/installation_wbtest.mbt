@@ -44,6 +44,10 @@ async test "installation defaults use the two automatic mounts and physical cwd"
     installed_filename(context, "/cygdrive/d/input", lookup~),
     Some("D:\\input"),
   )
+  assert_eq(
+    installed_filename(context, "C:records", lookup~),
+    Some("C:\\cygwin\\bin\\C\uF03Arecords"),
+  )
   assert_eq(installed_filename(context, "D:\\name", lookup~), Some("D:\\name"))
 }
 

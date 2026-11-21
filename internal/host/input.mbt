@@ -115,6 +115,30 @@ pub async fn stream_file(
 }
 
 ///|
+/// Anchor a physical input before passing it to Windows. A colon in a POSIX
+/// relative name is a filename character, even when it follows one letter.
+fn local_input_name(path : String) -> String raise {
+  if path.is_empty() || !(@async.platform is Windows) {
+    return path
+  }
+  let query = if !path.has_prefix("/") &&
+    !path.contains_char('\\') &&
+    !absolute_drive_name(path) {
+    ".\\" + path
+  } else {
+    path
+  }
+  guard local_windows_context(query) is Some(context) else { return path }
+  try mode_candidate(context, query, Windows) catch {
+    LookupErrno(reason) => raise input_path_error(path, reason)
+    err => raise err
+  } noraise {
+    Filesystem(name, ..) => name
+    _ => path
+  }
+}
+
+///|
 async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
   @fs.open(host_io_path(path), mode=ReadOnly) catch {
     @os_error.OsError(NotFound, ..) as missing if probe_suffix => {
@@ -177,6 +201,8 @@ pub async fn stream_file_bytes_until(
       // An empty virtual input supplies no fgets records.
       guard installed_filename(context, path) is Some(native) else { return 0 }
       native
+    } else if virtual_context is Some(_) {
+      local_input_name(path)
     } else {
       path
     }

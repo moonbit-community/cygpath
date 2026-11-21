@@ -1012,40 +1012,6 @@ async fn check_mount_owners(
   )
   let drive_record = drive_relative[:drive_relative.length() - 4].to_owned() +
     "records"
-  for
-    (label, file) in [
-      ("file-drive", drive_record),
-      ("file-colon", colon_input),
-      ("file-suffix", "sub\\records"),
-    ] {
-    for
-      (which, program, args, vars) in [
-        ("oracle", runtime_bin + "/cygpath.exe", ["-uf", file], environment),
-        (
-          "installed",
-          moonrun,
-          [wasm, "--", "--profile", profile, "-uf", file],
-          installed,
-        ),
-        (
-          "implicit",
-          moonrun,
-          [wasm, "--", "--profile", profile, "-uf", file],
-          environment,
-        ),
-      ] {
-      ignore(
-        probe(
-          output,
-          "link-lookup-" + label + "-" + which,
-          program,
-          args,
-          target,
-          vars,
-        ),
-      )
-    }
-  }
   let existing = target + "/sub/file"
   let absent = target + "/sub/missing"
   let backslashes = existing.replace_all(old="/", new="\\")
@@ -1056,6 +1022,24 @@ async fn check_mount_owners(
     target + "/leaf-link",
   ]
   let lookup_cases : Array[(String, Array[String], String, String)] = [
+    (
+      "cwd-file-drive",
+      ["-Uuf", drive_record],
+      "/proc/cygdrive/c/from-record\n",
+      "",
+    ),
+    (
+      "cwd-file-colon",
+      ["-Uuf", colon_input],
+      "/proc/cygdrive/c/colon-input\n",
+      "",
+    ),
+    (
+      "cwd-file-suffix",
+      ["-Uuf", "sub\\records"],
+      "/proc/cygdrive/c/from-record\n",
+      "",
+    ),
     (
       "cwd-mode",
       [
@@ -1216,7 +1200,7 @@ async fn check_mount_owners(
   let dos_table = escaped +
     "/dos-names /dos ntfs dos\n" +
     escaped +
-    "/dos-names /plain ntfs binary\n/dos /inherited none bind\nnone /cygdrive cygdrive dos,text\n"
+    "/dos-names /plain ntfs binary\n/dos /inherited none bind\nnone /cygdrive cygdrive dos\n"
   @fs.write_file(root + "/etc/fstab", dos_table)
   @fs.write_file(output + "/dos-spellings.fstab", dos_table)
   let stored = [
@@ -1226,28 +1210,51 @@ async fn check_mount_owners(
   let drive = "/cygdrive/" +
     dos_dir[:1].to_owned().to_lower() +
     dos_dir[2:].to_owned()
-  for
-    (label, names, expected) in [
+  let dos_cases = [
+    (
+      "paths",
+      [
+        "-m", "/dos/ leading", "/dos/name. ", "/dos/ a. / b.", "/dos/mid . dle",
+        "/inherited/file.", "/plain/file.", "/dos/.hidden", "/dos/records.",
+      ],
+      stored.map(name => dos_dir + "/" + name + "\n").join(""),
+    ),
+    ("read", ["-uf", "/dos/records."], "/cygdrive/c/encoded-leaf\n"),
+    (
+      "relative",
+      ["-m", " leading", "name. ", " a. / b."],
+      " leading\nname. \n a. / b\uF02E\n",
+    ),
+    (
+      "drive",
+      ["-m", drive + "/records.", dos_dir + "/records."],
+      dos_dir + "/records\uF02E\n" + dos_dir + "/records.\n",
+    ),
+  ]
+  let unc = "//localhost/" +
+    dos_dir[:1].to_owned() +
+    "$" +
+    dos_dir[2:].to_owned()
+  if @fs.exists(unc) {
+    let forward = unc + "/records."
+    let backward = forward.replace_all(old="/", new="\\")
+    let encoded = unc + "/records\uF02E\n"
+    dos_cases.push(("share-path", ["-m", forward, backward], encoded + encoded))
+    dos_cases.push(
       (
-        "paths",
-        [
-          "-m", "/dos/ leading", "/dos/name. ", "/dos/ a. / b.", "/dos/mid . dle",
-          "/inherited/file.", "/plain/file.", "/dos/.hidden", "/dos/records.",
-        ],
-        stored.map(name => dos_dir + "/" + name + "\n").join(""),
+        "share-mode",
+        ["-M", forward, backward],
+        forward + ": binary\n" + backward + ": binary\n",
       ),
-      ("read", ["-uf", "/dos/records."], "/cygdrive/c/encoded-leaf\n"),
-      (
-        "relative",
-        ["-m", " leading", "name. ", " a. / b."],
-        " leading\nname. \n a. / b\uF02E\n",
-      ),
-      (
-        "drive",
-        ["-m", drive + "/records.", dos_dir + "/records."],
-        dos_dir + "/records\uF02E\n" + dos_dir + "/records.\n",
-      ),
-    ] {
+    )
+    dos_cases.push(
+      ("share-input-forward", ["-uf", forward], "/cygdrive/c/encoded-leaf\n"),
+    )
+    dos_cases.push(
+      ("share-input-backward", ["-uf", backward], "/cygdrive/c/encoded-leaf\n"),
+    )
+  }
+  for (label, names, expected) in dos_cases {
     let here = if label == "relative" { dos_dir } else { root }
     let tag = "link-lookup-dos-" + label
     let oracle = probe(
@@ -1278,57 +1285,64 @@ async fn check_mount_owners(
       tag + " differs in " + profile,
     )
   }
-  let unc = "//localhost/" +
-    dos_dir[:1].to_owned() +
-    "$" +
-    dos_dir[2:].to_owned()
-  if @fs.exists(unc) {
-    let forward = unc + "/records."
-    let backward = forward.replace_all(old="/", new="\\")
-    for option in ["-m", "-M", "-uf"] {
-      let operands = if option == "-uf" {
-        [[forward], [backward]]
-      } else {
-        [[forward, backward]]
-      }
-      for n, names in operands {
-        for
-          (which, program, args, vars) in [
-            (
-              "oracle",
-              runtime_bin + "/cygpath.exe",
-              [option, ..names],
-              environment,
-            ),
-            (
-              "installed",
-              moonrun,
-              [wasm, "--", "--profile", profile, option, ..names],
-              installed,
-            ),
-          ] {
-          ignore(
-            probe(
-              output,
-              "link-lookup-share-" +
-              (if option == "-M" {
-                "mode"
-              } else if option == "-m" {
-                "path"
-              } else {
-                "input"
-              }) +
-              n.to_string() +
-              "-" +
-              which,
-              program,
-              args,
-              root,
-              vars,
-            ),
-          )
-        }
-      }
+  // The capture files are inherited from a native parent on the cygdrive mount.
+  // Record the stream-mode boundary independently of path conversion parity.
+  let text_table = dos_table.replace_all(
+    old="cygdrive dos\n",
+    new="cygdrive dos,text\n",
+  )
+  let captures = path_text(@fs.realpath(output + "/observations")).replace_all(
+    old=" ",
+    new="\\040",
+  )
+  let expected_line = dos_dir + "/records\uF02E"
+  let lf = digest(@utf8.encode(expected_line + "\n"))
+  let crlf = digest(@utf8.encode(expected_line + "\r\n"))
+  for
+    (label, table) in [
+      ("text", text_table),
+      ("binary", text_table + captures + " /captures ntfs binary\n"),
+    ] {
+    @fs.write_file(root + "/etc/fstab", table)
+    @fs.write_file(output + "/redirected-" + label + ".fstab", table)
+    let tag = "link-lookup-redirected-" + label
+    let args = ["-m", "/dos/records."]
+    let oracle = probe(
+      output,
+      tag + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      args,
+      root,
+      environment,
+    )
+    let port = probe(
+      output,
+      tag + "-wasm",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..args],
+      root,
+      installed,
+    )
+    require(
+      oracle.status == "completed" &&
+      port.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      port.exit_code == Some(0) &&
+      oracle.stderr_length == 0 &&
+      port.stderr_length == 0,
+      "redirected output failed in " + profile,
+    )
+    if label == "binary" {
+      compare(
+        oracle.stdout_sha256 == lf && port.stdout_sha256 == lf,
+        "binary redirection in " + profile,
+      )
+    } else {
+      require(
+        oracle.stdout_sha256 == crlf &&
+        (port.stdout_sha256 == crlf || port.stdout_sha256 == lf),
+        "unexpected text redirection in " + profile,
+      )
     }
   }
   let temp_table = "none /temporary usertemp binary\n"

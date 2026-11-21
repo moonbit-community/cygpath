@@ -149,17 +149,12 @@ fn Context::map_posix_mount(
 fn Context::dos_names(
   self : Context,
   path : ParsedPath,
-  operand : String,
   mount : Int32?,
 ) -> Bool {
   match mount {
     Some(index) => self.mounts[index].dos_names
     None =>
-      self.drive_dos_names &&
-      (
-        path.root == PosixRoot ||
-        (path.root is Unc(_, _) && !operand.contains_char('\\'))
-      )
+      self.drive_dos_names && (path.root == PosixRoot || path.root is Unc(_, _))
   }
 }
 
@@ -216,7 +211,7 @@ pub fn[P : ToPathInput] Context::relative_windows_name(
     parts[cwd.components.length():].join("\\")
   }
   Some(
-    if self.dos_names(parsed, path, mount) {
+    if self.dos_names(parsed, mount) {
       dos_mount_spelling(name, Relative, Windows)
     } else {
       name
@@ -259,7 +254,7 @@ pub fn[P : ToPathInput] Context::mode_candidate(
     None => (from == Posix || native.root is Unc(_, _)) && self.drive_text_mode
   }
   Filesystem(
-    native.render(Windows, dos_names=self.dos_names(parsed, path, mount)),
+    native.render(Windows, dos_names=self.dos_names(parsed, mount)),
     text_mode~,
   )
 }
