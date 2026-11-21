@@ -235,7 +235,10 @@ values fail. Mounts append, and Context rejects duplicates/conflicts. Duplicate
 The absolute terminal names `/dev/tty` and `/dev/ptmx` and fixed `/proc`
 entries report binary mode without an installation snapshot.
 On Windows, `-M C:/work/file` and its backslash spelling can query the drive
-directly. An ordinary file or missing leaf uses binary mode. Following a
+directly. On a local drive, backslash-relative names use the process working
+directory. For example, `-am sub\tool` returns the full path to `tool.exe`
+when that file supplies the executable suffix. An ordinary local Windows
+file or missing leaf uses binary mode. Following a
 native link can require a selected installation to map its target.
 With an installation snapshot, POSIX operands use the flags of the resolved
 mount. The CLI prints the original operand followed by `: text` or

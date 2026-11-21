@@ -76,8 +76,9 @@ For ordinary POSIX paths containing `..`, Windows/mixed output and `-f` check
 the preceding directory on disk. If that directory is a resolvable native
 link, traversal continues from the target's parent. This also applies to
 POSIX path-list members and per-line options.
-On Windows, `-M C:/work/file` can query an ordinary drive-qualified path
-without `CYGPATH_ROOT`. A native link can require the installation mount table
+On Windows, `-am sub\tool` uses the process working directory and finds
+`sub\tool.exe` when that executable supplies the missing name. `-M` can
+query paths such as `sub\file` or `C:/work/file` without `CYGPATH_ROOT`. A native link can require the installation mount table
 to determine its target’s mode.
 On an `fstab` mount with the `dos` option, Windows output uses U+F020 and
 U+F02E for affected filename-edge spaces and dots. File input uses the same

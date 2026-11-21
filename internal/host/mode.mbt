@@ -7,6 +7,28 @@ fn absolute_drive_name(path : String) -> Bool {
 }
 
 ///|
+/// These names resolve on a local drive using the process cwd alone.
+/// A share uses the installation's cygdrive flags even with a known cwd.
+fn local_windows_context(path : String) -> @lib.Context? raise {
+  guard @async.platform is Windows else { return None }
+  let plain = plain_native(path)
+  if absolute_drive_name(plain) {
+    return Some(@lib.Context::new())
+  }
+  guard path.contains_char('\\') &&
+    !plain.has_prefix("//") &&
+    !path.has_prefix("/") &&
+    !path.has_prefix("\\??\\") else {
+    return None
+  }
+  guard @env.current_dir() is Some(cwd) &&
+    absolute_drive_name(plain_native(cwd)) else {
+    return None
+  }
+  Some(@lib.Context::new(windows_cwd=cwd))
+}
+
+///|
 async fn installed_mode(
   context : @lib.Context,
   operand : String,
@@ -35,12 +57,12 @@ async fn installed_mode(
     },
     inspect,
   )
-  if (
-      operand.has_suffix("/") ||
-      operand.has_suffix("/.") ||
-      (windows && operand.has_suffix("\\"))
-    ) &&
-    is_directory is Some(false) {
+  let name = if windows {
+    operand.replace_all(old="\\", new="/")
+  } else {
+    operand
+  }
+  if needs_directory(name) && is_directory is Some(false) {
     raise LookupErrno("Not a directory")
   }
   text_mode
@@ -59,12 +81,11 @@ pub async fn report_mode(
     }
     if installed {
       installed_mode(context, path)
-    } else if @async.platform is Windows &&
-      server_lookup is Some(_) &&
-      absolute_drive_name(path) {
-      // A drive-qualified name bypasses POSIX mounts until a link target
+    } else if server_lookup is Some(_) &&
+      local_windows_context(path) is Some(drive_context) {
+      // A local Windows name bypasses POSIX mounts until a link target
       // has to be fed back through the runtime mount table.
-      installed_mode(context, path, inspect=native => {
+      installed_mode(drive_context, path, inspect=native => {
         match native_entity(native) {
           Found(_) as entry => entry
           Follow(_, _) =>

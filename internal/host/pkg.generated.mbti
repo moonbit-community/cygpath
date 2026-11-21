@@ -14,6 +14,8 @@ pub fn exit(Int32) -> Unit
 
 pub async fn installation_context(@lib.Profile) -> @lib.Context?
 
+pub let local_windows_lookup : (async (String, Bool) -> Result[String, String]?)?
+
 pub async fn long_name(String) -> String
 
 pub async fn network_server_exists(String) -> Bool

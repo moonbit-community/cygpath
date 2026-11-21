@@ -59,6 +59,7 @@ pub struct Converter {
   context : @lib.Context
   server_lookup : (async (String) -> Bool)?
   priv installed : Bool
+  priv local_windows : (async (String, Bool) -> Result[String, String]?)?
   priv lookup : (async (@lib.Context, String, @lib.InputSyntax, Bool) -> Result[
     String,
     String,
@@ -360,6 +361,7 @@ pub fn Request::prepare(
   self : Request,
   installation? : @lib.Context,
   nt_null? : Bool,
+  local_windows? : async (String, Bool) -> Result[String, String]?,
   server_lookup? : async (String) -> Bool,
   lookup? : async (@lib.Context, String, @lib.InputSyntax, Bool) -> Result[
     String,
@@ -400,6 +402,11 @@ pub fn Request::prepare(
       None
     },
     installed: installation is Some(_),
+    local_windows: if automatic && installation is None {
+      local_windows
+    } else {
+      None
+    },
     lookup: if automatic {
       lookup
     } else {
@@ -442,6 +449,7 @@ fn Converter::input_options(
     !self.list &&
     self.to != Posix &&
     drive_relative &&
+    !path.contains_char('\\') &&
     (self.absolute || path.length() == 2)
   let from = match self.from {
     Some(syntax) => syntax
@@ -663,7 +671,10 @@ async fn Converter::convert_name(
     )
   }
   let network_parent = path.contains("//") && path.contains("/..")
-  let host_lookup = self.lookup is Some(_) && (self.installed || network_parent)
+  let local_windows = self.local_windows is Some(_) &&
+    (from == Windows || (self.list && path.contains_char('\\')))
+  let host_lookup = local_windows ||
+    (self.lookup is Some(_) && (self.installed || network_parent))
   let server_lookup = self.server_lookup is Some(_) &&
     (absolute || network_parent)
   if (!host_lookup && !server_lookup && invalid is None) ||
@@ -702,6 +713,11 @@ async fn Converter::convert_name(
         !value.has_prefix("\\\\")
       )
     async fn convert_entry(context : @lib.Context) -> Result[String, String] {
+      if syntax == Windows &&
+        self.local_windows is Some(resolve) &&
+        resolve(value, full) is Some(result) {
+        return result
+      }
       match self.lookup {
         Some(resolve) if self.installed ||
           (

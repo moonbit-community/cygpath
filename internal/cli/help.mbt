@@ -24,7 +24,7 @@ pub fn help_text() -> String {
     #|  -l, --long-name            Expand ordinary short names on a Windows host
     #|  -d, -s, --short-name       Preserve existing ASCII 8.3 paths as DOS names
     #|  -c, --close HANDLE         Accept null and current process/thread pseudo handles
-    #|  -a, --absolute             Resolve relative paths using supplied cwd
+    #|  -a, --absolute             Convert to an absolute path
     #|  -U, --proc-cygdrive        Use /proc/cygdrive for drive fallback
     #|  -r                        Prefix single Windows paths with \\\\?\\
     #|  -f, --file FILE            Read UTF-8 lines; - reads standard input

@@ -69,6 +69,7 @@ async fn execute() -> Unit {
       let converter = request.prepare(
         installation?,
         nt_null?,
+        local_windows?=@host.local_windows_lookup,
         server_lookup=@host.network_server_exists,
         lookup=@host.convert_installed,
       )

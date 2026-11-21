@@ -79,7 +79,7 @@ pub fn Request::input(Self) -> InputSource
 pub fn Request::installation_profile(Self) -> @lib.Profile?
 pub fn Request::needs_device_probe(Self) -> Bool
 pub fn Request::per_line_options(Self) -> Bool
-pub fn Request::prepare(Self, installation? : @lib.Context, nt_null? : Bool, server_lookup? : async (String) -> Bool, lookup? : async (@lib.Context, String, @lib.InputSyntax, Bool) -> Result[String, String]) -> Converter raise CliError
+pub fn Request::prepare(Self, installation? : @lib.Context, nt_null? : Bool, local_windows? : async (String, Bool) -> Result[String, String]?, server_lookup? : async (String) -> Bool, lookup? : async (@lib.Context, String, @lib.InputSyntax, Bool) -> Result[String, String]) -> Converter raise CliError
 
 pub(all) enum SystemFolder {
   WindowsRoot

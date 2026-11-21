@@ -588,6 +588,39 @@ pub async fn convert_installed(
 }
 
 ///|
+pub let local_windows_lookup : (async (String, Bool) -> Result[String, String]?)? = if @async.platform
+  is Windows {
+  Some(local_windows_output)
+} else {
+  None
+}
+
+///|
+/// Resolve native operands that can be anchored without an installation.
+/// A followed link can re-enter POSIX mount lookup through its target.
+async fn local_windows_output(
+  path : String,
+  absolute : Bool,
+) -> Result[String, String]? {
+  guard local_windows_context(path) is Some(context) else { return None }
+  Some(
+    checked_windows_path(context, path, Windows, absolute, native_entity, (
+      native,
+      directory,
+      purpose,
+    ) => {
+      let (entity, suffix) = windows_entity(native, directory, purpose)
+      if entity is Follow(_, _) {
+        raise InstallationError(
+          "a selected Cygwin installation is required for a link target",
+        )
+      }
+      (entity, suffix)
+    }),
+  )
+}
+
+///|
 async fn checked_windows_path(
   context : @lib.Context,
   path : String,
