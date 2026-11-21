@@ -973,6 +973,59 @@ async fn check_mount_owners(
   check_dos_names(
     output, profile, runtime_bin, root, wasm, moonrun, environment, compare,
   )
+  let target = base + "/text-origin"
+  @fs.mkdir(target + "/sub", recursive=true)
+  @fs.write_file(target + "/records", b"C:/through-target\n")
+  @fs.write_file(target + "/sub/file", b"file")
+  @fs.write_file(root + "/remapped", b"C:/through-link-mount\n")
+  @fs.symlink(root + "/bridge", target~)
+  @fs.symlink(target + "/leaf-link", target=target + "/sub/file")
+  let lookup_table = escaped +
+    "/text-origin /text ntfs text\n" +
+    root.replace_all(old=" ", new="\\040") +
+    "/remapped /bridge/records ntfs binary\n"
+  @fs.write_file(root + "/etc/fstab", lookup_table)
+  @fs.write_file(output + "/link-lookup.fstab", lookup_table)
+  for
+    (label, args) in [
+      (
+        "mode",
+        [
+          "-M", "/bridge", "/bridge/sub", "/bridge/sub/file", "/bridge/sub/missing",
+          "/bridge/missing", "/bridge/leaf-link", "/bridge/sub/file/child", "/bridge/sub/../records",
+          "/bridge/missing/../records",
+        ],
+      ),
+      (
+        "path",
+        [
+          "-m", "/bridge/sub/../records", "/bridge/sub/../../gone", "/bridge/../gone",
+        ],
+      ),
+      ("input", ["-uf", "/bridge/sub/../records"]),
+    ] {
+    let tag = "link-lookup-" + label
+    ignore(
+      probe(
+        output,
+        tag + "-oracle",
+        runtime_bin + "/cygpath.exe",
+        args,
+        root,
+        environment,
+      ),
+    )
+    ignore(
+      probe(
+        output,
+        tag + "-wasm",
+        moonrun,
+        [wasm, "--", "--profile", profile, ..args],
+        root,
+        installed,
+      ),
+    )
+  }
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)
   @fs.write_file(output + "/usertemp.fstab", temp_table)
