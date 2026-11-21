@@ -440,7 +440,8 @@ async fn optional_fstab(path : String) -> String {
 ///|
 fn windows_temp(get : (String) -> String?) -> String? {
   for key in ["TMP", "TEMP", "USERPROFILE"] {
-    if get(key) is Some(value) && !value.is_empty() {
+    // GetTempPathW checks the raw environment value in UTF-16 units.
+    if get(key) is Some(value) && !value.is_empty() && value.length() <= 260 {
       return Some(value)
     }
   }
@@ -525,7 +526,13 @@ fn usertemp_source(
     tail.trim_end(chars=". ")
   }
   let prefix = absolute[:root].trim_end(chars="/")
-  prefix.to_owned() + "/" + tail.to_owned()
+  let source = prefix.to_owned() + "/" + tail.to_owned()
+  guard source.length() <= 260 else {
+    raise InstallationError(
+      "qualified Windows temporary directory exceeds 260 UTF-16 units",
+    )
+  }
+  source
 }
 
 ///|

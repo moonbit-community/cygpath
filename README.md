@@ -52,11 +52,13 @@ Explicit mounts, `--root`, prefix or cwd select the offline model.
 In installation mode the filename after `-f` uses the same mappings.
 `-f names` reads an exact match first, then tries `names.exe` when the name
 is absent. A readable directory supplies zero records. `-f -` reads stdin.
-A `usertemp` entry takes the first nonempty value of `TMP`, `TEMP`, and
-`USERPROFILE`. Relative values use the Windows process working directory.
+A `usertemp` entry tries `TMP`, `TEMP`, then `USERPROFILE`, skipping empty
+values and values longer than 260 UTF-16 units. If none qualifies, it uses
+the running Windows installation directory. Relative values use the Windows
+process working directory.
 For example, `TMP=..\cache` under `C:\work\app` mounts `C:\work\cache`,
-even if that directory is missing. The Windows-directory fallback when all
-three variables are unset still requires a host query. An ordinary `bind`
+even if that directory is missing. A relative value that expands beyond 260
+UTF-16 units raises an installation error. An ordinary `bind`
 entry uses the source mapping in effect at that line, without following symlinks.
 Mounts marked `posix=0` use Windows uppercase mappings for comparisons.
 If a user mount and a later system mount share a POSIX name, both native

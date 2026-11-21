@@ -135,14 +135,18 @@ the current fstab file. The next file can still update existing entries.
 With an explicitly selected Windows Cygwin installation (`CYGPATH_ROOT`), the host reads system fstab and optionally `fstab.d/<CYGPATH_USER>`, then maps the physical cwd. The mount initialization order and fstab field semantics are based on [Cygwin mount.cc](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc). Explicit CLI mount/cwd/prefix options bypass installation I/O. Nothing infers a root from `HOME`, `MSYSTEM` or the build host. The snapshot excludes in-memory session mounts. Ordinary absolute `bind` sources are resolved against preceding entries only; an otherwise unmodified bind inherits its source flags, not its immutability. Bind resolution is lexical, not `realpath`. The Windows oracle includes a disposable, separate Cygwin installation for bind comparisons; portable fixtures do not establish Windows parity.
 
 For a `usertemp` mount both runtimes call `GetTempPathW`. The adapter qualifies
-the first nonempty value of `TMP`, `TEMP`, or `USERPROFILE` against the Windows
-process cwd. Parent traversal stops at the drive root or UNC share. On another
+the first nonempty value of `TMP`, `TEMP`, or `USERPROFILE` of at most 260
+UTF-16 units against the Windows process cwd. It checks length before folding
+parent components. Parent traversal stops at the drive root or UNC share. On another
 drive, a relative name uses that drive’s saved directory when present and
 its root otherwise. The temporary directory can be missing and a symlink retains its name.
-The Windows-directory fallback when all three variables are absent still
-requires a host query. The disposable Windows comparison exercises four
-path spellings per runtime, plus a drive-relative name when a second drive
-is available.
+If all candidates are absent or too long, the adapter resolves the running
+Windows directory through `\\?\GLOBALROOT\SystemRoot`. It only requests
+the directory for a mount admitted to the table. The Windows comparison
+covers the default Actions account, including recased environment variables.
+A relative candidate can fit the input limit and still expand beyond 260
+units. The adapter reports an installation error for that case. The observed
+official output lost the requested filename.
 [Cygwin mount reader](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/mount.cc#L1258-L1273) · [Windows temp lookup](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettemppathw) · [Windows path normalization](https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#apply-the-current-directory).
 
 With `--profile=msys2`, the same host adapter checks for

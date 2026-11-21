@@ -419,6 +419,14 @@ async test "usertemp selects the first available Windows temp path" {
   assert_eq(windows_temp(key => vars.get(key)), Some("T:/x"))
   vars["TMP"] = "X:/y"
   assert_eq(windows_temp(key => vars.get(key)), Some("X:/y"))
+  let limit = "😀".repeat(130)
+  vars["TMP"] = limit
+  assert_eq(windows_temp(key => vars.get(key)), Some(limit))
+  vars["TMP"] = limit + "z"
+  vars["TEMP"] = limit + "z"
+  assert_eq(windows_temp(key => vars.get(key)), Some("U:/u"))
+  vars.remove("USERPROFILE")
+  assert_eq(windows_temp(key => vars.get(key)), None)
   let table = "none /tmp usertemp user,posix=0\nD:/ignored /tmp ntfs user\n"
   let context = mounted_context("C:/install", table, "", None, temp=() => {
     Some("T:/User Temp")
@@ -470,6 +478,20 @@ async test "usertemp qualifies nonexistent names against a Windows cwd" {
       )
     }
   }
+  try
+    usertemp_source(
+      Some("segment/".repeat(30) + "z"),
+      Some("C:/qualified/working/directory"),
+    )
+  catch {
+    InstallationError(message) =>
+      assert_eq(
+        message, "qualified Windows temporary directory exceeds 260 UTF-16 units",
+      )
+    err => raise err
+  } noraise {
+    _ => fail("oversize qualified temp directory was accepted")
+  }
   let drives : Map[String, String] = { "=C:": "C:/stale", "=D:": "D:\\other" }
   for
     (value, expected) in [
@@ -490,6 +512,41 @@ async test "usertemp qualifies nonexistent names against a Windows cwd" {
     err => raise err
   } noraise {
     _ => fail("invalid per-drive environment entry was used")
+  }
+}
+
+///|
+async test "usertemp only requests the host path for an admitted mount" {
+  for profile in [@lib.Profile::Cygwin, Msys2] {
+    let mut queries = 0
+    let temp : async () -> String? = () => {
+      queries += 1
+      Some("R:/Operating System")
+    }
+    let context = mounted_context(
+      "C:/install",
+      "none /temporary usertemp binary",
+      "none /temporary usertemp binary",
+      None,
+      profile~,
+      temp~,
+    )
+    assert_eq(
+      context.convert("/temporary/file", from=Posix, to=Mixed),
+      "R:/Operating System/file",
+    )
+    assert_eq(queries, 1)
+    ignore(
+      mounted_context(
+        "C:/install",
+        "D:/other /tmp ntfs binary",
+        "",
+        None,
+        profile~,
+        temp~,
+      ),
+    )
+    assert_eq(queries, 1)
   }
 }
 

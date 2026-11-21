@@ -878,112 +878,71 @@ async fn check_mount_owners(
     recased[key] = windows.to_lower().replace_all(old="/", new="\\")
   }
   recased["SystemTemp"] = base + "/unrelated"
-  let extended = environment.copy()
-  extended["TMP"] = "\\\\?\\" + base.replace_all(old="/", new="\\") + "\\absent"
-  let long = environment.copy()
-  long["TMP"] = base + "/" + "segment/".repeat(40) + "absent"
-  for
-    (name, vars) in [
-      ("unset", cleared),
-      ("recased", recased),
-      ("extended", extended),
-      ("long", long),
-    ] {
-    let observed = probe(
-      output,
-      "usertemp-" + name + "-oracle",
-      runtime_bin + "/cygpath.exe",
-      ["-am", "/temporary/file"],
-      root,
-      vars,
-    )
-    let actual = successful_text(output, observed)
-    if name != "long" {
-      let installed = vars.copy()
-      installed["CYGPATH_ROOT"] = root
-      let result = probe(
-        output,
-        "usertemp-" + name + "-wasm",
-        moonrun,
-        [wasm, "--", "--profile", profile, "-am", "/temporary/file"],
-        root,
-        installed,
-      )
-      let expected = if name == "extended" { base + "/absent" } else { windows }
-      compare(
-        actual == expected + "/file" &&
-        result.status == "completed" &&
-        result.exit_code == observed.exit_code &&
-        result.stdout_sha256 == observed.stdout_sha256 &&
-        result.stderr_sha256 == observed.stderr_sha256,
-        "usertemp " + name + " differs in " + profile,
-      )
-    }
-  }
-  let padding = "segment/".repeat(50)
-  let length_cases : Array[(String, String)] = []
-  for n in [257, 258, 259, 260, 261, 262, 320] {
-    length_cases.push(
-      (
-        "length-" + n.to_string(),
-        root[:2].to_owned() + "/" + padding[:n - 4].to_owned() + "z",
-      ),
-    )
-  }
-  length_cases.push(("relative-length", padding[:240].to_owned() + "z"))
-  length_cases.push(("collapsible", base + "/seg/..".repeat(45) + "/selected"))
-  length_cases.push(
-    (
-      "nonascii-length",
-      root[:2].to_owned() + "/" + "😀abcdef/".repeat(30) + "z",
-    ),
-  )
-  for (name, tmp) in length_cases {
-    let vars = environment.copy()
+  let cases = [("unset", cleared, windows), ("recased", recased, windows)]
+  let second = base + "/second"
+  let third = base + "/third"
+  let long = "segment/".repeat(33) + "z"
+  fn candidate(
+    name : String,
+    tmp : String,
+    temp : String,
+    user : String,
+    expected : String,
+  ) -> Unit {
+    let vars = cleared.copy()
     vars["TMP"] = tmp
-    vars["TEMP"] = base + "/second"
-    vars["USERPROFILE"] = base + "/third"
-    ignore(
-      successful_text(
-        output,
-        probe(
-          output,
-          "usertemp-" + name + "-oracle",
-          runtime_bin + "/cygpath.exe",
-          ["-am", "/temporary/file"],
-          root,
-          vars,
-        ),
-      ),
-    )
+    vars["TEMP"] = temp
+    vars["USERPROFILE"] = user
+    cases.push((name, vars, expected))
   }
-  let temp_cases = [
-    ("relative", "..\\missing", base + "/missing"),
-    ("drive", root[:2].to_owned(), root),
-    (
-      "current-root",
-      "\\cygpath-temp-probe",
-      root[:2].to_owned() + "/cygpath-temp-probe",
-    ),
-    ("absolute", base + "/absent/../new", base + "/new"),
-  ]
-  // probe() starts the child with only the supplied environment, so there
-  // is no saved current directory on an alternate drive.
-  for drive in ["C:", "D:"] {
-    if !root[:2].equal_ignore_ascii_case(drive) && @fs.exists(drive + "/") {
-      temp_cases.push(
-        (
-          "other-drive",
-          drive + "cygpath-temp-probe",
-          drive + "/cygpath-temp-probe",
-        ),
+  let drive = root[:2].to_owned()
+  let limit = drive + "/" + "segment/".repeat(32) + "z"
+  candidate("length-260", limit, second, third, "//?/" + limit)
+  candidate("length-261", limit + "z", second, third, second)
+  candidate(
+    "collapsible",
+    base + "/seg/..".repeat(45) + "/short",
+    second,
+    third,
+    second,
+  )
+  candidate(
+    "nonascii-length",
+    drive + "/" + "😀abcdef/".repeat(30) + "z",
+    second,
+    third,
+    second,
+  )
+  candidate("user-profile", long, long, third, third)
+  candidate("all-long", long, long, long, windows)
+  for
+    (name, value, expected) in [
+      (
+        "extended",
+        "\\\\?\\" + base.replace_all(old="/", new="\\") + "\\absent",
+        base + "/absent",
+      ),
+      ("relative", "..\\missing", base + "/missing"),
+      ("drive", drive, root),
+      ("current-root", "\\cygpath-temp-probe", drive + "/cygpath-temp-probe"),
+      ("absolute", base + "/absent/../new", base + "/new"),
+    ] {
+    candidate(name, value, second, third, expected)
+  }
+  // probe() supplies no saved current directory on the alternate drive.
+  for other in ["C:", "D:"] {
+    if !root[:2].equal_ignore_ascii_case(other) && @fs.exists(other + "/") {
+      candidate(
+        "other-drive",
+        other + "cygpath-temp-probe",
+        second,
+        third,
+        other + "/cygpath-temp-probe",
       )
       break
     }
   }
-  for (name, value, expected) in temp_cases {
-    let vars = environment.copy()
-    vars["TMP"] = value
+  for (name, vars, expected) in cases {
     let argv = ["-am", "/temporary/file"]
     let oracle = probe(
       output,
