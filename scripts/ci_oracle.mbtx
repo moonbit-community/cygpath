@@ -1586,7 +1586,8 @@ async fn check_mount_owners(
   for
     (tag, rows, valid) in [("raw", raw_names, 3), ("literal", literal_names, 2)] {
     let cancelled = rows[valid] + b"/../cancelled"
-    let records = [..rows, cancelled, present]
+    let absent = rows[valid] + b"z/../cancelled"
+    let records = [..rows, cancelled, absent, present]
     @fs.write_file(
       width_records,
       records.fold(init=b"", (out, row) => out + row + b"\n"),
@@ -1597,9 +1598,9 @@ async fn check_mount_owners(
     let stderr = rows[valid:].fold(init=b"", (out, row) => {
         out + b"cygpath: file '" + row + b"' - File name too long\n"
       }) +
-      b"cygpath: file '" +
-      cancelled +
-      b"' - No such file or directory\n"
+      [cancelled, absent].fold(init=b"", (out, row) => {
+        out + b"cygpath: file '" + row + b"' - Not a directory\n"
+      })
     compare_installed(
       "suffix-width-mode-" + tag,
       ["-Mf", width_records],

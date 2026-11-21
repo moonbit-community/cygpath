@@ -586,7 +586,9 @@ async fn checked_parents(
             inspect,
             server_lookup~,
           ) catch {
-            LookupErrno("No such device or address" | "File name too long") =>
+            LookupErrno("File name too long") =>
+              raise LookupErrno("Not a directory")
+            LookupErrno("No such device or address") =>
               raise LookupErrno("No such file or directory")
             err => raise err
           }
