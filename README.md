@@ -24,10 +24,14 @@ Input can come from arguments, files (`-f FILE`), or stdin (`-f -`), with
 per-record options (`-o`) and skipping empty operands (`-i`). Windows/mixed output
 supports UTF-8, UTF-7 (65000), GB18030-2000 (54936), Windows Symbol (42),
 the three Japanese ISO-2022 variants (50220–50222), ISO-2022-KR (50225), ISO-2022-CN (50227/50229),
-HZ-GB-2312 (52936), ISCII (57002–57011), and 115 table-based pages, including Windows JIS (20932), GB2312 (20936),
+HZ-GB-2312 (52936), ISCII (57002–57011), and 115 legacy code pages, including Windows JIS (20932), GB2312 (20936),
 logical Hebrew (38598) and EUC Korean (51949). The CLI targets only
 linear-memory Wasm for `moonx`; it has no external module dependencies. Import
 `ZSeanYves/cygpath/lib` to use the conversion library without host I/O.
+
+The five Windows GSM pages (55000–55004) encode `@` as a zero byte.
+For example, `-wC55000 A@B` prints `A` followed by LF. A converted name
+without a zero byte produces an explicit error. [GSM output rules](docs/04-api-and-cli.md#8-output-encoding-and-failure-ordering)
 
 On Windows, select an installed Cygwin once in PowerShell:
 
@@ -107,8 +111,7 @@ Cygwin and Wasm produced the same output for `-W`, `-US`, `-F044` and
 Unsupported: automatic selection among installations; reading alternate 8.3
 names; full Cygwin symlink resolution; raw Windows/mixed
 system-directory output, redirected shell folders and closing real inherited handles; host-dependent device names
-and general virtual-filesystem paths; automatic ANSI/OEM selection;
-GSM (55000–55004) and CP29001. In C.UTF-8 file records, Windows and mixed
+and general virtual-filesystem paths; automatic ANSI/OEM selection and CP29001. In C.UTF-8 file records, Windows and mixed
 output map invalid filename bytes to their Windows private-use characters.
 For example, a byte `ff` becomes U+F0FF. All three output formats accept
 a supplementary character written as a CESU-8 surrogate pair in a file

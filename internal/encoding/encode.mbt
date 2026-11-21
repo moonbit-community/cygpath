@@ -29,6 +29,11 @@ fn numeric_table(codepage : Int32) -> (Bytes, Int32)? {
     20936 => Some((cp_20936, 0x3f))
     20949 | 51949 => Some((cp_20949, 0x3f))
     38598 => codepage_table(28598)
+    55000 => Some((cp_55000, 0x20))
+    55001 => Some((cp_55001, 0x20))
+    55002 => Some((cp_55002, 0x20))
+    55003 => Some((cp_55003, 0x20))
+    55004 => Some((cp_55004, 0x20))
     _ => codepage_table(codepage)
   }
 }

@@ -54,10 +54,11 @@ pub fn help_text() -> String {
     #|Single paths with a drive prefix or backslashes are recognized as Windows.
     #|-u preserves C:name. With -au it resolves from the drive root.
     #|Output uses LF records. -C selects Windows/mixed output encoding.
-    #|Numeric pages include 115 table-based pages, Symbol (42), ISO-2022-JP
+    #|Numeric pages include 115 legacy pages, Symbol (42), ISO-2022-JP
     #|(50220-50222), KR (50225), CN (50227/50229), HZ (52936), GB18030 (54936),
     #|ISCII (57002-57011), UTF-7 (65000) and UTF-8 (65001). -C 0 restores UTF-8.
-    #|Unavailable pages (including 29001) are errors.
+    #|GSM (55000-55004) prints up to the first encoded zero (@).
+    #|Names without a zero on those pages and unavailable pages (including 29001) are errors.
     #|-f cannot be combined with NAME. No shell quoting is applied to records.
     #|
     #|Recognized but unsupported:

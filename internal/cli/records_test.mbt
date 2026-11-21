@@ -1,4 +1,17 @@
 ///|
+async test "Windows GSM conversion must fit before the CLI can print a name" {
+  let converter = request(["-wC55000", "name"]).prepare()
+  assert_eq(converter.encode_output("a@" + "^".repeat(16382) + "x"), b"a")
+  try converter.encode_output("a@" + "^".repeat(16383)) catch {
+    @cli.UnsupportedCapability(reason) =>
+      assert_eq(reason, "Windows GSM conversion exceeds the output buffer")
+    err => raise err
+  } noraise {
+    _ => fail("expected GSM capacity error")
+  }
+}
+
+///|
 async test "installed Windows output looks up individual names in records and lists" {
   let visited : Array[String] = []
   let lookup : async (@lib.Context, String, @lib.InputSyntax, Bool) -> Result[

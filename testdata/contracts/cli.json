@@ -1111,6 +1111,23 @@
       "exit_code": 0
     },
     {
+      "case_id": "gsm-codepage-records",
+      "category": "encoding",
+      "argv": ["-of-"],
+      "stdin_text": "-wC55000 A^€@suffix\n-wC55001 Áç@tail\n-mC55002 ÕÁ@tail\n-wC55003 Ğış@tail\n-wC55004 AΑΩω@tail\n-wpC55000 a:b@cut:c\n",
+      "stdout_hex": "411b141b650a1b411b090a1b2f1b0e0a1b471b691b730a204115150a613b620a",
+      "stderr_text": "",
+      "exit_code": 0
+    },
+    {
+      "case_id": "gsm-unterminated-name",
+      "category": "encoding",
+      "argv": ["-wC55000", "A@B", "plain", "later@x"],
+      "stdout_text": "A\n",
+      "stderr_text": "cygpath: unsupported-capability: \"code page 55000 produced no terminated Windows name\"\n",
+      "exit_code": 1
+    },
+    {
       "case_id": "iscii-output-records",
       "category": "encoding",
       "argv": ["-of-"],

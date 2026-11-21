@@ -52,7 +52,7 @@ test "the Japanese ISO-2022 selectors preserve their distinct kana transitions" 
 }
 
 ///|
-test "stateful pages match the Windows NLS scalar captures" {
+test "numeric pages match the Windows NLS scalar captures" {
   for
     (page, expected) in [
       (50220, 0x5a266094U),
@@ -62,6 +62,11 @@ test "stateful pages match the Windows NLS scalar captures" {
       (50227, 0xdabfa81aU),
       (50229, 0x46d74693U),
       (52936, 0xeb8eb3e8U),
+      (55000, 0xe995b31dU),
+      (55001, 0xad4a30eaU),
+      (55002, 0x84a31c09U),
+      (55003, 0x4ef14212U),
+      (55004, 0x6aa72978U),
       (57002, 0xe60ed2b0U),
       (57003, 0x3d46605cU),
       (57004, 0xec2fddeeU),
@@ -73,6 +78,8 @@ test "stateful pages match the Windows NLS scalar captures" {
       (57010, 0x2016e60aU),
       (57011, 0x3f6653ecU),
     ] {
+    let terminator = @encoding.encode("\u{0}", page)
+    assert_eq(terminator.length(), 1)
     let mut hash = 2166136261U
     for value in 0..<0x10000 {
       guard value.to_char() is Some(ch) else { continue }
@@ -88,10 +95,18 @@ test "stateful pages match the Windows NLS scalar captures" {
       for byte in encoded {
         hash = (hash ^ byte.to_uint()) * 16777619U
       }
-      hash *= 16777619U
+      hash = (hash ^ terminator[0].to_uint()) * 16777619U
     }
     assert_eq((page, hash), (page, expected))
   }
+}
+
+///|
+test "Windows GSM encodes each UTF-16 unit and preserves zero and escape codes" {
+  assert_eq(@encoding.encode("A@B", 55000), b"A\x00B")
+  assert_eq(@encoding.encode("A😀B", 55000), b"A  B")
+  assert_eq(@encoding.encode("ÁãĞış", 55002), b"\x1b\x0e\x1b{   ")
+  assert_eq(@encoding.encode("A@B", 55004), b" \x00 ")
 }
 
 ///|

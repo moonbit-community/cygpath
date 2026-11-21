@@ -180,3 +180,20 @@ and 20000. CP50225 excludes the 259 one-way best fits in the Wansung table.
 CP50229 excludes the two one-way mappings for U+FA0C and U+FA0D. The
 character-set designations and output shifts are covered by byte comparisons.
 [Unicode data provenance](../unicode/README.md) · [Microsoft code page assignments](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ucoderef/28fefe92-d66c-4b03-90a9-97b473223d43).
+
+## Windows GSM code pages
+
+The mappings for 55000–55004 derive from observable Windows conversion results.
+Each file `codepage-api-probe/bmp-CP.bin` records one Win32 call per BMP scalar
+with flags zero and NUL-terminated input. All five selectors encode the input
+terminator as byte 20, encode U+0040 as 00 and substitute a space for each
+unmapped UTF-16 unit. Extended letters and punctuation may take two bytes.
+The five pages differ even for some ASCII letters. For example, `A@B` returns
+`41 00 42 20` on 55000 and `20 00 20 20` on 55004. [Win32 probe](../../scripts/probe_windows_codepages.mbtx) · [Windows captures](https://github.com/moonbit-community/cygpath/actions/runs/44851348435)
+
+To reproduce the tables, extract `codepage-api-probe` from the default Cygwin
+or MSYS2 artifact and run
+`moon run scripts/generate_codepages.mbtx gsm codepage-api-probe internal/encoding`.
+The generator verifies all five input digests. Each four-byte entry stores a
+Unicode value and its GSM code. The encoder supplies the default space for
+values absent from the table.

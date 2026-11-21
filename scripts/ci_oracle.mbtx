@@ -1597,6 +1597,17 @@ async fn run(options : Map[String, String]) -> Unit {
     installed["CYGPATH_ROOT"] = root
     let cases : Array[(String, Array[String], Bytes, Bytes)] = [
       (
+        "gsm-default",
+        ["-wC55000", "A^€@suffix", "@first"],
+        b"A\x1b\x14\x1be\n\n",
+        b"",
+      ),
+      ("gsm-55001", ["-wC55001", "Áç@tail"], b"\x1bA\x1b\x09\n", b""),
+      ("gsm-55002-mixed", ["-mC55002", "ÕÁ@tail"], b"\x1b/\x1b\x0e\n", b""),
+      ("gsm-55003", ["-wC55003", "Ğış@tail"], b"\x1bG\x1bi\x1bs\n", b""),
+      ("gsm-55004", ["-wC55004", "AΑΩω@tail"], b" A\x15\x15\n", b""),
+      ("gsm-list", ["-wpC55000", "a:b@cut:c"], b"a;b\n", b""),
+      (
         "nt-null-mode",
         ["-M", "/dev/null", "/dev/zero", "/dev/null/"],
         b"/dev/null: binary\n/dev/zero: binary\n",

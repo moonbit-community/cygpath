@@ -450,6 +450,13 @@ produce an embedded zero in that stream. The CLI ends the output name at
 the first zero, as Cygwin does before printing.
 [Windows evidence and byte samples](../third_party/microsoft/README.md#stateful-code-pages).
 
+Windows GSM pages 55000–55004 map `@` to zero and the wide-string terminator to
+a space. Cygwin prints the bytes before the first zero. The CLI requires a zero
+in the encoded result and reports a capability error if one is absent. Each name
+or path list must fit the initial 32,768-byte conversion buffer, including the
+converted terminator. For mixed output, separator replacement happens after
+encoding and truncation. [Windows samples and mapping provenance](../third_party/microsoft/README.md#windows-gsm-code-pages)
+
 ISCII (57002–57011) starts each output name in the selected script.
 For example, Bengali `অঅ` produces `a4 a4` on 57003 and `ef 43 a4 a4`
 on 57006. A script change persists across ASCII path separators. After virama,
@@ -493,8 +500,7 @@ order. Repeated `-C` replaces the previous selection.
 A numeric value of zero restores the default conversion. Cygwin uses the
 current locale for that branch. The Wasm CLI's default encoding is UTF-8.
 [Cygwin multibyte conversion](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/utils/cygpath.cc#L156-L163).
-Windows-output `ANSI` and `OEM` require host selection. They, CP29001 and
-unimplemented pages such as GSM are rejected. POSIX
+Windows-output `ANSI` and `OEM` require host selection. CP29001 remains unavailable. POSIX
 output ignores a syntactically valid codepage selection, including unavailable
 identities, because that branch does not invoke the Windows encoder. No locale
 or platform codec participates in product encoding.

@@ -102,7 +102,11 @@ pub fn Converter::codepage(self : Converter) -> Int32 {
 }
 
 ///|
-fn encode_name(text : String, page : Int32) -> Bytes raise CliError {
+fn encode_name(
+  text : String,
+  page : Int32,
+  capacity? : Int32,
+) -> Bytes raise CliError {
   let bytes = @encoding.encode(text, page) catch {
     @encoding.UnmappableCharacter(page) => raise UnrepresentableName(page)
     @encoding.UnsupportedCodePage(page) =>
@@ -112,8 +116,21 @@ fn encode_name(text : String, page : Int32) -> Bytes raise CliError {
         " is not supported by the pure encoder",
       )
   }
+  // Windows GSM maps the wide terminator to a space. The full conversion,
+  // including that byte, must fit even if an earlier '@' encodes as zero.
+  if page is (55000..<=55004) &&
+    capacity is Some(limit) &&
+    bytes.length() >= limit {
+    raise UnsupportedCapability(
+      "Windows GSM conversion exceeds the output buffer",
+    )
+  }
   match bytes[:].find(b"\x00") {
     Some(end) => bytes[:end].to_owned()
+    None if page is (55000..<=55004) =>
+      raise UnsupportedCapability(
+        "code page \{page} produced no terminated Windows name",
+      )
     None => bytes
   }
 }
@@ -247,7 +264,7 @@ pub async fn Converter::encode_output(
   shorten? : async (String) -> String?,
 ) -> Bytes {
   let page = self.codepage()
-  let bytes = encode_name(text, page)
+  let bytes = encode_name(text, page, capacity=32768)
   if self.to != Posix &&
     needs_device_alias(
       bytes,
