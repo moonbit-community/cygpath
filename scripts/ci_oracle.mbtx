@@ -1004,6 +1004,48 @@ async fn check_mount_owners(
   let rooted_file = target[2:].to_owned().replace_all(old="/", new="\\") +
     "\\sub\\file"
   let drive_relative = target[:2].to_owned() + rooted_file[1:].to_owned()
+  @fs.write_file(target + "/sub/records.exe", b"C:/from-record\n")
+  let colon_input = target[:1].to_owned() + ":records"
+  @fs.write_file(
+    target + "/" + target[:1].to_owned() + "\uF03Arecords",
+    b"C:/colon-input\n",
+  )
+  let drive_record = drive_relative[:drive_relative.length() - 4].to_owned() +
+    "records"
+  for
+    (label, file) in [
+      ("file-drive", drive_record),
+      ("file-colon", colon_input),
+      ("file-suffix", "sub\\records"),
+    ] {
+    for
+      (which, program, args, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", ["-uf", file], environment),
+        (
+          "installed",
+          moonrun,
+          [wasm, "--", "--profile", profile, "-uf", file],
+          installed,
+        ),
+        (
+          "implicit",
+          moonrun,
+          [wasm, "--", "--profile", profile, "-uf", file],
+          environment,
+        ),
+      ] {
+      ignore(
+        probe(
+          output,
+          "link-lookup-" + label + "-" + which,
+          program,
+          args,
+          target,
+          vars,
+        ),
+      )
+    }
+  }
   let existing = target + "/sub/file"
   let absent = target + "/sub/missing"
   let backslashes = existing.replace_all(old="/", new="\\")
@@ -1174,7 +1216,7 @@ async fn check_mount_owners(
   let dos_table = escaped +
     "/dos-names /dos ntfs dos\n" +
     escaped +
-    "/dos-names /plain ntfs binary\n/dos /inherited none bind\nnone /cygdrive cygdrive dos\n"
+    "/dos-names /plain ntfs binary\n/dos /inherited none bind\nnone /cygdrive cygdrive dos,text\n"
   @fs.write_file(root + "/etc/fstab", dos_table)
   @fs.write_file(output + "/dos-spellings.fstab", dos_table)
   let stored = [
@@ -1235,6 +1277,59 @@ async fn check_mount_owners(
       port.stderr_sha256 == oracle.stderr_sha256,
       tag + " differs in " + profile,
     )
+  }
+  let unc = "//localhost/" +
+    dos_dir[:1].to_owned() +
+    "$" +
+    dos_dir[2:].to_owned()
+  if @fs.exists(unc) {
+    let forward = unc + "/records."
+    let backward = forward.replace_all(old="/", new="\\")
+    for option in ["-m", "-M", "-uf"] {
+      let operands = if option == "-uf" {
+        [[forward], [backward]]
+      } else {
+        [[forward, backward]]
+      }
+      for n, names in operands {
+        for
+          (which, program, args, vars) in [
+            (
+              "oracle",
+              runtime_bin + "/cygpath.exe",
+              [option, ..names],
+              environment,
+            ),
+            (
+              "installed",
+              moonrun,
+              [wasm, "--", "--profile", profile, option, ..names],
+              installed,
+            ),
+          ] {
+          ignore(
+            probe(
+              output,
+              "link-lookup-share-" +
+              (if option == "-M" {
+                "mode"
+              } else if option == "-m" {
+                "path"
+              } else {
+                "input"
+              }) +
+              n.to_string() +
+              "-" +
+              which,
+              program,
+              args,
+              root,
+              vars,
+            ),
+          )
+        }
+      }
+    }
   }
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)
