@@ -1674,6 +1674,81 @@ async fn check_mount_owners(
       Some(stdout),
     )
   }
+  async fn compare_file_width(
+    tag : String,
+    name : String,
+    code : Int32,
+    stderr : Bytes,
+    stdout : Bytes,
+  ) -> Unit {
+    let args = ["-uf", name]
+    compare_installed(tag, args, dos_dir, (code, Some(stderr)), Some(stdout))
+    let port = probe(
+      output,
+      tag + "-implicit",
+      moonrun,
+      [wasm, "--", "--profile", profile, ..args],
+      dos_dir,
+      environment,
+    )
+    compare(
+      port.status == "completed" &&
+      port.exit_code == Some(code) &&
+      port.stdout_sha256 == digest(stdout) &&
+      port.stderr_sha256 == digest(stderr),
+      tag + " differs without an installation in " + profile,
+    )
+  }
+  // The native spelling encodes ':' as U+F03A, which takes two more UTF-8
+  // bytes. Compare both spellings with and without an installation selected.
+  for i, width in [251, 252, 255, 256] {
+    let operand = "é".repeat(100) + ":" + "a".repeat(width - 201)
+    if width >= 255 {
+      @fs.write_file(punct_windows[i], b"exact-record\n")
+    }
+    for
+      (spelling, name, bytes) in [
+        ("colon", operand, width),
+        ("literal", operand.replace_all(old=":", new="\uF03A"), width + 2),
+      ] {
+      let (code, stderr, stdout) = if bytes > 255 {
+        (1, b"cygpath: File name too long\n", b"")
+      } else if width >= 255 {
+        (0, b"", b"exact-record\n")
+      } else if bytes <= 251 {
+        (0, b"", b"punct-file\n")
+      } else {
+        (1, b"cygpath: No such file or directory\n", b"")
+      }
+      compare_file_width(
+        "file-width-" + spelling + "-" + width.to_string(),
+        name,
+        code,
+        stderr,
+        stdout,
+      )
+    }
+    if width <= 252 {
+      let link = operand.replace_all(old="a", new="b")
+      @fs.symlink(
+        dos_dir + "/" + link.replace_all(old=":", new="\uF03A") + ".lnk",
+        target=punct_windows[i] + ".exe",
+        force_symlink=true,
+      )
+      let (code, stderr, stdout) = if width == 251 {
+        (0, b"", b"punct-file\n")
+      } else {
+        (1, b"cygpath: No such file or directory\n", b"")
+      }
+      compare_file_width(
+        "file-width-link-" + width.to_string(),
+        link,
+        code,
+        stderr,
+        stdout,
+      )
+    }
+  }
   let stored = [
     "\uF020leading", "name\uF02E\uF020", "\uF020a\uF02E\uF020/\uF020b\uF02E", "mid . dle",
     "file\uF02E", "file.", ".hidden", "records\uF02E",
