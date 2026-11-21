@@ -820,6 +820,54 @@ async fn check_dos_names(
       "assigned DOS fixture name is missing: " + short,
     )
   }
+  // Give each primary name a distinct, known alternate name. This makes
+  // copying the operand distinguishable from querying the directory entry.
+  let names = [
+    "A B.txt", "A  B.txt", "Ab .txt", "A.B C", "A+B.txt", "École.txt", "Ωmega.txt",
+    "Жук.txt", "日本.txt", "A😀b.txt", "ABCD中EFG.txt", "A~B.txt", ".Guide",
+  ]
+  for i, name in names {
+    @fs.write_file(dir + "/" + name, b"sample", create_mode=CreateNew)
+    let short = "P" + i.to_string() + ".ALT"
+    ignore(
+      successful_text(
+        output,
+        probe(
+          output,
+          "dos-shape-set-" + i.to_string(),
+          fsutil,
+          ["file", "setshortname", dir + "/" + name, short],
+          dir,
+          environment,
+        ),
+      ),
+    )
+  }
+  let operands = names.map(n => n.to_lower())
+  for (tag, flag) in [("long", "-wl"), ("short", "-ws")] {
+    let raw = probe(
+      output,
+      "dos-shape-" + tag + "-oracle",
+      bin + "/cygpath.exe",
+      [flag, ..operands],
+      dir,
+      environment,
+    )
+    require(
+      raw.status == "completed" && raw.exit_code == Some(0),
+      "DOS shape observation failed",
+    )
+    ignore(
+      probe(
+        output,
+        "dos-shape-" + tag + "-wasm",
+        moonrun,
+        [wasm, "--", "--profile", profile, flag, ..operands],
+        dir,
+        installed,
+      ),
+    )
+  }
   check("explicit", args, expected)
   check(
     "alias-list",
