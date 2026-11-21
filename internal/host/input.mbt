@@ -117,9 +117,9 @@ pub async fn stream_file(
 ///|
 /// Anchor a physical input before passing it to Windows. A colon in a POSIX
 /// relative name is a filename character, even when it follows one letter.
-fn local_input_name(path : String) -> String raise {
+fn local_input_path(path : String) -> @lib.NativePath? raise {
   if path.is_empty() || !(@async.platform is Windows) {
-    return path
+    return None
   }
   let query = if !path.has_prefix("/") &&
     !path.contains_char('\\') &&
@@ -128,18 +128,25 @@ fn local_input_name(path : String) -> String raise {
   } else {
     path
   }
-  guard local_windows_context(query) is Some(context) else { return path }
+  guard local_windows_context(query) is Some(context) else { return None }
   try lookup_target(context, query, Windows) catch {
     LookupErrno(reason) => raise input_path_error(path, reason)
     err => raise err
   } noraise {
-    Filesystem(name, ..) => name.windows_name()
-    _ => path
+    Filesystem(name, ..) => Some(name)
+    _ => None
   }
 }
 
 ///|
-async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
+async fn open_host_input(
+  path : String,
+  probe_suffix : Bool,
+  basename_bytes? : Int32,
+) -> @fs.File {
+  if basename_bytes is Some(size) && size > 255 {
+    raise FileNameTooLong
+  }
   @fs.open(host_io_path(path), mode=ReadOnly) catch {
     @os_error.OsError(NotFound, ..) as missing if probe_suffix => {
       let native = if @async.platform is Windows {
@@ -158,7 +165,8 @@ async fn open_host_input(path : String, probe_suffix : Bool) -> @fs.File {
         .unwrap_or(base)
       // An exact dangling symlink still takes priority over a sibling .exe.
       guard !base.is_empty() && native_kind(base) is None else { raise missing }
-      guard @utf8.encode(name).length() <= 251 else { raise missing }
+      let size = basename_bytes.unwrap_or_else(() => @utf8.encode(name).length())
+      guard size <= 251 else { raise missing }
       if executable_candidate(base + ".exe", name) is Some(_) {
         return @fs.open(host_io_path(base + ".exe"), mode=ReadOnly)
       }
@@ -201,16 +209,18 @@ pub async fn stream_file_bytes_until(
         is_virtual_input(ctx, path) => Some(ctx)
       _ => installation
     }
-    let filename = if context is Some(context) && !path.is_empty() {
+    let (filename, basename_bytes) = if context is Some(context) &&
+      !path.is_empty() {
       // An empty virtual input supplies no fgets records.
       guard installed_filename(context, path) is Some(native) else { return 0 }
-      native
-    } else if virtual_context is Some(_) {
-      local_input_name(path)
+      (native, None)
+    } else if virtual_context is Some(_) &&
+      local_input_path(path) is Some(entry) {
+      (entry.windows_name(), entry.basename_bytes())
     } else {
-      path
+      (path, None)
     }
-    let file = open_host_input(filename, context is None) catch {
+    let file = open_host_input(filename, context is None, basename_bytes?) catch {
       @os_error.OsError(NotFound, ..) => raise FileNotFound
       @os_error.OsError(AccessDenied, ..) => raise FileAccessDenied
       @os_error.OsError(NotDirectory, ..) => raise FileNotDirectory

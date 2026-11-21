@@ -398,7 +398,12 @@ that a parent already changed.
 
 `-f names.lst` opens the exact input name first and can open
 `names.lst.exe` if the exact entry is absent. The suffix applies to the final
-component. A directory found only by appending `.exe` is skipped. Opening
+component. On Windows, file input counts the original basename bytes before
+Windows filename encoding. Up to 251 bytes permit a suffix probe, 252–255
+permit only the exact entry, and a longer basename reports `File name too long`
+even when an exact NTFS entry exists. These limits also apply to a local
+drive path or relative input when no installation is selected.
+A directory found only by appending `.exe` is skipped. Opening
 an explicitly named readable directory returns zero records and exits
 successfully. With a selected installation, Cygwin mount mappings and
 native link traversal also apply to the input filename.
