@@ -99,15 +99,27 @@ async fn primary_entry_name(parent : String, name : String) -> String? {
 }
 
 ///|
+/// GetLongPathNameW consults the directory entry for short-shaped names,
+/// including spaces and characters that require an alternate name for -s.
+fn may_expand_long_component(name : String) -> Bool {
+  if name.length() > 12 {
+    return false
+  }
+  match name.split(".").to_array() {
+    [stem] => stem.length() <= 8
+    [stem, ext] => stem.length() <= 8 && ext.length() <= 3
+    _ => false
+  }
+}
+
+///|
 async fn long_component(path : String, name : String) -> String {
-  let eligible = dos_component(name)
-  if eligible == Some(false) {
+  if !may_expand_long_component(name) {
     return name
   }
   if @fs.kind(host_io_path(path), follow_symlink=false) is SymLink {
     // A normalized handle name would follow this link. Use its own directory entry.
-    if primary_entry_name(entry_parent(path, name), name) is Some(entry) &&
-      (entry == name || eligible == Some(true)) {
+    if primary_entry_name(entry_parent(path, name), name) is Some(entry) {
       return entry
     }
     raise NameLookupUnavailable(
@@ -119,8 +131,7 @@ async fn long_component(path : String, name : String) -> String {
   let normalized = plain_native(
     @fs.realpath(host_io_path(path)) catch {
       @os_error.OsError(_, ..) => {
-        if primary_entry_name(entry_parent(path, name), name) is Some(entry) &&
-          (entry == name || eligible == Some(true)) {
+        if primary_entry_name(entry_parent(path, name), name) is Some(entry) {
           return entry
         }
         raise NameLookupUnavailable(
@@ -133,11 +144,6 @@ async fn long_component(path : String, name : String) -> String {
   guard normalized.rev_split_once("/") is Some((_, leaf)) && !leaf.is_empty() else {
     raise NameLookupUnavailable(
       "cannot obtain entry name: " + @debug.to_string(path),
-    )
-  }
-  if eligible is None && leaf != name {
-    raise NameLookupUnavailable(
-      "OEM-dependent long-name spelling: " + @debug.to_string(path),
     )
   }
   leaf.to_owned()

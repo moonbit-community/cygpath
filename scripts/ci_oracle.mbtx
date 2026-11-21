@@ -844,30 +844,54 @@ async fn check_dos_names(
     )
   }
   let operands = names.map(n => n.to_lower())
-  for (tag, flag) in [("long", "-wl"), ("short", "-ws")] {
-    let raw = probe(
-      output,
-      "dos-shape-" + tag + "-oracle",
-      bin + "/cygpath.exe",
-      [flag, ..operands],
-      dir,
-      environment,
-    )
-    require(
-      raw.status == "completed" && raw.exit_code == Some(0),
-      "DOS shape observation failed",
-    )
-    ignore(
-      probe(
-        output,
-        "dos-shape-" + tag + "-wasm",
-        moonrun,
-        [wasm, "--", "--profile", profile, flag, ..operands],
-        dir,
-        installed,
-      ),
-    )
+  let expanded = names.copy()
+  expanded[expanded.length() - 1] = ".guide"
+  check("shape-long", ["-wl", ..operands], expanded.join("\n") + "\n")
+  // OEM-dependent 8.3 forms have separate short-name results.
+  let short = probe(
+    output,
+    "dos-shape-short-oracle",
+    bin + "/cygpath.exe",
+    ["-ws", ..operands],
+    dir,
+    environment,
+  )
+  require(
+    short.status == "completed" && short.exit_code == Some(0),
+    "short-name observation failed",
+  )
+  let shapes = [
+    "ABCDEFGHI", "ABCDEFGHIJKL", "ABCDEFGHIJKLM", "ABCDEFGHI.A", "ABCDEFGH.ABC",
+    "AB.ABCD", ".Ab", ".AbC", "A.B.C", "Ab.C.Dd", "A..B", "A😀bcdef", "A😀bcdefg",
+    "A😀b.cd😀", "Ab.😀c", "éCOLE2.txt", "ωMEGA2.txt", "a[2].txt", "A=B.txt",
+    "A;C.txt",
+  ]
+  for n in shapes {
+    @fs.write_file(dir + "/" + n, b"shape", create_mode=CreateNew)
   }
+  let query = shapes.map(s => s.to_lower())
+  let long = probe(
+    output,
+    "dos-shape-boundary-oracle",
+    bin + "/cygpath.exe",
+    ["-wl", ..query],
+    dir,
+    environment,
+  )
+  require(
+    long.status == "completed" && long.exit_code == Some(0),
+    "long-name boundary observation failed",
+  )
+  ignore(
+    probe(
+      output,
+      "dos-shape-boundary-wasm",
+      moonrun,
+      [wasm, "--", "--profile", profile, "-wl", ..query],
+      dir,
+      installed,
+    ),
+  )
   check("explicit", args, expected)
   check(
     "alias-list",
