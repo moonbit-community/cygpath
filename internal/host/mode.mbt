@@ -1,4 +1,12 @@
 ///|
+fn absolute_drive_name(path : String) -> Bool {
+  path.length() >= 3 &&
+  path[0] is ('A'..<='Z' | 'a'..<='z') &&
+  path[1] == ':' &&
+  path[2] is ('/' | '\\')
+}
+
+///|
 async fn installed_mode(
   context : @lib.Context,
   operand : String,
@@ -6,13 +14,7 @@ async fn installed_mode(
   parent_inspect? : async (String) -> NativeEntity,
   server_lookup~ : async (String) -> Bool = network_server_exists,
 ) -> Bool {
-  let windows = operand.contains_char('\\') ||
-    (
-      operand.length() >= 3 &&
-      operand[0] is ('a'..<='z' | 'A'..<='Z') &&
-      operand[1] == ':' &&
-      operand[2] == '/'
-    )
+  let windows = operand.contains_char('\\') || absolute_drive_name(operand)
   let path = if windows {
     operand
   } else {
@@ -57,6 +59,20 @@ pub async fn report_mode(
     }
     if installed {
       installed_mode(context, path)
+    } else if @async.platform is Windows &&
+      server_lookup is Some(_) &&
+      absolute_drive_name(path) {
+      // A drive-qualified name bypasses POSIX mounts until a link target
+      // has to be fed back through the runtime mount table.
+      installed_mode(context, path, inspect=native => {
+        match native_entity(native) {
+          Found(_) as entry => entry
+          Follow(_, _) =>
+            raise InstallationError(
+              "-M requires a selected Cygwin installation for a link target",
+            )
+        }
+      })
     } else {
       let needs_installation = InstallationError(
         "-M requires a selected Cygwin installation",

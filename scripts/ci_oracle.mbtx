@@ -986,45 +986,115 @@ async fn check_mount_owners(
     "/remapped /bridge/records ntfs binary\n"
   @fs.write_file(root + "/etc/fstab", lookup_table)
   @fs.write_file(output + "/link-lookup.fstab", lookup_table)
-  for
-    (label, args) in [
-      (
-        "mode",
-        [
-          "-M", "/bridge", "/bridge/sub", "/bridge/sub/file", "/bridge/sub/missing",
-          "/bridge/missing", "/bridge/leaf-link", "/bridge/sub/file/child", "/bridge/sub/../records",
-          "/bridge/missing/../records",
-        ],
-      ),
-      (
-        "path",
-        [
-          "-m", "/bridge/sub/../records", "/bridge/sub/../../gone", "/bridge/../gone",
-        ],
-      ),
-      ("input", ["-uf", "/bridge/sub/../records"]),
-    ] {
+  let existing = target + "/sub/file"
+  let absent = target + "/sub/missing"
+  let backslashes = existing.replace_all(old="/", new="\\")
+  let invalid = existing + "/child"
+  let lookup_cases : Array[(String, Array[String], String, String)] = [
+    (
+      "mode",
+      [
+        "-M", "/bridge", "/bridge/sub", "/bridge/sub/file", "/bridge/sub/missing",
+        "/bridge/missing", "/bridge/leaf-link", "/bridge/sub/file/child", "/bridge/sub/../records",
+        "/bridge/missing/../records",
+      ],
+      "/bridge: text\n/bridge/sub: text\n/bridge/sub/file: text\n/bridge/sub/missing: text\n/bridge/missing: text\n/bridge/leaf-link: text\n/bridge/sub/../records: text\n",
+      "cygpath: file '/bridge/sub/file/child' - Not a directory\ncygpath: file '/bridge/missing/../records' - No such file or directory\n",
+    ),
+    (
+      "path",
+      [
+        "-m", "/bridge/sub/../records", "/bridge/sub/../../gone", "/bridge/../gone",
+      ],
+      target + "/records\n" + root + "/gone\n" + root + "/gone\n",
+      "",
+    ),
+    (
+      "input",
+      ["-uf", "/bridge/sub/../records"],
+      "/cygdrive/c/through-target\n",
+      "",
+    ),
+    (
+      "drive",
+      ["-M", backslashes, absent, invalid, target],
+      backslashes + ": binary\n" + absent + ": binary\n" + target + ": binary\n",
+      "cygpath: file '" + invalid + "' - Not a directory\n",
+    ),
+  ]
+  for (label, args, stdout, stderr) in lookup_cases {
     let tag = "link-lookup-" + label
-    ignore(
-      probe(
-        output,
-        tag + "-oracle",
-        runtime_bin + "/cygpath.exe",
-        args,
-        root,
-        environment,
-      ),
+    let oracle = probe(
+      output,
+      tag + "-oracle",
+      runtime_bin + "/cygpath.exe",
+      args,
+      root,
+      environment,
     )
-    ignore(
-      probe(
+    compare(
+      oracle.status == "completed" &&
+      oracle.exit_code == Some(0) &&
+      oracle.stdout_sha256 == digest(@utf8.encode(stdout)) &&
+      oracle.stderr_sha256 == digest(@utf8.encode(stderr)),
+      "unexpected " + profile + " " + tag,
+    )
+    let runs = [("installed", installed)]
+    if label == "drive" {
+      runs.push(("implicit", environment))
+    }
+    for (selection, vars) in runs {
+      let port = probe(
         output,
-        tag + "-wasm",
+        tag + "-" + selection,
         moonrun,
         [wasm, "--", "--profile", profile, ..args],
         root,
-        installed,
-      ),
+        vars,
+      )
+      compare(
+        port.status == "completed" &&
+        port.exit_code == oracle.exit_code &&
+        port.stdout_sha256 == oracle.stdout_sha256 &&
+        port.stderr_sha256 == oracle.stderr_sha256,
+        tag + " differs in " + profile + " " + selection,
+      )
+    }
+  }
+  let drive_link = [
+    "-M",
+    root + "/bridge/sub/file",
+    root + "/bridge/missing",
+    target + "/leaf-link",
+  ]
+  let drive_link_reference = probe(
+    output,
+    "link-lookup-drive-link-oracle",
+    runtime_bin + "/cygpath.exe",
+    drive_link,
+    root,
+    environment,
+  )
+  for (label, vars) in [("installed", installed), ("implicit", environment)] {
+    let port = probe(
+      output,
+      "link-lookup-drive-link-" + label,
+      moonrun,
+      [wasm, "--", "--profile", profile, ..drive_link],
+      root,
+      vars,
     )
+    if label == "installed" {
+      compare(
+        drive_link_reference.status == "completed" &&
+        drive_link_reference.exit_code == Some(0) &&
+        port.status == "completed" &&
+        port.exit_code == drive_link_reference.exit_code &&
+        port.stdout_sha256 == drive_link_reference.stdout_sha256 &&
+        port.stderr_sha256 == drive_link_reference.stderr_sha256,
+        "drive-qualified native link mode differs in " + profile,
+      )
+    }
   }
   let temp_table = "none /temporary usertemp binary\n"
   @fs.write_file(root + "/etc/fstab", temp_table)

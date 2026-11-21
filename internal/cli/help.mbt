@@ -15,7 +15,7 @@ pub fn help_text() -> String {
     #|  -u, --unix                 POSIX output (default)
     #|  -w, --windows              Windows output with backslashes
     #|  -m, --mixed                Windows output with forward slashes
-    #|  -M, --mode                 Report text/binary mode using a selected installation
+    #|  -M, --mode                 Report the text or binary mode of a file
     #|  -W, --windir               Output the Windows directory as a POSIX path
     #|  -S, --sysdir               Output the system directory as a POSIX path
     #|  -F, --folder ID            Query a supported Windows shell folder ID

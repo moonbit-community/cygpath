@@ -234,15 +234,18 @@ values fail. Mounts append, and Context rejects duplicates/conflicts. Duplicate
 
 The absolute terminal names `/dev/tty` and `/dev/ptmx` and fixed `/proc`
 entries report binary mode without an installation snapshot.
-With an installed Cygwin snapshot, `-M/--mode` selects mode reporting instead
-of path output. It prints the original operand followed by `: text` or
+On Windows, `-M C:/work/file` and its backslash spelling can query the drive
+directly. An ordinary file or missing leaf uses binary mode. Following a
+native link can require a selected installation to map its target.
+With an installation snapshot, POSIX operands use the flags of the resolved
+mount. The CLI prints the original operand followed by `: text` or
 `: binary`. Ordinary missing names retain the selected mount mode; an empty
 name (even with `-i`) or a regular file used as a parent gets a diagnostic
 on stderr and does not stop later operands or change the exit status. `-f`
 and per-record `-o` use the same dispatch. Known limitations include live
 mount changes, Cygwin-only link metadata and native links without a resolvable
 target. Missing installation context is a capability failure, not a binary
-default. See [upstream mode lookup](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/external.cc#L403-L415).
+default. See [upstream mode lookup](https://github.com/cygwin/cygwin/blob/b11613e477c006b2ce0332463ed07f1118260e79/winsup/cygwin/external.cc#L425-L436).
 
 `-l` queries the Windows host after path conversion. For ordinary files and
 directories, `moonrun` obtains the normalized name of the opened entry. The CLI

@@ -76,6 +76,9 @@ For ordinary POSIX paths containing `..`, Windows/mixed output and `-f` check
 the preceding directory on disk. If that directory is a resolvable native
 link, traversal continues from the target's parent. This also applies to
 POSIX path-list members and per-line options.
+On Windows, `-M C:/work/file` can query an ordinary drive-qualified path
+without `CYGPATH_ROOT`. A native link can require the installation mount table
+to determine its target’s mode.
 In installation mode, `-M NAME` reports the selected mount's text/binary
 mode for ordinary files, directories, and missing names. It follows native
 links that the host can resolve. Live session mounts, Cygwin shortcut/sysfile
