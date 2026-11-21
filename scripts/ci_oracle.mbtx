@@ -1345,6 +1345,105 @@ async fn check_mount_owners(
     @fs.write_file(root + "/etc/fstab", table)
     compare_installed("fstab-bytes-" + name, args, root, Some(expected))
   }
+  @fs.write_file(root + "/etc/fstab", lookup_table)
+  let link_cookie = b"!<symlink>/text/records\x00"
+  let shortcut_header = b"L\x00\x00\x00\x01\x14\x02\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00F\x0c" +
+    Bytes::make(39, 0) +
+    b"\x01" +
+    Bytes::make(15, 0)
+  let shortcut_data = shortcut_header +
+    b"\x0d\x00/text/records\x0d\x00/text/records"
+  for
+    (name, data) in [
+      ("sys-file", link_cookie),
+      ("sys-copy", link_cookie),
+      ("sys-dir", b"!<symlink>/text/sub\x00"),
+      ("sys-exe.exe", link_cookie),
+      ("shell-file.lnk", shortcut_data),
+      ("shell-copy.lnk", shortcut_data),
+    ] {
+    @fs.write_file(root + "/" + name, data)
+  }
+  let pwsh = locate_tool("pwsh.exe")
+  let attrs = probe(
+    output,
+    "cookie-attributes",
+    pwsh,
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      (
+        #|$ErrorActionPreference='Stop'
+        #|foreach ($n in 'sys-file','sys-dir','sys-exe.exe') { [IO.File]::SetAttributes((Join-Path $pwd $n),[IO.FileAttributes]::System) }
+        #|[IO.File]::SetAttributes((Join-Path $pwd 'shell-file.lnk'),[IO.FileAttributes]::ReadOnly)
+        #|foreach ($n in 'sys-file','sys-copy','shell-file.lnk','shell-copy.lnk') { [Console]::WriteLine("$n $([IO.File]::GetAttributes((Join-Path $pwd $n)))") }
+      ),
+    ],
+    root,
+    environment,
+  )
+  ignore(successful_text(output, attrs))
+  defer @async.protect_from_cancel(() => {
+    let reset = probe(
+      output,
+      "cookie-reset-attributes",
+      pwsh,
+      [
+        "-NoProfile", "-NonInteractive", "-Command", "[IO.File]::SetAttributes((Join-Path $pwd 'shell-file.lnk'),[IO.FileAttributes]::Normal)",
+      ],
+      root,
+      environment,
+    )
+    ignore(successful_text(output, reset))
+  })
+  for
+    (label, args) in [
+      (
+        "named",
+        [
+          "-m", "/sys-file", "/sys-copy", "/sys-exe", "/shell-file.lnk", "/shell-copy.lnk",
+        ],
+      ),
+      (
+        "relative",
+        [
+          "-m", "sys-file", "./sys-copy", "sys-exe", "shell-file.lnk", "shell-copy.lnk",
+        ],
+      ),
+      ("implicit", ["-m", "/shell-file", "/shell-copy"]),
+      ("list", ["-mp", "/sys-file:/shell-file.lnk:/sys-exe"]),
+      (
+        "mode",
+        ["-M", "/sys-file", "/sys-copy", "/shell-file", "/shell-copy.lnk"],
+      ),
+      ("directory", ["-m", "/sys-dir/", "/sys-dir/tool", "/sys-dir/../records"]),
+      ("read-sys", ["-uf", "/sys-file"]),
+      ("read-shell", ["-uf", "/shell-file"]),
+      ("read-copy", ["-uf", "/sys-copy"]),
+    ] {
+    for
+      (which, program, argv, vars) in [
+        ("oracle", runtime_bin + "/cygpath.exe", args, environment),
+        (
+          "installed",
+          moonrun,
+          [wasm, "--", "--profile", profile, ..args],
+          installed,
+        ),
+      ] {
+      ignore(
+        probe(
+          output,
+          "cookie-" + label + "-" + which,
+          program,
+          argv,
+          root,
+          vars,
+        ),
+      )
+    }
+  }
   let dos_dir = base + "/dos-names"
   @fs.mkdir(dos_dir)
   @fs.write_file(dos_dir + "/records\uF02E", b"C:/encoded-leaf\n")
