@@ -897,7 +897,65 @@ async fn check_mount_owners(
       root,
       vars,
     )
-    ignore(successful_text(output, observed))
+    let actual = successful_text(output, observed)
+    if name != "long" {
+      let installed = vars.copy()
+      installed["CYGPATH_ROOT"] = root
+      let result = probe(
+        output,
+        "usertemp-" + name + "-wasm",
+        moonrun,
+        [wasm, "--", "--profile", profile, "-am", "/temporary/file"],
+        root,
+        installed,
+      )
+      let expected = if name == "extended" { base + "/absent" } else { windows }
+      compare(
+        actual == expected + "/file" &&
+        result.status == "completed" &&
+        result.exit_code == observed.exit_code &&
+        result.stdout_sha256 == observed.stdout_sha256 &&
+        result.stderr_sha256 == observed.stderr_sha256,
+        "usertemp " + name + " differs in " + profile,
+      )
+    }
+  }
+  let padding = "segment/".repeat(50)
+  let length_cases : Array[(String, String)] = []
+  for n in [257, 258, 259, 260, 261, 262, 320] {
+    length_cases.push(
+      (
+        "length-" + n.to_string(),
+        root[:2].to_owned() + "/" + padding[:n - 4].to_owned() + "z",
+      ),
+    )
+  }
+  length_cases.push(("relative-length", padding[:240].to_owned() + "z"))
+  length_cases.push(("collapsible", base + "/seg/..".repeat(45) + "/selected"))
+  length_cases.push(
+    (
+      "nonascii-length",
+      root[:2].to_owned() + "/" + "😀abcdef/".repeat(30) + "z",
+    ),
+  )
+  for (name, tmp) in length_cases {
+    let vars = environment.copy()
+    vars["TMP"] = tmp
+    vars["TEMP"] = base + "/second"
+    vars["USERPROFILE"] = base + "/third"
+    ignore(
+      successful_text(
+        output,
+        probe(
+          output,
+          "usertemp-" + name + "-oracle",
+          runtime_bin + "/cygpath.exe",
+          ["-am", "/temporary/file"],
+          root,
+          vars,
+        ),
+      ),
+    )
   }
   let temp_cases = [
     ("relative", "..\\missing", base + "/missing"),

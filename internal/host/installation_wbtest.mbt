@@ -420,13 +420,9 @@ async test "usertemp selects the first available Windows temp path" {
   vars["TMP"] = "X:/y"
   assert_eq(windows_temp(key => vars.get(key)), Some("X:/y"))
   let table = "none /tmp usertemp user,posix=0\nD:/ignored /tmp ntfs user\n"
-  let context = mounted_context(
-    "C:/install",
-    table,
-    "",
-    None,
-    temp="T:/User Temp",
-  )
+  let context = mounted_context("C:/install", table, "", None, temp=() => {
+    Some("T:/User Temp")
+  })
   assert_eq(context.convert("/TMP/a", from=Posix, to=Mixed), "T:/User Temp/a")
   try mounted_context("C:/install", table, "", None) catch {
     InstallationError(_) => ()
@@ -434,7 +430,9 @@ async test "usertemp selects the first available Windows temp path" {
   } noraise {
     _ => fail("missing Windows temp was guessed")
   }
-  try mounted_context("C:/install", table, "", None, temp="T:") catch {
+  try
+    mounted_context("C:/install", table, "", None, temp=() => Some("T:"))
+  catch {
     InstallationError(_) => ()
     err => raise err
   } noraise {
@@ -463,7 +461,7 @@ async test "usertemp qualifies nonexistent names against a Windows cwd" {
         table,
         "",
         Some(cwd),
-        temp~,
+        temp=() => Some(temp),
         profile~,
       )
       assert_eq(

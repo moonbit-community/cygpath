@@ -71,7 +71,7 @@ priv struct InstallTable {
   mut prefix : String
   mut drive_flags : @hashset.HashSet[String]
   mut drive_system : Bool
-  temp : () -> String raise HostError
+  temp : async () -> String
   nt_null : Bool?
 }
 
@@ -110,14 +110,14 @@ fn InstallTable::context(
 }
 
 ///|
-fn InstallTable::add(
+async fn InstallTable::add(
   self : InstallTable,
   path : String,
   source : String,
   system~ : Bool,
   flags~ : @hashset.HashSet[String],
   usertemp~ : Bool = false,
-) -> Bool raise {
+) -> Bool {
   let slot = for index, old in self.entries {
     if old.path != path {
       continue
@@ -384,7 +384,7 @@ async fn mounted_context(
   system : String,
   user : String,
   cwd : String?,
-  temp? : String,
+  temp~ : async () -> String? = () => None,
   nt_null? : Bool,
   profile~ : @lib.Profile = Cygwin,
   inspect~ : async (String) -> NativeEntity = native_entity,
@@ -396,7 +396,7 @@ async fn mounted_context(
     prefix: "/cygdrive",
     drive_flags: @hashset.from_array(["posix=0"]),
     drive_system: false,
-    temp: () => usertemp_source(temp, cwd),
+    temp: () => usertemp_source(temp(), cwd),
     nt_null,
   }
   ignore(
@@ -549,8 +549,12 @@ async fn load_installation(
     }
     _ => ""
   }
-  let temp = windows_temp(@env.get_env_var)
-  mounted_context(root, system, user, cwd, temp?, nt_null?, profile~) catch {
+  mounted_context(root, system, user, cwd, nt_null?, profile~, temp=() => {
+    match windows_temp(@env.get_env_var) {
+      Some(path) => Some(path)
+      None => system_folder("")
+    }
+  }) catch {
     @lib.ConversionError::_ as err =>
       raise InstallationError(@debug.to_string(err))
     err => raise err
