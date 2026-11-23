@@ -881,6 +881,8 @@ async fn check_dos_names(
     "R+éF.lnk\nD +中/A+B.txt\n",
   )
   let link = dir + "/R+éF.lnk"
+  let dotted = "\\\\?\\" + link.replace_all(old="/", new="\\") + "."
+  @fs.write_file(dotted, b"distinct regular sibling", create_mode=CreateNew)
   let source = dir + "/A long primary name.txt"
   let hard = dir + "/second.txt"
   let volume = @json.parse(
@@ -961,8 +963,29 @@ async fn check_dos_names(
       probe(
         output,
         "identity-set-link-alias",
-        fsutil,
-        ["file", "setshortname", link, "IDLINK.ALT"],
+        locate_tool("pwsh.exe"),
+        [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          (
+            #|$ErrorActionPreference = 'Stop'
+            #|Add-Type -Name LinkAlias -Namespace Oracle -MemberDefinition @'
+            #|[DllImport("kernel32.dll", CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true)]
+            #|public static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFileW(string path, uint access, uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
+            #|[DllImport("kernel32.dll", CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true)]
+            #|public static extern bool SetFileShortNameW(Microsoft.Win32.SafeHandles.SafeFileHandle file, string name);
+            #|'@
+            #|$path = (Get-Item -LiteralPath 'R+éF.lnk').FullName
+            #|# DELETE access, OPEN_EXISTING, BACKUP_SEMANTICS | OPEN_REPARSE_POINT
+            #|$file = [Oracle.LinkAlias]::CreateFileW($path, 0x10000, 7, [IntPtr]::Zero, 3, 0x02200000, [IntPtr]::Zero)
+            #|try {
+            #|  if ($file.IsInvalid -or ![Oracle.LinkAlias]::SetFileShortNameW($file, 'IDLINK.ALT')) {
+            #|    throw [ComponentModel.Win32Exception]::new([Runtime.InteropServices.Marshal]::GetLastWin32Error())
+            #|  }
+            #|} finally { $file.Dispose() }
+          ),
+        ],
         dir,
         environment,
       ),

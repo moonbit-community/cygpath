@@ -93,12 +93,19 @@ async fn link_alias_entry(path : String, name : String) -> String? {
     return None
   }
   let target = @fs.realpath(operand)
-  let prefix = path[:path.length() - name.length()].to_owned()
-  let dir = @fs.opendir(host_io_path(entry_parent(path, name)))
+  let parent = @fs.realpath(host_io_path(entry_parent(path, name)))
+  // The enumerated name is literal. Ordinary Win32 parsing could turn a
+  // sibling ending in a dot or space into another lookup of the same link.
+  let prefix = if @async.platform is Windows {
+    host_io_path(parent, verbatim=true).trim_end(chars="\\").to_owned() + "\\"
+  } else {
+    parent.trim_end(chars="/").to_owned() + "/"
+  }
+  let dir = @fs.opendir(parent)
   defer dir.close()
   let mut candidate = None
   while dir.next(include_hidden=true) is Some(entry) {
-    let child = host_io_path(prefix + entry.name)
+    let child = prefix + entry.name
     if @fs.kind(child, follow_symlink=false) is SymLink &&
       @fs.realpath(child) == target {
       if candidate is Some(_) ||

@@ -32,8 +32,8 @@ fn plain_native(path : String) -> String {
 ///|
 /// The Windows host passes paths straight to the Win32 file APIs. Use the
 /// extended spelling for long, already-qualified names (including UNC).
-fn host_io_path(path : String) -> String {
-  if !(@async.platform is Windows) || path.length() < 248 {
+fn host_io_path(path : String, verbatim~ : Bool = false) -> String {
+  if !(@async.platform is Windows) || (!verbatim && path.length() < 248) {
     return path
   }
   let win = path.replace_all(old="/", new="\\")
