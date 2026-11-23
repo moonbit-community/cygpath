@@ -54,6 +54,22 @@ async test "long lookup uses the entire original name when a component is missin
 }
 
 ///|
+async test "link alias lookup keeps the link entry and refuses ambiguous targets" {
+  let tmp = @fs.tmpdir(prefix="cygpath-link-id-")
+  defer @fs.remove(tmp, recursive=true)
+  let dir = plain_native(@fs.realpath(tmp))
+  let link = dir + "/Link"
+  @fs.write_binary(dir + "/file", b"file")
+  @fs.write_binary(dir + "/other", b"file")
+  @fs.symlink(link, target=dir + "/file")
+  @fs.symlink(dir + "/Elsewhere", target=dir + "/other")
+  assert_eq(link_alias_entry(link, "Link"), Some("Link"))
+  @fs.symlink(dir + "/Twin", target=dir + "/file")
+  assert_eq(link_alias_entry(link, "Link"), None)
+  assert_eq(long_component(link, "Link"), "Link")
+}
+
+///|
 test "DOS eligibility checks every component after the volume or share" {
   for
     root in [

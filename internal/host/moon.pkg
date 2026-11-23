@@ -12,6 +12,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/hashset",
+  "moonbitlang/x/fs" @metadata,
 }
 
 supported_targets = "wasm"

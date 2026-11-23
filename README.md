@@ -26,7 +26,7 @@ supports UTF-8, UTF-7 (65000), GB18030-2000 (54936), Windows Symbol (42),
 the three Japanese ISO-2022 variants (50220–50222), ISO-2022-KR (50225), ISO-2022-CN (50227/50229),
 HZ-GB-2312 (52936), ISCII (57002–57011), and 115 legacy code pages, including Windows JIS (20932), GB2312 (20936),
 logical Hebrew (38598) and EUC Korean (51949). The CLI targets only
-linear-memory Wasm for `moonx`; it has no external module dependencies. Import
+linear-memory Wasm for `moonx` and uses `moonbitlang/x@0.5.9` for file identity. Import
 `ZSeanYves/cygpath/lib` to use the conversion library without host I/O.
 
 The five Windows GSM pages (55000–55004) encode `@` as a zero byte.
@@ -102,8 +102,10 @@ values require Cygwin runtime state.
 On Windows, `-wl` and `-ml` can expand a supplied alias and restore the
 stored spelling of short-shaped ordinary names, including spaces, punctuation
 and Unicode. For example, `-wl a+b.txt` prints `A+B.txt` when that is the
-name on disk. A missing path keeps its entire converted spelling. Looking up
-a reparse point by an alternate name can still require additional host metadata.
+name on disk. A missing path keeps its entire converted spelling. For a live
+native link supplied by an alias, the CLI can recover its own directory entry
+when exactly one link in the parent resolves to that target and its identity
+matches with link following disabled.
 
 On Windows, `-d` and `-s` preserve the input spelling of an existing path
 whose components already have unambiguous ASCII 8.3 names. This includes a

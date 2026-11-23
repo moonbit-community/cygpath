@@ -84,6 +84,34 @@ async fn primary_entry_name(parent : String, name : String) -> String? {
 }
 
 ///|
+/// Recover a reparse point's own entry when the operand only names its alias.
+/// Windows volumes other than NTFS can report colliding IDs. Require a unique
+/// link to the resolved target as well as the identity of the unfollowed link.
+async fn link_alias_entry(path : String, name : String) -> String? {
+  let operand = host_io_path(path)
+  guard @metadata.identity(operand, follow_symlink=false) is Some(id) else {
+    return None
+  }
+  let target = @fs.realpath(operand)
+  let prefix = path[:path.length() - name.length()].to_owned()
+  let dir = @fs.opendir(host_io_path(entry_parent(path, name)))
+  defer dir.close()
+  let mut candidate = None
+  while dir.next(include_hidden=true) is Some(entry) {
+    let child = host_io_path(prefix + entry.name)
+    if @fs.kind(child, follow_symlink=false) is SymLink &&
+      @fs.realpath(child) == target {
+      if candidate is Some(_) ||
+        @metadata.identity(child, follow_symlink=false) != Some(id) {
+        return None
+      }
+      candidate = Some(entry.name)
+    }
+  }
+  candidate
+}
+
+///|
 /// GetLongPathNameW consults the directory entry for short-shaped names,
 /// including spaces and characters that require an alternate name for -s.
 fn may_expand_long_component(name : String) -> Bool {
@@ -103,6 +131,13 @@ async fn long_component(path : String, name : String) -> String {
     // A normalized handle name would follow this link. Use its own directory entry.
     if primary_entry_name(entry_parent(path, name), name) is Some(entry) {
       return entry
+    }
+    let entry = link_alias_entry(path, name) catch {
+      @metadata.IOError(_) | @os_error.OsError(_, ..) => None
+      err => raise err
+    }
+    if entry is Some(primary) {
+      return primary
     }
     raise NameLookupUnavailable(
       "long name of a reparse-point alias: " + @debug.to_string(path),

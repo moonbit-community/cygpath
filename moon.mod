@@ -13,3 +13,7 @@ keywords = [ "cygpath", "cygwin", "windows", "path" ]
 preferred_target = "wasm"
 
 description = "A MoonBit implementation of Cygwin-style path conversion (in development)."
+
+import {
+  "moonbitlang/x@0.5.9",
+}

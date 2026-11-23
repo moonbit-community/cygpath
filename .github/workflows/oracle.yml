@@ -49,7 +49,7 @@ jobs:
           ORACLE_SETUP_EXE: ${{ steps.cygwin.outputs.setup }}
           ORACLE_PACKAGE_CACHE: ${{ steps.cygwin.outputs.package-cache }}
         run: >-
-          moon run --deny-warn scripts/ci_oracle.mbtx --
+          moon run --target wasm --deny-warn scripts/ci_oracle.mbtx --
           --profile ${{ matrix.profile }}
           --context-variant ${{ matrix.context }}
           --root "$env:ORACLE_ROOT"

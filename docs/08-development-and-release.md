@@ -33,7 +33,7 @@ precedence, per-record state, errors, and remaining unsupported capabilities.
 | Dependency or source | Version/provenance | Use |
 | --- | --- | --- |
 | Official MoonBit async | 0.22.10, Apache-2.0 | Standalone test tooling only |
-| Official MoonBit x | 0.5.8, Apache-2.0 | Standalone tooling only: SHA-256 for fixtures and evidence |
+| Official MoonBit x | 0.5.9, Apache-2.0 | File identity in the host adapter and Windows oracle. Standalone fixture tools also use the crypto package for SHA-256 |
 | MoonBit core | Recorded compiler, Apache-2.0 | Collections/encoding, env and experimental `core/async` I/O for the product |
 | Unicode/Microsoft encoding tables | Pinned source manifests in `third_party/` | Pure numeric-code-page data; preserve supplied licenses |
 | newlib sorting adaptation | Pinned source and BSD-3-Clause notice in `third_party/newlib/` | Observable MSYS2 mount-order behavior |
@@ -121,7 +121,7 @@ exact-version `moonx` execution.
    version, conversions, failures, file input, and stdin.
 
 Publication and exact-version registry retrieval have not been performed by this
-work. P3 is complete for its frozen scope. The file identity API has already
-merged into `x/fs`. After the coordinated `x` release, adopt the published
-version and run the NTFS identity cases described in
+work. P3 is complete for its frozen scope. The default Windows oracle jobs
+retain the measured NTFS volume and Wasm file-identity checks in
+`ntfs-identity.json`, alongside the paired output for long-name lookup. See
 [issue #10](https://github.com/moonbit-community/cygpath/issues/10#issuecomment-7047844931).

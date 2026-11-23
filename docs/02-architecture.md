@@ -20,9 +20,13 @@ The only executable target is linear-memory Wasm, as accepted by `moonx`. The pu
 
 The November 2026 audit verified directory enumeration, `kind` and `realpath` through `core/async/fs` on linear-memory Wasm. On macOS the runner identified a dangling symlink and resolved a live symlink to its target. [Registered imports in moonrun 738607b](https://github.com/moonbitlang/moon/blob/738607b/crates/moonrun/src/async_api/registry.rs).
 
-`x/fs.identity` merged into upstream on 2026-11-20. In the macOS Wasm probe a file, its hardlink and a followed symlink had equal identities. Querying the symlink with `follow_symlink=false` returned a distinct identity. On 2026-11-21 the latest Mooncakes version was `0.5.8`, which predates the API. Adoption in cygpath waits for the coordinated `x` release that exports it. [Upstream PR](https://github.com/moonbitlang/x/pull/373) · [Mooncakes](https://mooncakes.io/docs/moonbitlang/x) · [Adoption issue](https://github.com/moonbit-community/cygpath/issues/10).
-
-On Windows the upstream API supports identity comparisons on NTFS. A missing identity returns `None`, a failed lookup raises `IOError`, and other filesystems including ReFS can return a non-unique identifier. The post-release Windows test therefore needs to record the fixture's filesystem before using identity equality. [Merged API contract](https://github.com/moonbitlang/x/blob/822f3a7fa84873735955688e09f57e0bbeb685a8/fs/stat.mbt#L183-L209).
+The host adapter uses `x/fs.identity(path, follow_symlink=false)` from the published
+`moonbitlang/x@0.5.9` to confirm the directory entry of a reparse point supplied by
+an alias. It also requires a unique link resolving to the requested target in that
+parent. Windows identity comparison is supported on NTFS. Other filesystems,
+including ReFS, can return colliding IDs. A lookup can succeed with an unavailable
+identity (`None`), while a failed query raises `IOError`.
+[Released API contract](https://github.com/moonbitlang/x/blob/v0.5.9/fs/stat.mbt#L252-L277) · [NTFS acceptance](https://github.com/moonbit-community/cygpath/issues/10#issuecomment-7047844931).
 
 The host adapter resolves the NT `SystemRoot` link through `core/async/fs.realpath` for POSIX system-directory output. The CLI converts the resulting path through its current mount context. An explicit Windows test compares both directory selectors and their numeric equivalents with Cygwin. Raw API spelling, registered shell-folder locations, alternate 8.3 names, active Windows code pages and Cygwin session mounts still require separate queries. [Folder behavior and evidence](04-api-and-cli.md#5-options-and-precedence).
 

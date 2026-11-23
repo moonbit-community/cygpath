@@ -276,8 +276,11 @@ punctuation and Unicode inside the 8.3 widths can still require lookup.
 For ordinary entries, `moonrun` obtains the normalized name of the opened
 entry. The CLI uses only its last component so an earlier junction keeps
 its spelling. For a reparse point, directory enumeration can recover its
-own name by exact or unique ASCII case match. An unresolved reparse alias
-produces a capability error. A missing Windows path returns the whole
+own name by exact or unique ASCII case match. If the operand uses another
+spelling, the host enumerates the parent, including hidden entries. It accepts
+the sole link resolving to the same target when the operand and that entry
+also have matching unfollowed identities. An inconclusive scan, including
+multiple links to that target, produces a capability error. A missing Windows path returns the whole
 original spelling, including any short parent names.
 Lists apply the lookup to each member. With `-C`, the first encoded result
 must decode in the supported UTF-8 locale before the lookup. Windows

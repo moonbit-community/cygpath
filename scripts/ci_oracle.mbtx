@@ -8,7 +8,8 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "moonbitlang/x@0.5.8/crypto",
+  "moonbitlang/x@0.5.9/crypto",
+  "moonbitlang/x@0.5.9/fs" @metadata,
 }
 ----
 
@@ -879,6 +880,100 @@ async fn check_dos_names(
     ["-ml", "r+éf.LNK", "d +中/a+b.txt"],
     "R+éF.lnk\nD +中/A+B.txt\n",
   )
+  let link = dir + "/R+éF.lnk"
+  let source = dir + "/A long primary name.txt"
+  let hard = dir + "/second.txt"
+  let volume = @json.parse(
+    successful_text(
+      output,
+      probe(
+        output,
+        "identity-volume",
+        locate_tool("pwsh.exe"),
+        [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          (
+            #|$ErrorActionPreference = 'Stop'
+            #|$file = Get-Item -LiteralPath 'A long primary name.txt'
+            #|$vol = Get-Volume -FilePath $file.FullName
+            #|[pscustomobject]@{ filesystem=$vol.FileSystemType.ToString(); volume=$vol.UniqueId; file=$file.FullName } | ConvertTo-Json -Compress
+          ),
+        ],
+        dir,
+        environment,
+      ),
+    ),
+  )
+  require(
+    text_field(volume, "filesystem") == "NTFS",
+    "identity fixture requires NTFS",
+  )
+  ignore(
+    successful_text(
+      output,
+      probe(
+        output,
+        "identity-hardlink",
+        fsutil,
+        ["hardlink", "create", hard, source],
+        dir,
+        environment,
+      ),
+    ),
+  )
+  guard @metadata.identity(source) is Some(id) &&
+    @metadata.identity(link, follow_symlink=false) is Some(link_id) else {
+    fail("NTFS fixture did not supply file and link identities")
+  }
+  let file = @metadata.open(hard, mode=ReadOnly)
+  defer file.close()
+  let missing_error = try {
+    ignore(@metadata.identity(dir + "/absent-id"))
+    false
+  } catch {
+    @metadata.IOError(_) => true
+  }
+  let identity_checks : Map[String, Bool] = {
+    "hardlink_equals_file": @metadata.identity(hard) == Some(id),
+    "open_hardlink_equals_file": file.identity() == Some(id),
+    "followed_link_equals_file": @metadata.identity(link) == Some(id),
+    "unfollowed_link_differs": link_id != id,
+    "other_file_differs": @metadata.identity(dir + "/README.TXT") is Some(other) &&
+    other != id,
+    "missing_raises_ioerror": missing_error,
+  }
+  save_json(output + "/ntfs-identity.json", {
+    "volume": volume,
+    "source": source,
+    "hardlink": hard,
+    "symlink": link,
+    "checks": @json.to_json(identity_checks),
+  })
+  for name, passed in identity_checks {
+    require(passed, "NTFS identity check failed: " + name)
+  }
+  check("identity-link-unicode", ["-wl", "r+Éf.LNK"], "R+éF.lnk\n")
+  ignore(
+    successful_text(
+      output,
+      probe(
+        output,
+        "identity-set-link-alias",
+        fsutil,
+        ["file", "setshortname", link, "IDLINK.ALT"],
+        dir,
+        environment,
+      ),
+    ),
+  )
+  require(
+    @metadata.identity(dir + "/IDLINK.ALT", follow_symlink=false) ==
+    Some(link_id),
+    "assigned alias must name the reparse point itself",
+  )
+  check("identity-link-alias", ["-wl", "idlink.alt"], "R+éF.lnk\n")
   @fs.write_file(dir + "/Ab", b"plain", create_mode=CreateNew)
   check(
     "shape-trailing",
